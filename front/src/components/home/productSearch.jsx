@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import api from '../../services/api';
 import LoadingSpinner from '../shared/LoadingSpinner';
 
@@ -26,21 +26,15 @@ export default function ProductSearch({ onSearch }) {
     }
   }, [query, onSearch]);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      performSearch();
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [query, performSearch]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    performSearch();
+  };
 
   return (
     <div className="mb-6">
-      <form onSubmit={(e) => {
-        e.preventDefault();
-        performSearch();
-      }}>
-        <div class="search" className="flex gap-6">
+      <form onSubmit={handleSubmit}>
+        <div className="flex gap-6">
           <input
             type="text"
             value={query}
@@ -51,9 +45,9 @@ export default function ProductSearch({ onSearch }) {
           <button 
             type="submit" 
             disabled={isLoading}
-            className="px-4 py-2  bg-blue-500 text-white rounded disabled:bg-blue-300"
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-blue-300 hover:bg-blue-600"
           >
-            Search
+            {isLoading ? 'Searching...' : 'Search'}
           </button>
         </div>
       </form>

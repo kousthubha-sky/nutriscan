@@ -4,11 +4,12 @@ export default {
   ],
   theme: {
     extend: {
-      // ...existing theme
+      
     },
   },
   plugins: [
     import('@tailwindcss/forms'),
     import('@tailwindcss/typography'),
+    import('@tailwindcss/base'),
   ],
 }

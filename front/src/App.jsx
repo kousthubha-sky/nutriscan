@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import './App.css';
+import './globals.css';
 import Login from './components/auth/login.jsx';
 import Home from './components/home/home.jsx';
 import Signup from './components/auth/signup.jsx';
