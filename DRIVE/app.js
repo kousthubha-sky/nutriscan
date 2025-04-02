@@ -38,6 +38,8 @@ app.use('/user', userRouter)
 const productRouter = require('./routes/productRoutes')
 app.use('/products', productRouter)
 
-app.listen(3000, () => {    // 3000 is the port number
-  console.log('Server is running on port 3000')
-})
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});

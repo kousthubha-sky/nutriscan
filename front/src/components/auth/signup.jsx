@@ -1,37 +1,45 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Add navigation import
 export default function Signup({onLogin}) {
 
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState(""); // Add state for error handling
+    const navigate = useNavigate(); // Add navigation hook
 
     function handleSubmit(event) {
-      event.preventDefault();
-      fetch("http://localhost:3000/user/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password })
-      })
-      .then(response => {
-          if (!response.ok) throw new Error('Signup failed');
-          return response.json();
-      })
-      .then(() => {
-          // Auto-login after successful signup
-          return fetch("http://localhost:3000/user/login", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username, password })
-          });
-      })
-      .then(response => {
-          if (!response.ok) throw new Error('Login failed');
-          return response.json();
-      })
-      .then(data => onLogin(data.user))
-      .catch(error => console.error("Error:", error));
-  }
+        event.preventDefault(); // Add this line
+        fetch("http://localhost:3000/user/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, email, password })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Signup failed');
+            return response.json();
+        })
+        .then(() => {
+            // Auto-login after successful signup
+            return fetch("http://localhost:3000/user/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Login failed');
+            return response.json();
+        })
+        .then(data => {
+            onLogin(data.user);
+            navigate("/"); // Add navigation
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            setError(error.message); // Add error handling
+        });
+    }
 
     return ( 
 
@@ -43,7 +51,7 @@ export default function Signup({onLogin}) {
     rel="stylesheet"
   />
   <title>Document</title>
-  <form action="/user/register" method="post" className="max-w-sm mx-auto">
+  <form onSubmit={handleSubmit} method="post" className="max-w-sm mx-auto">
     {/* Username */}
     <label
       htmlFor="website-admin"
@@ -132,6 +140,7 @@ export default function Signup({onLogin}) {
     <p className="mt-4 text-sm">
         Already have an account? <Link to="/login" className="text-blue-600">Log in</Link>
     </p>
+    {error && <p className="mt-4 text-sm text-red-600">{error}</p>} {/* Display error */}
   </form>
 </>
 
