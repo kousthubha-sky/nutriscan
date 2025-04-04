@@ -1,61 +1,85 @@
+import { X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+
 export default function ProductDetailsModal({ product, onClose }) {
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(onClose, 300); // Match animation duration
+  }, [onClose]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [handleClose]);
+
   if (!product) return null;
 
+  const getImageUrl = (product) => {
+    return product.image_url || product.imageUrl || '/placeholder.png';
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-start">
-            <h2 className="text-2xl font-bold mb-4">{product.product_name || product.name}</h2>
-            <button 
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
+    <div 
+      className={`modal-overlay ${isClosing ? 'closing' : ''}`}
+      onClick={handleClose}
+    >
+      <div 
+        className={`modal-container ${isClosing ? 'closing' : ''}`}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="modal-header">
+          <h2 className="text-xl font-bold">Product Details</h2>
+          <button className="modal-close-btn" onClick={handleClose}>
+            <X size={20} />
+          </button>
+        </div>
 
-          {product.image_url && (
-            <img 
-              src={product.image_url} 
-              alt={product.product_name || product.name}
-              className="w-full max-h-64 object-contain mb-4"
-            />
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold text-lg">Product Information</h3>
-              <p><strong>Brand:</strong> {product.brands || product.brand || 'N/A'}</p>
-              <p><strong>Category:</strong> {product.categories || product.category || 'N/A'}</p>
+        <div className="modal-content">
+          <div className="modal-product-grid">
+            <div className="modal-image-container">
+              <img
+                src={getImageUrl(product)}
+                alt={product.product_name || product.name}
+                className="product-detail-image"
+                onError={(e) => {
+                  e.target.src = '/placeholder.png';
+                  e.target.onerror = null;
+                }}
+              />
             </div>
 
-            {product.ingredients && (
-              <div>
-                <h3 className="font-semibold text-lg">Ingredients</h3>
-                <p className="text-gray-600">{product.ingredients}</p>
-              </div>
-            )}
+            <div className="product-details">
+              <h3 className="text-xl font-bold mb-2">
+                {product.product_name || product.name}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {product.brands || product.brand || 'N/A'}
+              </p>
 
-            {product.nutrition_facts && (
-              <div>
-                <h3 className="font-semibold text-lg">Nutrition Facts</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(product.nutrition_facts).map(([key, value]) => (
-                    <div key={key} className="border-b py-1">
-                      <span className="font-medium">{key}:</span> {value}
-                    </div>
-                  ))}
+              {product.ingredients && (
+                <div className="mb-4">
+                  <h4 className="font-semibold mb-1">Ingredients:</h4>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {product.ingredients}
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
 
-            {product.allergens && (
-              <div>
-                <h3 className="font-semibold text-lg text-red-600">Allergens</h3>
-                <p className="text-red-600">{product.allergens}</p>
+              <div className="space-y-2">
+                <p><span className="font-semibold">Product Code:</span> {product._id || product.code}</p>
+                {product.category && (
+                  <p><span className="font-semibold">Category:</span> {product.category}</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
