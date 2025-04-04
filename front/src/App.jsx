@@ -1,24 +1,29 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useState } from 'react';
 import './App.css';
-
-import Login from './components/auth/login.jsx';
-import Home from './components/home/home.jsx';
-import Signup from './components/auth/signup.jsx';
+import Navbar from './components/shared/Navbar';
+import Login from './components/auth/login';
+import Home from './components/home/home';
+import Signup from './components/auth/signup';
 
 function App() {
   const [user, setUser] = useState(null);
 
+  const handleLogout = () => {
+    setUser(null);
+    // Add any additional logout logic here (e.g., clearing local storage)
+  };
+
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Redirect to Home if logged in, otherwise go to Login */}
-        <Route path="/" element={user ? <Home user={user} /> : <Navigate to="/login" />} />
-        {/* Login Route */}
-        <Route path="/login" element={<Login onLogin={setUser} />} />
-        {/* Signup Route */}
-        <Route path="/signup" element={<Signup onLogin={setUser} />} />
-      </Routes>
+      <div className="app-container">
+        <Navbar user={user} onLogout={handleLogout} />
+        <Routes>
+          <Route path="/" element={<Home user={user} />} />
+          <Route path="/login" element={<Login onLogin={setUser} />} />
+          <Route path="/signup" element={<Signup onLogin={setUser} />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   );
 }

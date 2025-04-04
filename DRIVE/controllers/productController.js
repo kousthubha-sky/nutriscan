@@ -73,7 +73,7 @@ exports.searchProducts = async (req, res) => {
       _id: p.code,
       name: p.product_name,
       brand: p.brands,
-      imageUrl: p.image_url,
+      imageUrl: p.image_url || p.image_small_url || p.image_thumb_url || null,
       ingredients: p.ingredients_text
     })) || [];
 

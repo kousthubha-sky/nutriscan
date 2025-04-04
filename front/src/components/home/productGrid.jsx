@@ -4,6 +4,21 @@ import ProductDetailsModal from './ProductDetailsModal';
 
 export default function ProductGrid({ products, isLoading }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [imageErrors, setImageErrors] = useState({});
+
+  const handleImageError = (productId) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [productId]: true
+    }));
+  };
+
+  const getImageUrl = (product) => {
+    if (imageErrors[product._id || product.code]) {
+      return '/placeholder.png'; // Your local placeholder image
+    }
+    return product.image_url || product.imageUrl || '/placeholder.png';
+  };
 
   if (isLoading) return <LoadingSpinner />;
   if (!products?.length) {
@@ -20,23 +35,25 @@ export default function ProductGrid({ products, isLoading }) {
         {products.map((product) => (
           <div 
             key={product._id || product.code}
-            className="border p-4 rounded-lg hover:shadow-md transition-shadow bg-white"
+            className="product-card border rounded-lg hover:shadow-md transition-shadow bg-white"
           >
-            {/* Show less information initially */}
-            <h3 className="font-bold text-lg mb-2">
+            <h3 className="font-bold text-lg mb-2 px-4 pt-4">
               {product.product_name || product.name}
             </h3>
 
-            {product.image_url && (
-              <img 
-                src={product.image_url} 
-                alt={product.product_name || product.name}
-                className="w-full h-40 object-contain mb-4"
-                onError={(e) => e.target.style.display = 'none'}
-              />
-            )}
+            <div className="image-wrapper">
+              <div className="image-container">
+                <img 
+                  src={getImageUrl(product)}
+                  alt={product.product_name || product.name}
+                  className="product-image"
+                  onError={() => handleImageError(product._id || product.code)}
+                  loading="lazy"
+                />
+              </div>
+            </div>
 
-            <div className="space-y-2">
+            <div className="product-info px-4 pb-4">
               <p className="text-gray-600">
                 <span className="font-semibold">Brand:</span> {product.brands || product.brand || 'N/A'}
               </p>
@@ -52,7 +69,6 @@ export default function ProductGrid({ products, isLoading }) {
         ))}
       </div>
 
-      {/* Modal */}
       {selectedProduct && (
         <ProductDetailsModal 
           product={selectedProduct} 
