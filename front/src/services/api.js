@@ -2,34 +2,32 @@ const API_BASE = 'http://localhost:3000';
 
 const api = {
   async searchProducts(query, page = 1) {
+    console.log('Searching with query:', query, 'page:', page);
+    
     try {
-      const response = await fetch(
-        `${API_BASE}/products/search?q=${encodeURIComponent(query)}&page=${page}&fields=product_name,name,brand,brands,categories,image_url,ingredients,nutrition_facts,description,allergens`
-      );
+      const url = `${API_BASE}/products/search?q=${encodeURIComponent(query)}&page=${page}`;
+      console.log('Request URL:', url);
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      console.log('API Response:', data);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Search failed');
+        throw new Error(data.message || 'Search failed');
       }
       
-      const data = await response.json();
-      console.log('API Response:', data); // Debug log
-      return data;
+      return {
+        products: data.products || [],
+        currentPage: Number(data.currentPage) || page,
+        totalPages: Number(data.totalPages) || 1,
+        query // Include the query in the response
+      };
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
-  },
-
-  // Add other API methods here when needed
-  // Example:
-  /*
-  async getProductDetails(barcode) {
-    const response = await fetch(`${API_BASE}/products/${barcode}`);
-    if (!response.ok) throw new Error('Product not found');
-    return await response.json();
   }
-  */
 };
 
 export default api;
