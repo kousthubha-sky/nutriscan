@@ -1,5 +1,6 @@
 const axios = require('axios');
 const Product = require('../models/Product');
+const calculateHealthRating = require('../utils/healthRating');
 
 function escapeRegExp(string) {
   if (!string) return '';
@@ -21,68 +22,76 @@ exports.searchProducts = async (req, res) => {
     const skip = (parseInt(page) - 1) * limit;
     const sanitizedQuery = escapeRegExp(query);
 
-    // Search local database
-    const [results, total] = await Promise.all([
-      Product.find({
-        $or: [
-          { name: new RegExp(sanitizedQuery, 'i') },
-          { brand: new RegExp(sanitizedQuery, 'i') }
-        ]
-      })
-      .select('name brand imageUrl ingredients')
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-      
-      Product.countDocuments({
-        $or: [
-          { name: new RegExp(sanitizedQuery, 'i') },
-          { brand: new RegExp(sanitizedQuery, 'i') }
-        ]
-      })
-    ]);
-
-    console.log('Search results:', {
-      count: results.length,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit)
-    });
-
-    if (results.length > 0) {
-      return res.json({
-        success: true,
-        products: results,
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        total
-      });
-    }
-
-    // Fallback to external API if no local results
-    const response = await axios.get('https://world.openfoodfacts.org/cgi/search.pl', {
+    // Fetch from API first
+    const apiResponse = await axios.get('https://world.openfoodfacts.org/cgi/search.pl', {
       params: {
         search_terms: query,
-        page_size: limit,
+        page_size: 24, // Fetch more to ensure we have enough after deduplication
         page: page,
         json: 1
       }
     });
 
-    const products = response.data.products?.map(p => ({
-      _id: p.code,
-      name: p.product_name,
-      brand: p.brands,
-      imageUrl: p.image_url || p.image_small_url || p.image_thumb_url || null,
-      ingredients: p.ingredients_text
-    })) || [];
+    // Convert API results
+    const apiProducts = (apiResponse.data.products || []).map(p => ({
+      barcode: p.code,
+      name: p.product_name || 'Unknown Product',
+      brand: p.brands || 'Unknown Brand',
+      imageUrl: p.image_url || p.image_small_url || p.image_thumb_url,
+      ingredients: p.ingredients_text || '',
+      source: 'api',
+      healthRating: calculateHealthRating({
+        ingredients: p.ingredients_text || ''
+      })
+    }));
+
+    // Get local results
+    const localResults = await Product.find({
+      $or: [
+        { name: new RegExp(sanitizedQuery, 'i') },
+        { brand: new RegExp(sanitizedQuery, 'i') }
+      ]
+    })
+    .select('barcode name brand imageUrl ingredients')
+    .lean();
+
+    // Store new API products
+    const existingBarcodes = new Set(localResults.map(p => p.barcode));
+    const newProducts = apiProducts.filter(p => !existingBarcodes.has(p.barcode));
+
+    if (newProducts.length > 0) {
+      try {
+        await Product.insertMany(newProducts, { ordered: false });
+        console.log(`Stored ${newProducts.length} new products`);
+      } catch (err) {
+        console.error('Error storing new products:', err);
+      }
+    }
+
+    // Combine results, prioritizing API results for freshness
+    const combinedProducts = [
+      ...apiProducts,
+      ...localResults.filter(local => 
+        !apiProducts.some(api => api.barcode === local.barcode)
+      )
+    ];
+
+    // Paginate results
+    const startIndex = 0; // Always start from beginning since API already handles pagination
+    const endIndex = limit;
+    const paginatedProducts = combinedProducts.slice(startIndex, endIndex);
 
     res.json({
       success: true,
-      products,
+      products: paginatedProducts,
       currentPage: parseInt(page),
-      totalPages: Math.ceil(response.data.count / limit),
-      total: response.data.count
+      totalPages: Math.ceil(apiResponse.data.count / limit),
+      total: apiResponse.data.count,
+      sources: {
+        api: apiProducts.length,
+        local: localResults.length,
+        new: newProducts.length
+      }
     });
 
   } catch (error) {
