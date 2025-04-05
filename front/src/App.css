@@ -532,3 +532,41 @@
   background: rgba(0, 0, 0, 0.1);
   transform: scale(1.1);
 }
+
+/* Nutrition Facts Styles */
+.nutrition-facts {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.nutrition-facts h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 4px solid #000;
+}
+
+.nutrition-value {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .nutrition-facts {
+    border-color: #374151;
+  }
+  
+  .nutrition-facts h3 {
+    border-bottom-color: #fff;
+  }
+  
+  .nutrition-value {
+    border-bottom-color: #374151;
+  }
+}

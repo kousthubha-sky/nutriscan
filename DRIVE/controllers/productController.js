@@ -42,7 +42,19 @@ exports.searchProducts = async (req, res) => {
       source: 'api',
       healthRating: calculateHealthRating({
         ingredients: p.ingredients_text || ''
-      })
+      }),
+      nutriments: {
+        energy_kcal_100g: p.nutriments?.energy_kcal_100g,
+        carbohydrates_100g: p.nutriments?.carbohydrates_100g,
+        sugars_100g: p.nutriments?.sugars_100g,
+        fat_100g: p.nutriments?.fat_100g,
+        saturated_fat_100g: p.nutriments?.saturated_fat_100g,
+        proteins_100g: p.nutriments?.proteins_100g,
+        fiber_100g: p.nutriments?.fiber_100g,
+        salt_100g: p.nutriments?.salt_100g,
+        sodium_100g: p.nutriments?.sodium_100g
+      },
+      serving_size: p.serving_size || '100g'
     }));
 
     // Get local results
