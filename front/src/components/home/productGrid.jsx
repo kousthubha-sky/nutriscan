@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import LoadingSpinner from '../shared/LoadingSpinner';
-import ProductDetailsModal from './ProductDetailsModal';
 
-export default function ProductGrid({ products, isLoading }) {
-  const [selectedProduct, setSelectedProduct] = useState(null);
+const ProductGrid = memo(({ 
+  products, 
+  isLoading, 
+  currentPage, 
+  totalPages, 
+  onPageChange,
+  onProductSelect // We'll only use this prop now
+}) => {
   const [imageErrors, setImageErrors] = useState({});
 
   const handleImageError = (productId) => {
@@ -15,27 +20,36 @@ export default function ProductGrid({ products, isLoading }) {
 
   const getImageUrl = (product) => {
     if (imageErrors[product._id || product.code]) {
-      return '/placeholder.png'; // Your local placeholder image
+      return '/placeholder.png';
     }
     return product.image_url || product.imageUrl || '/placeholder.png';
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   if (!products?.length) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">No products found. Try a different search term.</p>
+        <p className="text-gray-500 dark:text-gray-400">No products found. Try a different search term.</p>
       </div>
     );
   }
 
   return (
-    <>
-      <div id='prodgrid' className="">
-        {products.map((product) => (
+    <div className="space-y-6 pb-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.map(product => (
           <div 
             key={product._id || product.code}
-            className="product-card border rounded-lg hover:shadow-md transition-shadow bg-white"
+            className="product-card border rounded-lg hover:shadow-md transition-shadow 
+              bg-white dark:bg-gray-800 dark:border-gray-700 cursor-pointer"
+            onClick={() => onProductSelect(product)} // Simplified click handler
           >
             <h3 className="font-bold text-lg mb-2 px-4 pt-4">
               {product.product_name || product.name}
@@ -54,27 +68,41 @@ export default function ProductGrid({ products, isLoading }) {
             </div>
 
             <div className="product-info px-4 pb-4">
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 <span className="font-semibold">Brand:</span> {product.brands || product.brand || 'N/A'}
               </p>
-              
-              <button 
-                onClick={() => setSelectedProduct(product)}
-                className="w-full mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                View Details
-              </button>
             </div>
           </div>
         ))}
       </div>
 
-      {selectedProduct && (
-        <ProductDetailsModal 
-          product={selectedProduct} 
-          onClose={() => setSelectedProduct(null)} 
-        />
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1 || isLoading}
+              className="page-btn"
+            >
+              Previous
+            </button>
+            
+            <span className="page-info">
+              Page {currentPage} of {totalPages}
+            </span>
+            
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages || isLoading}
+              className="page-btn"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
-}
+});
+
+export default ProductGrid;

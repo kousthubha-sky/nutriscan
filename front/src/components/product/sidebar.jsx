@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Home, ScanLine, BarChart2, GitCompare, PlusCircle, Settings, LogOut, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
+import { Link } from "react-router-dom"
 
 const menuItems = [
   {
@@ -15,7 +16,7 @@ const menuItems = [
     label: "Scan Product",
     href: "#",
     section: null,
-    action: "scan", // This will be used to trigger the scanner
+    action: "scan",
   },
   {
     icon: <BarChart2 className="h-5 w-5" />,
@@ -46,24 +47,23 @@ const bottomMenuItems = [
     label: "Settings",
     href: "#",
     section: null,
-    action: "settings", // This will be used to open settings
+    action: "settings",
   },
   {
     icon: <LogOut className="h-5 w-5" />,
     label: "Logout",
     href: "#",
     section: null,
-    action: null,
+    action: "logout",
   },
 ]
 
-export function Sidebar({ onAction }) {
+export function Sidebar({ user, onAction }) {
   const [activeSection, setActiveSection] = useState("top")
   const { theme } = useTheme()
   const isDarkTheme = theme === "dark"
   const [isOpen, setIsOpen] = useState(false)
 
-  // Handle menu item click
   const handleMenuItemClick = (e, item) => {
     if (item.action) {
       e.preventDefault()
@@ -71,7 +71,6 @@ export function Sidebar({ onAction }) {
     }
   }
 
-  // Handle scroll to update active section
   useEffect(() => {
     const handleScroll = () => {
       const sections = [
@@ -102,7 +101,6 @@ export function Sidebar({ onAction }) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Close sidebar when clicking outside on mobile
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isOpen && !event.target.closest(".sidebar")) {
@@ -116,7 +114,6 @@ export function Sidebar({ onAction }) {
 
   return (
     <>
-      {/* Mobile menu button - moved to right corner */}
       <button
         className="md:hidden fixed top-4 right-4 z-50"
         onClick={() => setIsOpen(!isOpen)}
@@ -124,22 +121,27 @@ export function Sidebar({ onAction }) {
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
+      {/* Sidebar container */}
       <div
-        className={`sidebar ${isOpen ? "open" : ""} w-64 h-screen flex flex-col 
-          border-l border-gray-200/10 
-          ${isDarkTheme ? "border-gray-800/10" : "border-gray-200/20"} 
-          fixed md:static right-0 top-0 z-30 bg-background`}
+        className={`sidebar ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} 
+          w-64 h-screen flex flex-col fixed left-0 top-0 z-30 bg-background
+          border-r border-gray-200/10 transition-transform duration-300
+          ${isDarkTheme ? "border-gray-800/10" : "border-gray-200/20"}`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-200/10 dark:border-gray-800/10 flex items-center gap-2">
           <div
             className={`h-8 w-8 flex items-center justify-center rounded ${
-              isDarkTheme ? "bg-gray-700" : "bg-gray-200"
+              isDarkTheme ? "bg-gray-700" : "bg-gray-600"
             }`}
           >
             <span className="font-bold text-lg">NS</span>
           </div>
-          <span className="font-bold text-xl text-green-600">NutriScan</span>
+          <span className="font-bold text-xl text-green-600">
+            <Link to="/" className="flex items-center gap-2">
+              NutriScan
+            </Link>
+          </span>
         </div>
 
         {/* Main menu */}
@@ -169,36 +171,58 @@ export function Sidebar({ onAction }) {
 
         {/* User profile at bottom */}
         <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-xs">User</span>
+          {user ? (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                  <span className="text-xs">{user.username.charAt(0).toUpperCase()}</span>
+                </div>
+                <div>
+                  <p className="font-medium">{user.username}</p>
+                  <p className="text-xs text-gray-500">{user.email || 'user@example.com'}</p>
+                </div>
+              </div>
+              <nav>
+                <ul className="space-y-1">
+                  {bottomMenuItems.map((item) => (
+                    <li key={item.label}>
+                      <a
+                        href={item.href}
+                        onClick={(e) => handleMenuItemClick(e, item)}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:${
+                          isDarkTheme ? "bg-gray-800" : "bg-gray-100"
+                        } text-gray-600 hover:text-gray-900`}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Link
+                to="/login"
+                className={`w-full text-center py-2 px-3 rounded-lg transition-colors ${
+                  isDarkTheme ?  "hover:bg-white text-black" : " hover:bg-gray-900 text-white"
+                } text-gray-900 dark:text-white`}
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className={`w-full text-center py-2 px-3 rounded-lg transition-colors ${
+                  isDarkTheme ? " hover:bg-white text-black" : " hover:bg-gray-900 text-white"
+                } text-white`}
+              >
+                Sign Up
+              </Link>
             </div>
-            <div>
-              <p className="font-medium">John Doe</p>
-              <p className="text-xs text-gray-500">user@example.com</p>
-            </div>
-          </div>
-          <nav>
-            <ul className="space-y-1">
-              {bottomMenuItems.map((item) => (
-                <li key={item.label}>
-                  <a
-                    href={item.href}
-                    onClick={(e) => handleMenuItemClick(e, item)}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:${
-                      isDarkTheme ? "bg-gray-800" : "bg-gray-100"
-                    } text-gray-600 hover:text-gray-900`}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          )}
         </div>
       </div>
     </>
   )
 }
-

@@ -4,7 +4,6 @@ import { NutritionFacts } from '../product/NutritionFacts';
 
 function HealthRating({ product }) {
   const rating = product.healthRating || 3;
-  // Removed unused variable 'hasHalfStar'
 
   const getNutriScoreColor = (grade) => {
     switch (grade?.toLowerCase()) {
@@ -58,7 +57,11 @@ export default function ProductDetailsModal({ product, onClose }) {
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
-    setTimeout(onClose, 300); // Match animation duration
+    const timer = setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [onClose]);
 
   useEffect(() => {
@@ -72,6 +75,14 @@ export default function ProductDetailsModal({ product, onClose }) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [handleClose]);
 
+  // Prevent scrolling when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   if (!product) return null;
 
   const getImageUrl = (product) => {
@@ -80,43 +91,57 @@ export default function ProductDetailsModal({ product, onClose }) {
 
   return (
     <div 
-      className={`modal-overlay ${isClosing ? 'closing' : ''}`}
+      className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 
+        transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
       onClick={handleClose}
+      aria-modal="true"
+      role="dialog"
     >
       <div 
-        className={`modal-container ${isClosing ? 'closing' : ''}`}
+        className={`bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-4xl max-h-[90vh] 
+          overflow-y-auto transform transition-all duration-300
+          ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
         onClick={e => e.stopPropagation()}
       >
-        <div className="modal-header">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b 
+          dark:border-gray-700 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">Product Details</h2>
-          <button className="modal-close-btn" onClick={handleClose}>
+          <button 
+            onClick={handleClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full 
+              transition-colors"
+            aria-label="Close modal"
+          >
             <X size={20} />
           </button>
         </div>
 
-        <div className="modal-content">
-          <div className="modal-product-grid">
-            <div className="modal-image-container">
-              <img
-                src={getImageUrl(product)}
-                alt={product.product_name || product.name}
-                className="product-detail-image"
-                onError={(e) => {
-                  e.target.src = '/placeholder.png';
-                  e.target.onerror = null;
-                }}
-              />
+        <div className="p-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 
+                dark:bg-gray-700">
+                <img
+                  src={getImageUrl(product)}
+                  alt={product.product_name || product.name}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    e.target.src = '/placeholder.png';
+                    e.target.onerror = null;
+                  }}
+                />
+              </div>
+              
+              <HealthRating product={product} />
             </div>
 
-            <div className="product-details">
+            <div className="space-y-4">
               <h3 className="text-xl font-bold mb-2">
                 {product.product_name || product.name}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 {product.brands || product.brand || 'N/A'}
               </p>
-
-              <HealthRating product={product} />
 
               {product.ingredients && (
                 <div className="mb-4">
@@ -133,13 +158,12 @@ export default function ProductDetailsModal({ product, onClose }) {
                   <p><span className="font-semibold">Category:</span> {product.category}</p>
                 )}
               </div>
-            </div>
 
-            {/* Add Nutrition Facts */}
-            <NutritionFacts 
-              nutriments={product.nutriments} 
-              serving_size={product.serving_size} 
-            />
+              <NutritionFacts 
+                nutriments={product.nutriments} 
+                serving_size={product.serving_size} 
+              />
+            </div>
           </div>
         </div>
       </div>
