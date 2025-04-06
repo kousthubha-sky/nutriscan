@@ -1,8 +1,9 @@
+@import "tailwindcss";
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: 100%; /* Update from 1280px */
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
 .logo {
@@ -351,6 +352,70 @@
 /* Update existing container styles to account for navbar */
 .app-container {
   padding-top: 4rem; /* Add space for fixed navbar */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 256px;
+  background-color: var(--background);
+  border-right: 1px solid var(--border);
+  transition: transform 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    z-index: 40;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* Sidebar positioning */
+.sidebar {
+  transition: transform 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* Main content spacing */
+.flex-1 {
+  max-width: calc(100% - 16rem); /* 16rem = 256px (sidebar width) */
+}
+
+@media (max-width: 768px) {
+  .flex-1 {
+    max-width: 100%;
+  }
 }
 
 /* Product detail layout */
