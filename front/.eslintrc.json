@@ -1,0 +1,14 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended"
+  ],
+  "rules": {
+    "no-unused-vars": ["error", { "varsIgnorePattern": "^motion$" }]
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

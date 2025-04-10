@@ -152,6 +152,14 @@ function calculateHealthRating(product) {
     // Ensure score stays within 1-5 range
     finalScore = Math.max(1, Math.min(5, Math.round(finalScore * 10) / 10));
 
+    // Enhanced analysis to separate pros and cons
+    const healthAnalysis = analysis.map(item => {
+      if (item.includes('Good source') || item.includes('Low in') || item.includes('beneficial')) {
+        return { type: 'pro', text: item };
+      }
+      return { type: 'con', text: item };
+    });
+
     return {
       score: finalScore,
       analysis: analysis,
@@ -160,7 +168,9 @@ function calculateHealthRating(product) {
               finalScore >= 2 ? 'Less Healthy' : 'Not Recommended',
       color: finalScore >= 4 ? 'green' :
              finalScore >= 3 ? 'yellow' :
-             finalScore >= 2 ? 'orange' : 'red'
+             finalScore >= 2 ? 'orange' : 'red',
+      pros: healthAnalysis.filter(a => a.type === 'pro').map(a => a.text),
+      cons: healthAnalysis.filter(a => a.type === 'con').map(a => a.text)
     };
   } catch (error) {
     console.error('Error calculating health rating:', error);

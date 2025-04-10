@@ -1,5 +1,7 @@
 import { memo, useState } from 'react';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { Star } from "lucide-react";
+import { motion as Motion } from "framer-motion";
 
 const ProductGrid = memo(({ 
   products, 
@@ -7,7 +9,7 @@ const ProductGrid = memo(({
   currentPage, 
   totalPages, 
   onPageChange,
-  onProductSelect // We'll only use this prop now
+  onProductSelect
 }) => {
   const [imageErrors, setImageErrors] = useState({});
 
@@ -43,41 +45,45 @@ const ProductGrid = memo(({
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map(product => (
-          <div 
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+        {products.map((product, index) => (
+          <Motion.div
             key={product._id || product.code}
-            className="product-card border rounded-lg hover:shadow-md transition-shadow 
-              bg-white dark:bg-gray-800 dark:border-gray-700 cursor-pointer"
-            onClick={() => onProductSelect(product)} // Simplified click handler
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="w-full transparent dark:transparent rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 dark:border-gray-700 group"
+            onClick={() => onProductSelect(product)}
           >
-            <h3 className="font-bold text-lg mb-2 px-4 pt-4">
-              {product.product_name || product.name}
-            </h3>
-
-            <div className="image-wrapper">
-              <div className="image-container">
-                <img 
+            <div className="relative pt-[100%]">
+              <div className="absolute inset-0 p-4">
+                <img
                   src={getImageUrl(product)}
                   alt={product.product_name || product.name}
-                  className="product-image"
+                  className="w-full h-full object-contain transition-transform group-hover:scale-105"
                   onError={() => handleImageError(product._id || product.code)}
                   loading="lazy"
                 />
+                <div className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-full flex items-center gap-1 text-sm font-medium">
+                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  <span>{(product.healthRating || 3.0).toFixed(1)}</span>
+                </div>
               </div>
             </div>
-
-            <div className="product-info px-4 pb-4">
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-semibold">Brand:</span> {product.brands || product.brand || 'N/A'}
+            <div className="p-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm transition-colors group-hover:bg-white/80 dark:group-hover:bg-gray-800/80">
+              <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 min-h-[2.5rem]">
+                {product.product_name || product.name}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {product.brands || product.brand || 'Unknown Brand'}
               </p>
             </div>
-          </div>
+          </Motion.div>
         ))}
       </div>
 
       {totalPages > 1 && (
-        <div className="pagination-controls">
+        <div className="pagination-controls ">
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => onPageChange(currentPage - 1)}

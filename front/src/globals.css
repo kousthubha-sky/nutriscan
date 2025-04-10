@@ -1,4 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html {
+  color: black;
+  /* Reduce base font size */
+  font-size: 14px;
+}
 
 @layer base {
   :root {
@@ -51,15 +58,44 @@
   * {
     border-color: var(--border);
   }
+  
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    font-family: 'Inter', sans-serif;
+    /* Add more compact base sizing */
+    line-height: 1.4;
   }
+
+  /* Scale down headings */
+  h1 { font-size: 1.75rem; line-height: 1.2; }
+  h2 { font-size: 1.5rem; line-height: 1.2; }
+  h3 { font-size: 1.25rem; line-height: 1.2; }
+  h4 { font-size: 1.125rem; line-height: 1.2; }
+  
+  /* Adjust base component sizes */
+  .product-card {
+    font-size: 0.875rem;
+  }
+  
+  /* Adjust input and button sizes */
+  input, button, select, textarea {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 /* Add smooth transition for theme changes */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease, 
+              opacity 0.3s ease, 
+              transform 0.3s ease;
 }
 
 /* Scanning animation */
@@ -80,5 +116,33 @@
 
 .animate-scan {
   animation: scan 2s linear infinite;
+}
+
+/* Product card theme styles */
+.product-card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 300ms;
+}
+
+.product-card:hover {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.product-card .content {
+  background-color: hsl(var(--background) / 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Dark mode specific styles */
+.dark .product-card {
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--card) / 0.5);
+}
+
+.dark .product-card .content {
+  background-color: hsl(var(--background) / 0.5);
 }
 

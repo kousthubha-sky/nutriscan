@@ -1,4 +1,19 @@
 @import "tailwindcss";
+body {
+  background-color:#000;
+  margin: 0;
+  padding: px;  /* Reduced from 50px */
+}
+
+/* dash prods */
+#featured-product:hover img {
+  transform: scale(1.05);
+}
+#featured-product-card{
+  border: 1px solid #e5e7eb;
+}
+
+/* dash prods */
 #root {
   max-width: 100%; /* Update from 1280px */
   margin: 0;
@@ -80,10 +95,10 @@
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
-  gap: 1.5rem;
-  padding: 1rem;
+  gap: 1rem;  /* Reduced from 1.5rem */
+  padding: 0.75rem;  /* Reduced from 1rem */
   margin-top: 1rem;
-  margin-bottom: 6rem; /* Updated space for pagination */
+  margin-bottom: 4rem;  /* Reduced from 6rem */
   padding-bottom: 1rem; /* Added spacing for content above pagination */
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -159,51 +174,43 @@
 
 /* Update the product card and image container styles */
 .product-card {
-  flex: 0 0 300px;
-  min-width: 300px;
-  height: 400px; /* Fixed height for consistency */
-  background: #1a1a1a;
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s;
-  display: flex;
-  flex-direction: column;
-}
-
-.image-wrapper {
-  flex: 1;
-  padding: 1rem;
-  min-height: 200px;
-}
-
-.image-container {
   width: 100%;
-  height: 100%;
-  position: relative;
-  background: #f3f4f6;
+  background: transparent;
   border-radius: 0.5rem;
   overflow: hidden;
-}
-
-.product-image {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 90%;
-  max-height: 90%;
-  object-fit: contain;
-}
-
-.product-info {
-  margin-top: auto;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
+  padding: 0.75rem;  /* Add compact padding */
 }
 
 .product-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.image-container {
+  position: relative;
+  padding-top: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+.image-container img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.product-card:hover .image-container img {
+  transform: scale(1.05);
+}
+
+.product-info {
+  margin-top: auto;
 }
 
 .image-container {
@@ -224,11 +231,11 @@
 
 /* Product content layout */
 .product-card h3 {
-  font-size: 1rem;
+  font-size: 0.875rem;  /* Reduced from 1rem */
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;  /* Reduced from 0.5rem */
   line-height: 1.2;
-  height: 2.4em; /* Fixed height for 2 lines of text */
+  height: 2.1em;  /* Adjusted for new font size */
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -296,27 +303,29 @@
   display: none;
 }
 
-/* Update container styles - remove navbar padding */
+/* Update container styles for more compact layout */
 .app-container {
   padding-top: 0;
   min-height: 100vh;
   display: flex;
+  max-width: 1400px;  /* Add max-width to prevent too wide layouts */
+  margin: 0 auto;
 }
 
 /* Update sidebar styles */
 .sidebar {
-  flex: 1;
+  flex: 0 0 200px;  /* Reduced from 256px */
   overflow-y: auto;
-  width: 256px;
+  width: 200px;  /* Reduced from 256px */
   background-color: var(--background);
   border-right: 1px solid var(--border);
 }
 
 /* Main content spacing */
 .ml-64 {
-  margin-left: 16rem;
-  padding: 1.5rem;
-  width: calc(100% - 16rem);
+  margin-left: 200px;  /* Reduced from 16rem */
+  padding: 1rem;  /* Reduced from 1.5rem */
+  width: calc(100% - 200px);
   min-height: 100vh;
 }
 

@@ -64,7 +64,7 @@ exports.searchProducts = async (req, res) => {
       pageSize: apiResponse.data.page_size
     });
 
-    // Convert API results
+    // Enhanced product mapping
     const apiProducts = (apiResponse.data.products || []).map(p => {
       const healthAnalysis = calculateHealthRating({
         ingredients: p.ingredients_text || '',
@@ -77,7 +77,11 @@ exports.searchProducts = async (req, res) => {
         name: p.product_name || 'Unknown Product',
         brand: p.brands || 'Unknown Brand',
         imageUrl: p.image_url || p.image_small_url || p.image_thumb_url,
+        category: p.categories?.split(',')[0]?.trim(),
+        description: p.generic_name || p.product_name,
         ingredients: p.ingredients_text || '',
+        labels: p.labels || '',
+        allergens: p.allergens || '',
         nutriments: {
           energy_kcal_100g: p.nutriments?.energy_kcal_100g,
           carbohydrates_100g: p.nutriments?.carbohydrates_100g,

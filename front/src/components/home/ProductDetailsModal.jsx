@@ -1,6 +1,7 @@
 import { X, Star } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { NutritionFacts } from '../product/NutritionFacts';
+import { IngredientAnalysis } from '../product/ingredient-analysis';
 
 function HealthRating({ product }) {
   const rating = product.healthRating || 3;
@@ -163,6 +164,8 @@ export default function ProductDetailsModal({ product, onClose }) {
                 nutriments={product.nutriments} 
                 serving_size={product.serving_size} 
               />
+
+              <IngredientAnalysis product={product} />
             </div>
           </div>
         </div>

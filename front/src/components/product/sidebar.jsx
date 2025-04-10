@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Home, ScanLine, BarChart2, GitCompare, PlusCircle, Settings, LogOut, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Link } from "react-router-dom"
+import { ThemeToggle } from "../ui/theme-toggle"
 
 const menuItems = [
   {
@@ -65,9 +66,17 @@ export function Sidebar({ user, onAction }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleMenuItemClick = (e, item) => {
+    e.preventDefault() // Prevent default for all clicks
+    
     if (item.action) {
-      e.preventDefault()
       onAction(item.action)
+    } else if (item.section) {
+      const element = document.getElementById(item.section)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setActiveSection(item.section)
+        setIsOpen(false) // Close mobile menu after clicking
+      }
     }
   }
 
@@ -128,25 +137,17 @@ export function Sidebar({ user, onAction }) {
           border-r border-gray-200/10 transition-transform duration-300
           ${isDarkTheme ? "border-gray-800/10" : "border-gray-200/20"}`}
       >
-        {/* Logo */}
-        <div className="p-4 border-b border-gray-200/10 dark:border-gray-800/10 flex items-center gap-2">
-          <div
-            className={`h-8 w-8 flex items-center justify-center rounded ${
-              isDarkTheme ? "bg-gray-700" : "bg-gray-600"
-            }`}
-          >
-            <span className="font-bold text-lg">NS</span>
-          </div>
-          <span className="font-bold text-xl text-green-600">
-            <Link to="/" className="flex items-center gap-2">
-              NutriScan
-            </Link>
-          </span>
+        {/* Logo and Theme Toggle */}
+        <div className="flex items-center justify-between p-4">
+          <Link to="/" className="flex items-center gap-2 font-semibold">
+            <span>NutriScan</span>
+          </Link>
+          <ThemeToggle />
         </div>
 
-        {/* Main menu */}
+        {/* Updated Main menu */}
         <div className="p-4">
-          <p className="text-xs font-semibold text-gray-500 mb-4">MAIN MENU</p>
+          <p className="text-xs font-semibold text-gray-400/50 mb-4">MAIN MENU</p>
           <nav>
             <ul className="space-y-1">
               {menuItems.map((item) => (
@@ -154,14 +155,20 @@ export function Sidebar({ user, onAction }) {
                   <a
                     href={item.href}
                     onClick={(e) => handleMenuItemClick(e, item)}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                       item.section && activeSection === item.section
-                        ? `${isDarkTheme ? "bg-green-900/20 text-green-500" : "bg-green-50 text-green-600"}`
-                        : `hover:${isDarkTheme ? "bg-gray-800" : "bg-gray-100"} text-gray-600 hover:text-gray-900`
+                        ? `bg-green-500/10 text-green-500`
+                        : `text-gray-400/50 hover:text-green-500 hover:bg-green-500/10`
                     }`}
                   >
-                    {item.icon}
-                    <span>{item.label}</span>
+                    <span className={`transition-colors duration-200 ${
+                      item.section && activeSection === item.section
+                        ? 'text-green-500'
+                        : 'text-gray-400/50 group-hover:text-green-500'
+                    }`}>
+                      {item.icon}
+                    </span>
+                    <span className="text-inherit">{item.label}</span>
                   </a>
                 </li>
               ))}
@@ -173,7 +180,10 @@ export function Sidebar({ user, onAction }) {
         <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-800">
           {user ? (
             <>
-              <div className="flex items-center gap-3 mb-4">
+              <div 
+                className="flex items-center gap-3 mb-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors"
+                onClick={() => onAction('profile')}
+              >
                 <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                   <span className="text-xs">{user.username.charAt(0).toUpperCase()}</span>
                 </div>

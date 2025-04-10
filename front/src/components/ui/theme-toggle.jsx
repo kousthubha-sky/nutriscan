@@ -1,43 +1,44 @@
 "use client"
-import { Moon, Sun } from "lucide-react"
+import { Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
-import { motion } from "framer-motion"
-
-import { Switch } from "@/components/ui/switch"
+import { useEffect, useState } from "react"
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-  const isDark = theme === "dark"
+  const { setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
 
-  const toggleTheme = () => {
-    setTheme(isDark ? "light" : "dark")
-  }
+  // Ensure the component is mounted before rendering to avoid hydration issues
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
+  const isDark = resolvedTheme === "dark"
 
   return (
-    <div className="flex items-center space-x-2 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
-      <motion.div
-        initial={{ rotate: 0 }}
-        animate={{ rotate: isDark ? 12 : 0, scale: isDark ? 0.75 : 1 }}
-        transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
-      >
-        <Sun className={`h-[1.2rem] w-[1.2rem] ${isDark ? "text-gray-500" : "text-amber-500"}`} />
-      </motion.div>
-      <Switch
-        checked={isDark}
-        onCheckedChange={toggleTheme}
-        aria-label="Toggle theme"
-        className={`transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 ${
-          isDark ? "bg-indigo-600 data-[state=checked]:bg-indigo-600" : "bg-green-500 data-[state=checked]:bg-green-500"
-        }`}
-      />
-      <motion.div
-        initial={{ rotate: 0 }}
-        animate={{ rotate: !isDark ? 12 : 0, scale: !isDark ? 0.75 : 1 }}
-        transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
-      >
-        <Moon className={`h-[1.2rem] w-[1.2rem] ${!isDark ? "text-gray-500" : "text-indigo-400"}`} />
-      </motion.div>
-    </div>
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="relative w-12 h-12 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
+      aria-label="Toggle theme"
+    >
+      <div className="relative w-6 h-6">
+        <span
+          className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+            isDark ? "opacity-0 rotate-90" : "opacity-100 rotate-0"
+          }`}
+        >
+          <Sun className="w-6 h-6 text-yellow-500" />
+        </span>
+        <span
+          className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${
+            isDark ? "opacity-100 rotate-0" : "opacity-0 -rotate-90"
+          }`}
+        >
+          <Moon className="w-6 h-6 text-purple-500" />
+        </span>
+      </div>
+    </button>
   )
 }
 

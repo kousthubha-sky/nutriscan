@@ -1,5 +1,6 @@
 "use client"
 
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion"
 import { useTheme } from "next-themes"
 import { Pizza, Coffee, Apple, IceCream, Cake, Beef, Carrot, Egg } from "lucide-react"

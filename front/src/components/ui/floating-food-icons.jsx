@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion"
 import { useTheme } from "next-themes"
 import {
@@ -56,7 +57,7 @@ export function FloatingFoodIcons() {
     // Create floating icons on component mount
     const createFloatingIcons = () => {
       const newIcons = []
-      const iconCount = 30 // Number of floating icons
+      const iconCount = 100 // Number of floating icons
 
       for (let i = 0; i < iconCount; i++) {
         // Get a random icon from the array
@@ -73,11 +74,11 @@ export function FloatingFoodIcons() {
           id: i,
           x: Math.random() * 100, // Random x position (0-100%)
           y: Math.random() * 100, // Random y position (0-100%)
-          size: Math.random() * 20 + 10, // Random size (10-30px)
+          size: Math.random() * 16 + 8, // Reduced size (8-24px from 10-30px)
           rotation: Math.random() * 360, // Random rotation (0-360deg)
           icon: icon,
           delay: Math.random() * 5, // Random delay (0-5s)
-          duration: Math.random() * 20 + 20, // Random duration (20-40s)
+          duration: Math.random() * 15 + 15, // Reduced duration (15-30s from 20-40s)
         })
       }
 
@@ -123,7 +124,7 @@ export function FloatingFoodIcons() {
           <div
             className={`absolute inset-0 rounded-full ${
               isDarkTheme ? "bg-blue-500/5" : "bg-purple-500/5"
-            } blur-xl -z-10 scale-150 opacity-50`}
+            } blur-xl -z-10 scale-350 opacity-50`}
           />
         </motion.div>
       ))}

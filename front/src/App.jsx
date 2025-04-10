@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useState , useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { Link } from 'react-router-dom';
 import Login from './components/auth/login';
@@ -8,16 +8,19 @@ import Signup from './components/auth/signup';
 import { Sidebar } from './components/product/sidebar';
 import { ThemeProvider } from './components/ui/theme-provider';
 import Navbar from './components/shared/Navbar';
+import { SettingsMenu } from './components/product/settings-menu';
+import { UserProfile } from './components/product/user-profile';
 
 function App() {
   const [user, setUser] = useState(() => {
-    // Check if user data exists in localStorage
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   useEffect(() => {
-    // Update localStorage when user state changes
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
     } else {
@@ -28,8 +31,23 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    // Redirect to home page after logout
     return <Navigate to="/" />;
+  };
+
+  const handleAction = (action) => {
+    switch (action) {
+      case 'settings':
+        setIsSettingsOpen(true);
+        break;
+      case 'profile':
+        setIsProfileOpen(true);
+        break;
+      case 'logout':
+        handleLogout();
+        break;
+      default:
+        console.log(action);
+    }
   };
 
   return (
@@ -41,18 +59,8 @@ function App() {
             <div className="flex min-h-screen bg-background text-foreground">
               <Sidebar 
                 user={user}
-                onAction={(action) => {
-                  if (action === 'logout') {
-                    handleLogout()
-                  } else {
-                    console.log(action)
-                  }
-                }}
+                onAction={handleAction}
               />
-
-
-            
-              
             </div>
           </div>
 
@@ -64,6 +72,23 @@ function App() {
               <Route path="/signup" element={<Signup onLogin={setUser} />} />
             </Routes>
           </div>
+
+          {/* Settings Modal */}
+          {isSettingsOpen && (
+            <SettingsMenu 
+              isOpen={isSettingsOpen}
+              onClose={() => setIsSettingsOpen(false)}
+            />
+          )}
+
+          {/* User Profile Modal */}
+          {isProfileOpen && (
+            <UserProfile 
+              isOpen={isProfileOpen}
+              onClose={() => setIsProfileOpen(false)}
+              user={user}
+            />
+          )}
         </div>
       </BrowserRouter>
     </ThemeProvider>
