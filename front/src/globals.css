@@ -5,6 +5,7 @@ html {
   color: black;
   /* Reduce base font size */
   font-size: 14px;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
 @layer base {
@@ -83,6 +84,27 @@ html {
     font-size: 0.875rem;
     padding: 0.5rem 0.75rem;
   }
+}
+
+/* Ensure smooth scrolling behavior for the entire app */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Add padding to account for fixed header/navigation */
+.scroll-mt-8 {
+  scroll-margin-top: 2rem;
+}
+
+/* Add focus styles for the analysis section */
+#details {
+  transition: outline 0.2s ease;
+}
+
+#details:target {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 8px;
+  border-radius: 0.5rem;
 }
 
 html {

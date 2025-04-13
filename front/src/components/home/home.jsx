@@ -9,6 +9,8 @@ import { motion } from "framer-motion";
 import { ChevronDown, Star } from "lucide-react";
 import { AnalysisSection } from '../product/analysis-section';
 import { IngredientAnalysis } from '../product/ingredient-analysis';
+import { HealthierAlternatives } from '../product/healthier-alternatives';
+import { NutritionalImpact } from '../product/nutritional-impact';
 
 export default function Home({ user }) {
   const [state, setState] = useState({
@@ -20,6 +22,7 @@ export default function Home({ user }) {
     error: null
   });
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedAnalysisProduct, setSelectedAnalysisProduct] = useState(null);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [showAllFeatured, setShowAllFeatured] = useState(false);
 
@@ -57,6 +60,15 @@ export default function Home({ user }) {
       }));
     }
   }, [state.currentQuery]);
+
+  const handleAnalysisSelect = useCallback((product) => {
+    setSelectedAnalysisProduct(product);
+    // Scroll to analysis section with smooth behavior
+    const analysisSection = document.getElementById('details');
+    if (analysisSection) {
+      analysisSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -132,8 +144,7 @@ export default function Home({ user }) {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="w-full transparent dark:transparent rounded-lg shadow-sm hover:shadow-md transition-all"
-                      onClick={() => setSelectedProduct(product)}
+                      className="w-full transparent dark:transparent rounded-lg shadow-sm hover:shadow-md transition-all group"
                     >
                       <div className="relative pt-[100%]"> {/* Create 1:1 aspect ratio container */}
                         <div className="absolute inset-0 p-4">
@@ -159,6 +170,20 @@ export default function Home({ user }) {
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                           {product.brands || product.brand || 'Unknown Brand'}
                         </p>
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => setSelectedProduct(product)}
+                            className="w-1/2 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 transition-colors"
+                          >
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => setSelectedAnalysisProduct(product)}
+                            className="w-1/2 px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-md hover:bg-primary/10 transition-colors"
+                          >
+                            View Analysis
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
@@ -197,6 +222,7 @@ export default function Home({ user }) {
                   totalPages={state.totalPages}
                   onPageChange={handlePageChange}
                   onProductSelect={setSelectedProduct}
+                  onAnalysisSelect={handleAnalysisSelect}
                 />
               </div>
             </>
@@ -213,11 +239,23 @@ export default function Home({ user }) {
 
           {/* Static Analysis Section */}
           {featuredProducts.length > 0 && (
-            <div id='details' className="mt-12 space-y-12">
-              <AnalysisSection product={featuredProducts[9]} />
-              <IngredientAnalysis product={featuredProducts[9]}/>
+            <div id='details' className="mt-12 space-y-12 scroll-mt-8">
+              <AnalysisSection product={selectedAnalysisProduct || featuredProducts[9]} />
+              <IngredientAnalysis product={selectedAnalysisProduct || featuredProducts[9]}/>
+              <NutritionalImpact product={selectedAnalysisProduct || featuredProducts[9]} />
             </div>
           )}
+          
+          {/* Add Healthier Alternatives Section */}
+          <section className="w-full max-w-7xl mx-auto py-12">
+            <h2 className="text-3xl font-bold mb-8">Recommended Healthy Products</h2>
+            <HealthierAlternatives 
+              product={{
+                healthRating: 4.0,
+                category: "All Categories"
+              }} 
+            />
+          </section>
           
         </div>
       </div>

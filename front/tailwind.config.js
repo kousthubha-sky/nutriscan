@@ -44,5 +44,7 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    import('tailwind-scrollbar').then(plugin => plugin.default({ nocompatible: true })),
+  ],
 }

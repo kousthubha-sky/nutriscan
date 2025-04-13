@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { Home, ScanLine, BarChart2, GitCompare, PlusCircle, Settings, LogOut, Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Link } from "react-router-dom"
-import { ThemeToggle } from "../ui/theme-toggle"
 
 const menuItems = [
   {
@@ -66,17 +65,9 @@ export function Sidebar({ user, onAction }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleMenuItemClick = (e, item) => {
-    e.preventDefault() // Prevent default for all clicks
-    
     if (item.action) {
+      e.preventDefault()
       onAction(item.action)
-    } else if (item.section) {
-      const element = document.getElementById(item.section)
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        setActiveSection(item.section)
-        setIsOpen(false) // Close mobile menu after clicking
-      }
     }
   }
 
@@ -137,12 +128,20 @@ export function Sidebar({ user, onAction }) {
           border-r border-gray-200/10 transition-transform duration-300
           ${isDarkTheme ? "border-gray-800/10" : "border-gray-200/20"}`}
       >
-        {/* Logo and Theme Toggle */}
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2 font-semibold">
-            <span>NutriScan</span>
-          </Link>
-          <ThemeToggle />
+        {/* Logo */}
+        <div className="p-4 border-b border-gray-200/10 dark:border-gray-800/10 flex items-center gap-2">
+          <div
+            className={`h-8 w-8 flex items-center justify-center rounded ${
+              isDarkTheme ? "bg-gray-700" : "bg-gray-600"
+            }`}
+          >
+            <span className="font-bold text-lg">NS</span>
+          </div>
+          <span className="font-bold text-xl text-green-600">
+            <Link to="/" className="flex items-center gap-2">
+              NutriScan
+            </Link>
+          </span>
         </div>
 
         {/* Updated Main menu */}

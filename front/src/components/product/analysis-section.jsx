@@ -4,10 +4,13 @@ import { useTheme } from "next-themes"
 import { CheckCircle2, XCircle, BookOpen, Share2, Star } from "lucide-react"
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion"
+import { useState } from "react"
+import { HealthierAlternatives } from "./healthier-alternatives"
 
 export function AnalysisSection({ product }) {
   const { theme } = useTheme()
   const isDarkTheme = theme === "dark"
+  const [showFullAnalysis, setShowFullAnalysis] = useState(false)
 
   // Add mock AI analysis data
   const aiAnalysis = {
@@ -50,164 +53,180 @@ export function AnalysisSection({ product }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`${isDarkTheme ? "border-gray-800" : "border-gray-200"} p-8 bg-card my-12 mx-auto max-w-7xl rounded-xl shadow-lg scroll-mt-24`}
+      className={`rounded-lg border ${isDarkTheme ? "border-gray-800" : "border-gray-200"} overflow-hidden bg-card`}
     >
-      {/* Main title section */}
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight mb-2">{analysis.title}</h2>
-        <p className="text-lg text-muted-foreground font-medium">{analysis.brand}</p>
-      </div>
-
-      {/* Grid layout for photo and content */}
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Photo section */}
-        <div className="lg:w-1/3">
-          <div className="bg-muted rounded-xl overflow-hidden p-6 sticky top-24">
-            <img
-              src={product?.imageUrl || product?.image_url || "/placeholder.png"}
-              alt={analysis.title}
-              className="w-full h-auto object-contain"
-            />
+      {/* Initial Analysis Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Product Image Section */}
+        <div className="relative h-100 mt-5 bg-muted">
+          <img
+            src={product?.imageUrl || product?.image_url || "/placeholder.png"}
+            alt={analysis.title}
+            className="w-full h-full object-contain"
+          />
+          <div className="absolute top-4 right-4 bg-white/90 dark:bg-gray-800/90 px-3 py-1.5 rounded-full flex items-center gap-2">
+            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+            <span className="font-bold">{analysis.healthScore.toFixed(1)}</span>
           </div>
         </div>
 
-        {/* Content section */}
-        <div className="lg:w-2/3">
-          {/* Health Score and Tags */}
-          <div className="mb-8">
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                <span className="text-lg font-bold text-primary">{analysis.healthScore.toFixed(1)}</span>
-                <span className="text-sm font-medium text-primary">Health Score</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {analysis.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Product Details Card */}
-            <div className="bg-muted/50 rounded-lg p-6 space-y-3 backdrop-blur-sm border border-border/50 mb-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Barcode</p>
-                  <p className="font-medium">{analysis.barcode}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Product ID</p>
-                  <p className="font-medium">{analysis.productId}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Analyzed on</p>
-                  <p className="font-medium">{analysis.analyzedOn}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="prose dark:prose-invert max-w-none mb-8">
-              <p className="text-base leading-relaxed text-muted-foreground">
-                {analysis.description}
-              </p>
-            </div>
-
-            {/* Recommendations */}
-            <div className="space-y-3 mb-8">
-              <h4 className="font-semibold">Recommendations</h4>
-              <ul className="space-y-2">
-                {analysis.recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <CheckCircle2 className="w-4 h-4 mt-1 text-green-500" />
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4">
-              <button className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                <BookOpen className="h-5 w-5" />
-                <span>Read Full Analysis</span>
-              </button>
-              <button className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors">
-                <Share2 className="h-5 w-5" />
-                <span>Share Analysis</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Pros and Cons Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <div>
-          <h3 className="font-medium flex items-center gap-2 text-green-600">
-            <CheckCircle2 className="w-5 h-5" />
-            Pros
-          </h3>
-          <ul className="ml-6 space-y-1 text-muted-foreground">
-            {analysis.pros.map((pro, index) => (
-              <li key={index} className="list-disc">{pro}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-medium flex items-center gap-2 text-red-600">
-            <XCircle className="w-5 h-5" />
-            Cons
-          </h3>
-          <ul className="ml-6 space-y-1 text-muted-foreground">
-            {analysis.cons.map((con, index) => (
-              <li key={index} className="list-disc">{con}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* Updated Nutrition Facts and Ingredients Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 w-300">
-        <div className=" p-4">
-          <h3 className="text-lg font-bold mb-2 pb-2 border-b-4 border-gray-800 dark:border-gray-200">
-            Nutrition Facts
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Per 100g serving
-          </p>
-          <div className="space-y-2">
-            {Object.entries(analysis.nutrients).map(([key, value]) => (
-              <div key={key} className="flex justify-between py-1 border-b dark:border-gray-700">
-                <span className="text-muted-foreground">
-                  {key.replace(/([A-Z])/g, " $1").replace(/_100g/g, "")}
+        {/* Analysis Content Section */}
+        <div className="p-6 md:col-span-2">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">{analysis.title}</h2>
+            <p className="text-lg text-muted-foreground">{analysis.brand}</p>
+            
+            <div className="flex flex-wrap gap-2 mt-4">
+              {analysis.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full"
+                >
+                  {tag}
                 </span>
-                <span className="font-medium">
-                  {typeof value === 'number' ? value.toFixed(1) : value}
-                  {key.includes('energy') ? ' kcal' : 'g'}
-                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Product Details */}
+          <div className="bg-muted/50 p-6 rounded-lg space-y-4 backdrop-blur-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Barcode</p>
+                <p className="mt-1">{analysis.barcode}</p>
               </div>
-            ))}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Product ID</p>
+                <p className="mt-1">{analysis.productId}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Analyzed on</p>
+                <p className="mt-1">{analysis.analyzedOn}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-4 mt-6">
+            <button 
+              onClick={() => setShowFullAnalysis(!showFullAnalysis)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <BookOpen className="h-5 w-5" />
+              <span>{showFullAnalysis ? 'Hide Full Analysis' : 'Read Full Analysis'}</span>
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors">
+              <Share2 className="h-5 w-5" />
+              <span>Share Analysis</span>
+            </button>
           </div>
         </div>
-        <div className=" p-4 ml-8 mt-4">
-          <h3 className="font-medium">Ingredients</h3>
-          <p className="text-sm text-muted-foreground">{analysis.ingredients}</p>
-          <h4 className="font-medium mt-4">Potential Allergens:</h4>
-          <ul className="text-sm text-red-600 space-y-1">
-            {analysis.allergens.map((allergen, index) => (
-              <li key={index}>{allergen}</li>
-            ))}
-          </ul>
-          <h4 className="font-medium mt-4">Harmful Ingredients:</h4>
-          <p className="text-sm text-green-600">{analysis.harmfulIngredients}</p>
-        </div>
       </div>
+
+      {/* Additional Analysis Sections */}
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ 
+          opacity: showFullAnalysis ? 1 : 0,
+          height: showFullAnalysis ? "auto" : 0
+        }}
+        transition={{ duration: 0.3 }}
+        className="border-t border-border overflow-hidden"
+      >
+        <div className="p-6 space-y-8">
+          {/* AI-Powered Analysis */}
+          <section>
+            <h3 className="text-xl font-bold mb-4">AI-Powered Analysis</h3>
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-medium text-muted-foreground mb-2">Overall Assessment</h4>
+                <p className="text-foreground">{aiAnalysis.healthSummary}</p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-muted-foreground mb-2">Nutritional Insights</h4>
+                <p className="text-foreground">{aiAnalysis.nutritionalInsights}</p>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-muted-foreground mb-2">Recommendations</h4>
+                <ul className="space-y-2">
+                  {aiAnalysis.recommendations.map((rec, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 mt-1 text-green-500 flex-shrink-0" />
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-muted-foreground mb-2">Sustainability</h4>
+                <p className="text-foreground">{aiAnalysis.sustainabilityNote}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Detailed Nutritional Analysis */}
+          <section>
+            <h3 className="text-xl font-bold mb-4">Detailed Nutritional Analysis</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="font-medium text-muted-foreground">Nutrition Facts</h4>
+                <div className="space-y-2">
+                  {Object.entries(analysis.nutrients).map(([key, value]) => (
+                    <div key={key} className="flex justify-between py-1 border-b dark:border-gray-700">
+                      <span className="text-muted-foreground">
+                        {key.replace(/([A-Z])/g, " $1").replace(/_100g/g, "")}
+                      </span>
+                      <span className="font-medium">
+                        {typeof value === 'number' ? value.toFixed(1) : value}
+                        {key.includes('energy') ? ' kcal' : 'g'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium text-muted-foreground">Health Implications</h4>
+                <div className="space-y-6">
+                  <div>
+                    <h5 className="text-sm font-medium text-green-600 mb-2">Benefits</h5>
+                    <ul className="space-y-2">
+                      {analysis.pros.map((pro, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <CheckCircle2 className="w-4 h-4 mt-0.5 text-green-500 flex-shrink-0" />
+                          <span>{pro}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h5 className="text-sm font-medium text-red-600 mb-2">Concerns</h5>
+                    <ul className="space-y-2">
+                      {analysis.cons.map((con, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <XCircle className="w-4 h-4 mt-0.5 text-red-500 flex-shrink-0" />
+                          <span>{con}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Disclaimer */}
+          <section className="border-t border-border pt-6">
+            <p className="text-sm text-muted-foreground italic">
+              {aiAnalysis.disclaimer}
+            </p>
+          </section>
+        </div>
+      </motion.div>
     </motion.div>
   )
 }
