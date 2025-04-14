@@ -10,6 +10,8 @@ import { ThemeProvider } from './components/ui/theme-provider';
 import Navbar from './components/shared/Navbar';
 import { SettingsMenu } from './components/product/settings-menu';
 import { UserProfile } from './components/product/user-profile';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -53,6 +55,18 @@ function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <BrowserRouter>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+        />
         <div className="app-container flex min-h-screen bg-background text-foreground">
           {/* Static sidebar */}
           <div className="fixed inset-y-0 left-0 w-64 bg-background border-r border-border">
@@ -65,7 +79,7 @@ function App() {
           </div>
 
           {/* Main content */}
-          <div className="flex-1 md:ml-64 p-4">
+          <div className="flex md:ml-64 pl-">
             <Routes>
               <Route path="/" element={<Home user={user} />} />
               <Route path="/login" element={<Login onLogin={setUser} />} />
