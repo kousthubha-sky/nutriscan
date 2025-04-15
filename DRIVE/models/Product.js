@@ -52,8 +52,6 @@ ProductSchema.index({
   ingredients: 'text' 
 });
 
-// Index for barcode lookups
-ProductSchema.index({ barcode: 1 });
 
 // Index for frequently accessed products
 ProductSchema.index({ searchCount: -1 });

@@ -1,15 +1,45 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export function IngredientAnalysis({ product }) {
   const [expandedIngredient, setExpandedIngredient] = useState(null)
+
+  useEffect(() => {
+    if (product?.ingredients) {
+      // Cache ingredient analysis data
+      const cacheKey = `ingredient-analysis-${product._id || product.code}`;
+      localStorage.setItem(cacheKey, JSON.stringify({
+        ingredients: product.ingredients,
+        timestamp: Date.now()
+      }));
+    }
+  }, [product]);
 
   const toggleIngredient = (index) => {
     setExpandedIngredient(expandedIngredient === index ? null : index);
   };
 
-  if (!product?.ingredients) return null;
+  // Try to get cached data if no live data is available
+  if (!product?.ingredients) {
+    const cachedData = Object.keys(localStorage)
+      .filter(key => key.startsWith('ingredient-analysis-'))
+      .map(key => {
+        try {
+          return JSON.parse(localStorage.getItem(key));
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.timestamp - a.timestamp)[0];
+
+    if (cachedData?.ingredients) {
+      product = { ...product, ingredients: cachedData.ingredients };
+    } else {
+      return null;
+    }
+  }
 
   // Split ingredients string into array and clean up
   const ingredientsList = product.ingredients

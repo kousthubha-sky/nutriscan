@@ -154,16 +154,17 @@ export function Sidebar({ user, onAction }) {
                   <a
                     href={item.href}
                     onClick={(e) => handleMenuItemClick(e, item)}
-                    className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                      item.section && activeSection === item.section
-                        ? `bg-green-500/10 text-green-500`
-                        : `text-gray-400/50 hover:text-green-500 hover:bg-green-500/10`
-                    }`}
+                    className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 relative
+                      font-medium
+                      ${item.section && activeSection === item.section
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold border-l-4 border-green-500"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-green-600 dark:hover:text-green-400 border-l-4 border-transparent"}
+                    `}
                   >
                     <span className={`transition-colors duration-200 ${
                       item.section && activeSection === item.section
-                        ? 'text-green-500'
-                        : 'text-gray-400/50 group-hover:text-green-500'
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-gray-400 group-hover:text-green-600 dark:text-gray-500 dark:group-hover:text-green-400'
                     }`}>
                       {item.icon}
                     </span>
@@ -198,9 +199,8 @@ export function Sidebar({ user, onAction }) {
                       <a
                         href={item.href}
                         onClick={(e) => handleMenuItemClick(e, item)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:${
-                          isDarkTheme ? "bg-gray-800" : "bg-gray-100"
-                        } text-gray-600 hover:text-gray-900`}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium
+                          hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-green-600 dark:hover:text-green-400`}
                       >
                         {item.icon}
                         <span>{item.label}</span>

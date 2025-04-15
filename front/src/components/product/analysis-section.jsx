@@ -4,13 +4,58 @@ import { useTheme } from "next-themes"
 import { CheckCircle2, XCircle, BookOpen, Share2, Star } from "lucide-react"
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { HealthierAlternatives } from "./healthier-alternatives"
 
 export function AnalysisSection({ product }) {
   const { theme } = useTheme()
   const isDarkTheme = theme === "dark"
   const [showFullAnalysis, setShowFullAnalysis] = useState(false)
+
+  useEffect(() => {
+    if (product?.healthRating) {
+      // Cache analysis data
+      const cacheKey = `analysis-${product._id || product.code}`;
+      localStorage.setItem(cacheKey, JSON.stringify({
+        healthRating: product.healthRating,
+        healthAnalysis: product.healthAnalysis,
+        category: product.category,
+        name: product.name,
+        brand: product.brand,
+        timestamp: Date.now()
+      }));
+    }
+  }, [product]);
+
+  // Use cached data if no live data is available
+  if (!product?.healthRating) {
+    const cachedData = Object.keys(localStorage)
+      .filter(key => key.startsWith('analysis-'))
+      .map(key => {
+        try {
+          return JSON.parse(localStorage.getItem(key));
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.timestamp - a.timestamp)[0];
+
+    if (cachedData) {
+      product = { ...product, ...cachedData };
+    } else {
+      return (
+        <div className="py-8 border-t border-gray-200 dark:border-gray-800">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6">Analysis</h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Analysis information is currently unavailable.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
 
   // Add mock AI analysis data
   const aiAnalysis = {

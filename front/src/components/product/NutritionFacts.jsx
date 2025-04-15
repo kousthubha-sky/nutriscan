@@ -1,7 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export function NutritionFacts({ nutriments, serving_size }) {
-  if (!nutriments) return null;
+  useEffect(() => {
+    if (nutriments) {
+      // Cache nutrition data
+      const cacheKey = `nutrition-${JSON.stringify(nutriments)}`;
+      localStorage.setItem(cacheKey, JSON.stringify({
+        nutriments,
+        serving_size,
+        timestamp: Date.now()
+      }));
+    }
+  }, [nutriments, serving_size]);
+
+  // Use cached data if no live data is available
+  if (!nutriments) {
+    // Try to find cached data for this product
+    const cachedData = Object.keys(localStorage)
+      .filter(key => key.startsWith('nutrition-'))
+      .map(key => {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          return { ...data, key };
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.timestamp - a.timestamp)[0]; // Get most recent
+
+    if (cachedData) {
+      nutriments = cachedData.nutriments;
+      serving_size = cachedData.serving_size;
+    } else {
+      return (
+        <div className="mt-6 p-4 border rounded-lg dark:border-gray-700">
+          <h3 className="text-lg font-bold mb-2">Nutrition Facts</h3>
+          <p className="text-sm text-gray-500">
+            Nutrition information is currently unavailable.
+          </p>
+        </div>
+      );
+    }
+  }
 
   const nutrients = [
     { key: 'energy_kcal_100g', label: 'Energy', unit: 'kcal' },

@@ -38,41 +38,78 @@ exports.searchProducts = async (req, res) => {
 
     // Enhanced validation
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
-      console.log('Invalid search query:', { query });
       return res.status(400).json({
         success: false,
-        error: 'Please enter a valid search term',
-        debug: {
-          receivedQuery: query,
-          queryType: typeof query,
-          trimmedLength: query?.trim()?.length
-        }
+        error: 'Please enter a valid search term'
       });
     }
 
-    const limit = 10;
+    const limit = 24; // Increased limit for better results
     const skip = (parseInt(page) - 1) * limit;
     const sanitizedQuery = escapeRegExp(query.trim());
 
-    // Additional validation log
-    console.log('Processed query:', {
-      original: query,
-      sanitized: sanitizedQuery,
-      page: page,
-      limit: limit,
-      skip: skip
-    });
-
-    // Only proceed with API call if we have a valid query
-    if (sanitizedQuery.length < 2) {
-      return res.status(400).json({
-        success: false,
-        error: 'Search term must be at least 2 characters long'
+    // Always fetch from API first to get fresh results
+    let apiProducts = [];
+    let apiError = null;
+    let apiTotalCount = 0;
+    let apiResponse = null;
+    
+    try {
+      apiResponse = await api.get('https://world.openfoodfacts.org/cgi/search.pl', {
+        params: {
+          search_terms: sanitizedQuery,
+          page_size: limit,
+          page: page,
+          json: 1
+        }
       });
+
+      apiTotalCount = apiResponse.data.count || 0;
+
+      // Enhanced product mapping for API results
+      apiProducts = (apiResponse.data.products || []).map(p => {
+        const healthAnalysis = calculateHealthRating({
+          ingredients: p.ingredients_text || '',
+          nutriments: p.nutriments,
+          nutriscore_grade: p.nutriscore_grade
+        });
+
+        return {
+          barcode: p.code,
+          name: p.product_name || 'Unknown Product',
+          brand: p.brands || 'Unknown Brand',
+          imageUrl: p.image_url || p.image_small_url || p.image_thumb_url,
+          category: p.categories?.split(',')[0]?.trim(),
+          description: p.generic_name || p.product_name,
+          ingredients: p.ingredients_text || '',
+          labels: p.labels || '',
+          allergens: p.allergens || '',
+          nutriments: {
+            energy_kcal_100g: p.nutriments?.energy_kcal_100g,
+            carbohydrates_100g: p.nutriments?.carbohydrates_100g,
+            sugars_100g: p.nutriments?.sugars_100g,
+            fat_100g: p.nutriments?.fat_100g,
+            saturated_fat_100g: p.nutriments?.saturated_fat_100g,
+            proteins_100g: p.nutriments?.proteins_100g,
+            fiber_100g: p.nutriments?.fiber_100g,
+            salt_100g: p.nutriments?.salt_100g
+          },
+          nutriscore_grade: p.nutriscore_grade,
+          healthRating: healthAnalysis.score,
+          healthAnalysis: healthAnalysis.analysis,
+          healthRatingLabel: healthAnalysis.rating,
+          healthRatingColor: healthAnalysis.color,
+          source: 'api'
+        };
+      });
+
+    } catch (error) {
+      console.error('API fetch error:', error);
+      apiError = error;
     }
 
-    // First, try to get results from local database
-    let localResults = await Product.find({
+    // Get results from local database
+    const localResults = await Product.find({
       $or: [
         { name: new RegExp(sanitizedQuery, 'i') },
         { brand: new RegExp(sanitizedQuery, 'i') },
@@ -80,8 +117,7 @@ exports.searchProducts = async (req, res) => {
       ]
     })
     .sort({ searchCount: -1 })
-    .skip(skip)
-    .limit(limit * 2) // Fetch extra for better coverage
+    .limit(limit)
     .lean();
 
     // Update search count for retrieved products
@@ -93,70 +129,10 @@ exports.searchProducts = async (req, res) => {
       );
     }
 
-    let apiProducts = [];
-    let apiError = null;
-
-    // Try to fetch from API only if we don't have enough local results
-    if (localResults.length < limit) {
-      try {
-        const apiResponse = await api.get('https://world.openfoodfacts.org/cgi/search.pl', {
-          params: {
-            search_terms: sanitizedQuery,
-            page_size: 24,
-            page: page,
-            json: 1
-          }
-        });
-
-        console.log('API Response stats:', {
-          totalProducts: apiResponse.data.count,
-          receivedProducts: apiResponse.data.products?.length,
-          page: apiResponse.data.page,
-          pageSize: apiResponse.data.page_size
-        });
-
-        // Enhanced product mapping
-        apiProducts = (apiResponse.data.products || []).map(p => {
-          const healthAnalysis = calculateHealthRating({
-            ingredients: p.ingredients_text || '',
-            nutriments: p.nutriments,
-            nutriscore_grade: p.nutriscore_grade
-          });
-
-          return {
-            barcode: p.code,
-            name: p.product_name || 'Unknown Product',
-            brand: p.brands || 'Unknown Brand',
-            imageUrl: p.image_url || p.image_small_url || p.image_thumb_url,
-            category: p.categories?.split(',')[0]?.trim(),
-            description: p.generic_name || p.product_name,
-            ingredients: p.ingredients_text || '',
-            labels: p.labels || '',
-            allergens: p.allergens || '',
-            nutriments: {
-              energy_kcal_100g: p.nutriments?.energy_kcal_100g,
-              carbohydrates_100g: p.nutriments?.carbohydrates_100g,
-              sugars_100g: p.nutriments?.sugars_100g,
-              fat_100g: p.nutriments?.fat_100g,
-              saturated_fat_100g: p.nutriments?.saturated_fat_100g,
-              proteins_100g: p.nutriments?.proteins_100g,
-              fiber_100g: p.nutriments?.fiber_100g,
-              salt_100g: p.nutriments?.salt_100g
-            },
-            nutriscore_grade: p.nutriscore_grade,
-            healthRating: healthAnalysis.score,
-            healthAnalysis: healthAnalysis.analysis,
-            healthRatingLabel: healthAnalysis.rating,
-            healthRatingColor: healthAnalysis.color,
-            lastFetched: new Date()
-          };
-        });
-
-      } catch (error) {
-        console.error('API fetch error:', error);
-        apiError = error;
-      }
-    }
+    // Mark local results
+    localResults.forEach(product => {
+      product.source = 'local';
+    });
 
     // Store new API products in background
     if (apiProducts.length > 0) {
@@ -164,7 +140,7 @@ exports.searchProducts = async (req, res) => {
         updateOne: {
           filter: { barcode: product.barcode },
           update: { 
-            $set: product,
+            $set: { ...product, lastFetched: new Date() },
             $inc: { searchCount: 1 }
           },
           upsert: true
@@ -178,25 +154,50 @@ exports.searchProducts = async (req, res) => {
       }
     }
 
-    // Combine and deduplicate results
+    // Combine and deduplicate results, ensuring a mix of both sources
     const seenBarcodes = new Set();
-    const combinedProducts = [
-      ...apiProducts,
-      ...localResults
-    ].filter(p => {
-      if (seenBarcodes.has(p.barcode)) return false;
-      seenBarcodes.add(p.barcode);
-      return true;
+    let combinedProducts = [];
+    
+    // Helper to add unique products
+    const addUniqueProducts = (products) => {
+      products.forEach(p => {
+        if (!seenBarcodes.has(p.barcode)) {
+          seenBarcodes.add(p.barcode);
+          combinedProducts.push(p);
+        }
+      });
+    };
+
+    // Add API products first as they're fresher
+    addUniqueProducts(apiProducts);
+    
+    // Then add local results that aren't duplicates
+    addUniqueProducts(localResults);
+
+    // Calculate pagination
+    const totalLocalResults = await Product.countDocuments({
+      $or: [
+        { name: new RegExp(sanitizedQuery, 'i') },
+        { brand: new RegExp(sanitizedQuery, 'i') },
+        { category: new RegExp(sanitizedQuery, 'i') }
+      ]
     });
 
-    // Return results with offline indicator
+    const totalResults = Math.max(apiTotalCount, totalLocalResults);
+    const totalPages = Math.max(1, Math.ceil(totalResults / limit));
+
+    // Slice for current page
+    const startIdx = (page - 1) * limit;
+    const endIdx = startIdx + limit;
+    const paginatedResults = combinedProducts.slice(startIdx, endIdx);
+
+    // Return results with source information
     res.json({
       success: true,
-      products: combinedProducts.slice(0, limit),
+      products: paginatedResults,
       currentPage: parseInt(page),
-      totalPages: Math.ceil(combinedProducts.length / limit),
-      total: combinedProducts.length,
-      isOfflineResults: apiError !== null && localResults.length > 0,
+      totalPages: totalPages,
+      total: totalResults,
       sources: {
         local: localResults.length,
         api: apiProducts.length
@@ -204,12 +205,7 @@ exports.searchProducts = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Search error:', {
-      message: error.message,
-      query: req.query.q,
-      stack: error.stack
-    });
-    
+    console.error('Search error:', error);
     res.status(500).json({
       success: false,
       error: 'Search failed',
