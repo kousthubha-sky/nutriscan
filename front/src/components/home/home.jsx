@@ -25,51 +25,42 @@ export default function Home({ user }) {
       healthRating: 0,
       category: '',
       dietaryPreference: ''
-    }
+    },
+    unfilteredProducts: [] // Store unfiltered products
   });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedAnalysisProduct, setSelectedAnalysisProduct] = useState(null);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [showAllFeatured, setShowAllFeatured] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [tempFilters, setTempFilters] = useState({
+    brand: '',
+    healthRating: 0,
+    category: '',
+    dietaryPreference: ''
+  });
 
-  const handleResetSearch = () => {
-    setState(prev => ({
-      ...prev,
-      products: [],
-      currentQuery: '',
-      currentPage: 1,
-      totalPages: 1,
-      error: null,
-      filters: {
-        brand: '',
-        healthRating: 0,
-        category: '',
-        dietaryPreference: ''
-      }
-    }));
-  };
-
-  const applyFilters = useCallback((products) => {
+  const applyFilters = useCallback((products, filters) => {
     return products.filter(product => {
       // Brand filter (including Indian brands)
-      if (state.filters.brand && !product.brand?.toLowerCase().includes(state.filters.brand.toLowerCase())) {
+      if (filters.brand && !product.brand?.toLowerCase().includes(filters.brand.toLowerCase())) {
         return false;
       }
 
       // Health rating filter
-      if (state.filters.healthRating > 0 && product.healthRating < state.filters.healthRating) {
+      if (filters.healthRating > 0 && product.healthRating < filters.healthRating) {
         return false;
       }
 
       // Category filter
-      if (state.filters.category && product.category?.toLowerCase() !== state.filters.category.toLowerCase()) {
+      if (filters.category && product.category?.toLowerCase() !== filters.category.toLowerCase()) {
         return false;
       }
 
       // Dietary preference filter
-      if (state.filters.dietaryPreference) {
+      if (filters.dietaryPreference) {
         const ingredients = (product.ingredients || '').toLowerCase();
-        switch (state.filters.dietaryPreference) {
+        switch (filters.dietaryPreference) {
           case 'vegetarian':
             return !ingredients.includes('meat') && !ingredients.includes('chicken') && !ingredients.includes('fish');
           case 'vegan':
@@ -83,20 +74,33 @@ export default function Home({ user }) {
 
       return true;
     });
-  }, [state.filters]);
+  }, []);
+
+  // Effect to re-apply filters when they change
+  useEffect(() => {
+    if (state.unfilteredProducts.length > 0) {
+      const filteredProducts = applyFilters(state.unfilteredProducts, state.filters);
+      setState(prev => ({
+        ...prev,
+        products: filteredProducts,
+        totalPages: Math.ceil(filteredProducts.length / 10)
+      }));
+    }
+  }, [state.filters, state.unfilteredProducts, applyFilters]);
 
   const handleSearch = useCallback(async (searchResults) => {
-    const filteredProducts = applyFilters(searchResults.products);
+    const filteredProducts = applyFilters(searchResults.products, state.filters);
     setState(prev => ({
       ...prev,
       products: filteredProducts,
+      unfilteredProducts: searchResults.products, // Store unfiltered products
       currentPage: searchResults.currentPage,
-      totalPages: Math.ceil(filteredProducts.length / 10), // Adjust total pages based on filtered results
+      totalPages: Math.ceil(filteredProducts.length / 10),
       currentQuery: searchResults.query,
       isLoading: false,
       error: null
     }));
-  }, [applyFilters]);
+  }, [applyFilters, state.filters]);
 
   const handlePageChange = useCallback(async (newPage) => {
     if (!state.currentQuery) return;
@@ -104,10 +108,11 @@ export default function Home({ user }) {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
       const results = await api.searchProducts(state.currentQuery, newPage);
-      const filteredProducts = applyFilters(results.products);
+      const filteredProducts = applyFilters(results.products, state.filters);
       setState(prev => ({
         ...prev,
         products: filteredProducts,
+        unfilteredProducts: results.products,
         currentPage: newPage,
         totalPages: Math.ceil(filteredProducts.length / 10),
         isLoading: false
@@ -120,7 +125,7 @@ export default function Home({ user }) {
         isLoading: false
       }));
     }
-  }, [state.currentQuery, applyFilters]);
+  }, [state.currentQuery, state.filters, applyFilters]);
 
   const handleAnalysisSelect = useCallback((product) => {
     setSelectedAnalysisProduct(product);
@@ -130,6 +135,14 @@ export default function Home({ user }) {
       analysisSection.scrollIntoView({ behavior: 'smooth' });
     }
   }, []);
+
+  const handleApplyFilters = () => {
+    setState(prev => ({
+      ...prev,
+      filters: { ...tempFilters }
+    }));
+    setShowFilters(false);
+  };
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -189,97 +202,123 @@ export default function Home({ user }) {
               onSearchStart={() => setState(prev => ({ ...prev, isLoading: true }))}
             />
 
-            {/* Redesigned Filters Section with Animation */}
-            <AnimatePresence>
+            {/* Enhanced Filters Section with Animation */}
             {state.products.length > 0 && (
-              <motion.div
-                key="filters-bar"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, type: "spring" }}
-                className="bg-gradient-to-r from-primary/10 to-blue-100 dark:from-primary/20 dark:to-gray-900/40 shadow-lg p-6 rounded-2xl border-primary/20 flex flex-wrap gap-4 items-center mb-2"
-              >
-                {/* Back to Home Button with Animation */}
+              <div className="relative">
                 <motion.button
-                  whileHover={{ scale: 1.08, backgroundColor: "#22c55e" }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleResetSearch}
-                  className="flex items-center gap-2 px-5 py-2 text-base font-semibold text-white bg-primary rounded-full shadow-md hover:bg-neutral-600 transition-all duration-200 border-2 border-primary/60"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <HomeIcon className="w-5 h-5" />
-                  Back to Home
+                  <Filter className="w-5 h-5 text-primary" />
+                  <span className="font-medium text-primary">Filters</span>
+                  <ChevronDown 
+                    className={`w-5 h-5 text-primary transition-transform duration-200 ${
+                      showFilters ? 'rotate-180' : ''
+                    }`} 
+                  />
                 </motion.button>
 
-                <div className="flex items-center gap-2 text-primary font-bold text-lg">
-                  <Filter className="w-5 h-5" />
-                  Filters
-                </div>
+                <AnimatePresence>
+                  {showFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ type: "spring", damping: 20 }}
+                      className="absolute top-full mt-2 w-full bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 p-4 space-y-4 z-50"
+                    >
+                      {/* Brand Filter */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                          <Utensils className="w-4 h-4 text-blue-500" /> Brand
+                        </label>
+                        <select
+                          value={tempFilters.brand}
+                          onChange={(e) => setTempFilters(prev => ({
+                            ...prev,
+                            brand: e.target.value
+                          }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="">All Brands</option>
+                          <option value="amul">Amul</option>
+                          <option value="britannia">Britannia</option>
+                          <option value="parle">Parle</option>
+                          <option value="haldirams">Haldiram's</option>
+                          <option value="mtr">MTR</option>
+                        </select>
+                      </div>
 
-                {/* Brand Filter */}
-                <div className="flex flex-col items-start">
-                  <label className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
-                    <Utensils className="w-4 h-4 text-blue-500" /> Brand
-                  </label>
-                  <select
-                    value={state.filters.brand}
-                    onChange={(e) => setState(prev => ({
-                      ...prev,
-                      filters: { ...prev.filters, brand: e.target.value }
-                    }))}
-                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-primary/40"
-                  >
-                    <option value="">All Brands</option>
-                    <option value="amul">Amul</option>
-                    <option value="britannia">Britannia</option>
-                    <option value="parle">Parle</option>
-                    <option value="haldirams">Haldiram's</option>
-                    <option value="mtr">MTR</option>
-                  </select>
-                </div>
+                      {/* Health Rating Filter */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-500" /> Health Rating
+                        </label>
+                        <select
+                          value={tempFilters.healthRating}
+                          onChange={(e) => setTempFilters(prev => ({
+                            ...prev,
+                            healthRating: Number(e.target.value)
+                          }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="0">All Health Ratings</option>
+                          <option value="4">4+ Stars</option>
+                          <option value="3">3+ Stars</option>
+                          <option value="2">2+ Stars</option>
+                        </select>
+                      </div>
 
-                {/* Health Rating Filter */}
-                <div className="flex flex-col items-start">
-                  <label className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-500" /> Health
-                  </label>
-                  <select
-                    value={state.filters.healthRating}
-                    onChange={(e) => setState(prev => ({
-                      ...prev,
-                      filters: { ...prev.filters, healthRating: Number(e.target.value) }
-                    }))}
-                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-primary/40"
-                  >
-                    <option value="0">All Health Ratings</option>
-                    <option value="4">4+ Stars</option>
-                    <option value="3">3+ Stars</option>
-                    <option value="2">2+ Stars</option>
-                  </select>
-                </div>
+                      {/* Dietary Preferences Filter */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                          <Leaf className="w-4 h-4 text-green-500" /> Dietary Preferences
+                        </label>
+                        <select
+                          value={tempFilters.dietaryPreference}
+                          onChange={(e) => setTempFilters(prev => ({
+                            ...prev,
+                            dietaryPreference: e.target.value
+                          }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="">All Dietary Preferences</option>
+                          <option value="vegetarian">Vegetarian</option>
+                          <option value="vegan">Vegan</option>
+                          <option value="gluten-free">Gluten-Free</option>
+                        </select>
+                      </div>
 
-                {/* Dietary Preferences Filter */}
-                <div className="flex flex-col items-start">
-                  <label className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
-                    <Leaf className="w-4 h-4 text-green-500" /> Diet
-                  </label>
-                  <select
-                    value={state.filters.dietaryPreference}
-                    onChange={(e) => setState(prev => ({
-                      ...prev,
-                      filters: { ...prev.filters, dietaryPreference: e.target.value }
-                    }))}
-                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-primary/40"
-                  >
-                    <option value="">All Dietary Preferences</option>
-                    <option value="vegetarian">Vegetarian</option>
-                    <option value="vegan">Vegan</option>
-                    <option value="gluten-free">Gluten-Free</option>
-                  </select>
-                </div>
-              </motion.div>
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+                        <button
+                          onClick={() => {
+                            setTempFilters({
+                              brand: '',
+                              healthRating: 0,
+                              category: '',
+                              dietaryPreference: ''
+                            });
+                            handleApplyFilters();
+                          }}
+                          className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        >
+                          Reset
+                        </button>
+                        <button
+                          onClick={handleApplyFilters}
+                          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                          Apply Filters
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
-            </AnimatePresence>
 
             {/* Conditionally render dashboard or search results */}
             {state.products.length === 0 && !state.isLoading ? (
