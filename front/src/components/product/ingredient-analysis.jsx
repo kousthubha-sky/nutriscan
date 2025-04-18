@@ -4,50 +4,45 @@ import { useState, useEffect } from "react"
 
 export function IngredientAnalysis({ product }) {
   const [expandedIngredient, setExpandedIngredient] = useState(null);
+  const [currentProduct, setCurrentProduct] = useState(null);
 
-  // Reset expanded state when product changes
+  // Update current product when product prop changes
   useEffect(() => {
-    setExpandedIngredient(null);
-  }, [product?._id]);
+    if (product) {
+      setCurrentProduct(product);
+    }
+  }, [product]); // Updated dependency array
 
   useEffect(() => {
-    if (product?.ingredients) {
+    if (currentProduct?.ingredients) {
       // Cache ingredient analysis data
-      const cacheKey = `ingredient-analysis-${product._id || product.code}`;
+      const cacheKey = `ingredient-analysis-${currentProduct._id || currentProduct.code}`;
       localStorage.setItem(cacheKey, JSON.stringify({
-        ingredients: product.ingredients,
+        ingredients: currentProduct.ingredients,
         timestamp: Date.now()
       }));
     }
-  }, [product]);
+  }, [currentProduct]);
 
   const toggleIngredient = (index) => {
     setExpandedIngredient(expandedIngredient === index ? null : index);
   };
 
-  // Try to get cached data if no live data is available
-  if (!product?.ingredients) {
-    const cachedData = Object.keys(localStorage)
-      .filter(key => key.startsWith('ingredient-analysis-'))
-      .map(key => {
-        try {
-          return JSON.parse(localStorage.getItem(key));
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.timestamp - a.timestamp)[0];
-
-    if (cachedData?.ingredients) {
-      product = { ...product, ingredients: cachedData.ingredients };
-    } else {
-      return null;
-    }
+  if (!currentProduct?.ingredients) {
+    return (
+      <section id="ingredients" className="border-t border-gray-200 dark:border-gray-700 pt-6">
+        <div>
+          <h2 className="text-xl font-bold mb-2">Ingredient Analysis</h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            No ingredient information available for this product.
+          </p>
+        </div>
+      </section>
+    );
   }
 
   // Split ingredients string into array and clean up
-  const ingredientsList = product.ingredients
+  const ingredientsList = currentProduct.ingredients
     .split(',')
     .map(i => i.trim())
     .filter(i => i.length > 0);

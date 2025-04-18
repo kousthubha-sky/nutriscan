@@ -25,10 +25,11 @@ router.post('/signup',
         message: 'User registration failed',
       })
     }
-    const { email, username, password } = req.body
+    const { email, username, password, role } = req.body
 
     // Check if the username already exists
-    const existingUser = await userModel.findOne({ username: username })
+    const existingUser = await userModel.findOne({ username: username.toLowerCase() })
+    
     if (existingUser) {
       return res.status(400).json({
         message: 'Username already exists'
@@ -40,10 +41,19 @@ router.post('/signup',
     const newUser = await userModel.create({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role: role === 'admin' ? 'admin' : 'user'  // Only set admin if explicitly specified
     })
-    //this will return the new user created
-    res.json(newUser)
+
+    // Remove password from response
+    const userResponse = {
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role
+    }
+    
+    res.json(userResponse)
   }
 )
 
@@ -91,7 +101,8 @@ router.post('/login',
   const userData = {
       username: user.username,
       email: user.email,
-      _id: user._id
+      _id: user._id,
+      role: user.role  // Include role in response
   };
   return res.status(200).json({ message: 'Login successful', user: userData });
 

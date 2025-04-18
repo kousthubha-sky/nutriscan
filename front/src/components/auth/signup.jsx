@@ -8,14 +8,21 @@ export default function Signup({onLogin}) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     function handleSubmit(event) {
         event.preventDefault();
+        setIsLoading(true);
         fetch("http://localhost:3000/user/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password,
+                role: 'user' // Always set to user for public signup
+            })
         })
         .then(response => {
             if (!response.ok) throw new Error('Signup failed');
@@ -41,6 +48,9 @@ export default function Signup({onLogin}) {
             console.error("Error:", error);
             setError(error.message);
             toast.error(error.message);
+        })
+        .finally(() => {
+            setIsLoading(false);
         });
     }
 
@@ -48,7 +58,6 @@ export default function Signup({onLogin}) {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br w-300 from-gray-900 to-black m-0 py-12 px-4 sm:px-6 lg:px-8">
             <FloatingFoodIcons className="absolute inset-0 z-0" />
             <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl">
-            <FloatingFoodIcons className="absolute inset-0 z-0" />
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
                         Create your account
@@ -126,7 +135,7 @@ export default function Signup({onLogin}) {
                             type="submit"
                             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
                         >
-                            Sign up
+                            {isLoading ? "Signing up..." : "Sign up"}
                         </button>
                     </div>
 

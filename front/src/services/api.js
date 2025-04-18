@@ -79,6 +79,65 @@ const api = {
       console.error('Failed to fetch healthier alternatives:', error);
       throw error;
     }
+  },
+
+  // Admin API methods
+  async getPendingSubmissions(page = 1, limit = 10) {
+    try {
+      const params = new URLSearchParams({ page, limit });
+      const response = await fetch(`${API_BASE}/admin/submissions/pending?${params}`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  },
+
+  async getSubmissionStats() {
+    try {
+      const response = await fetch(`${API_BASE}/admin/submissions/stats`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  },
+
+  async reviewSubmission(submissionId, { status, feedback }) {
+    try {
+      const response = await fetch(`${API_BASE}/admin/submissions/${submissionId}/review`, {
+        method: 'POST',
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status, feedback })
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  },
+
+  getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  },
+
+  handleResponse(response) {
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    return response.json();
+  },
+
+  handleError(error) {
+    console.error('API Error:', error);
+    throw error;
   }
 };
 

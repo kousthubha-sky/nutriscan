@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Home, ScanLine, BarChart2, GitCompare, PlusCircle, Settings, LogOut, Menu, X } from "lucide-react"
+import { Home, ScanLine, BarChart2, GitCompare, PlusCircle, Settings, LogOut, Menu, X, ShieldCheck } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Link } from "react-router-dom"
 
@@ -40,6 +40,14 @@ const menuItems = [
     action: null,
   },
 ]
+
+const adminMenuItem = {
+  icon: <ShieldCheck className="h-5 w-5" />,
+  label: "Admin Panel",
+  href: "/admin",
+  section: null,
+  action: null,
+}
 
 const bottomMenuItems = [
   {
@@ -172,6 +180,23 @@ export function Sidebar({ user, onAction }) {
                   </a>
                 </li>
               ))}
+
+              {/* Admin Menu Item */}
+              {user?.role === 'admin' && (
+                <li key="admin">
+                  <Link
+                    to={adminMenuItem.href}
+                    className="group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 relative
+                      font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 
+                      hover:text-green-600 dark:hover:text-green-400 border-l-4 border-transparent"
+                  >
+                    <span className="text-gray-400 group-hover:text-green-600 dark:text-gray-500 dark:group-hover:text-green-400">
+                      {adminMenuItem.icon}
+                    </span>
+                    <span className="text-inherit">{adminMenuItem.label}</span>
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
         </div>

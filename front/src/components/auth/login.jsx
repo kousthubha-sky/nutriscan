@@ -34,7 +34,12 @@ export default function Login({ onLogin }) {
         .then((data) => {
             onLogin(data.user);
             toast.success("Welcome back! Login successful");
-            navigate("/");
+            // Redirect admins to admin dashboard, regular users to home
+            if (data.user.role === 'admin') {
+                navigate("/admin");
+            } else {
+                navigate("/");
+            }
         })
         .catch(error => {
             console.error("Error:", error);
@@ -48,7 +53,7 @@ export default function Login({ onLogin }) {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-emerald-950 animate-gradient-xy w-320">
             <FloatingFoodIcons className="absolute inset-0 z-0" />
             <div className="backdrop-blur-lg  p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all hover:scale-105">
-                <FloatingFoodIcons  />
+                
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
                     <p className="text-white/80">Sign in to continue your journey</p>

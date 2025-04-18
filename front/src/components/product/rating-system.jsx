@@ -4,26 +4,9 @@ export function RatingSystem() {
   return (
     <section id="rating" className="py-8 border-t border-gray-200 dark:border-gray-800">
       <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">AI Analysis Summary</h2>
-          <div className="flex items-center gap-1">
-            <span className="font-bold text-xl">4.5</span>
-            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-          </div>
-        </div>
+        
 
-        <p className="text-gray-700 dark:text-gray-300 mb-6">
-          This organic granola cereal is a nutritious breakfast option with high-quality organic ingredients. It offers
-          significant health benefits from whole grains, fiber, and essential nutrients, though the added sugar content
-          and oil slightly reduce its overall health score. It's a good choice for most diets, especially when paired
-          with fresh fruit or yogurt for a balanced meal.
-        </p>
-
-        <div className="flex justify-center mb-6">
-          <button className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
-            Get Full Analysis Report
-          </button>
-        </div>
+        
 
         <h3 className="text-xl font-bold mb-4">Health Rating System</h3>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -147,6 +130,76 @@ export function RatingSystem() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-12 border-t border-gray-200 dark:border-gray-800 pt-8">
+          <h3 className="text-xl font-bold mb-6">Frequently Asked Questions</h3>
+          <div className="grid gap-6">
+            {[
+              {
+                question: "How accurate is the health rating system?",
+                answer: "Our AI-powered system analyzes multiple factors including ingredients, nutritional content, and processing methods. The ratings are based on established nutritional guidelines and are regularly updated with new research."
+              },
+              {
+                question: "What makes a product score higher?",
+                answer: "Products score higher when they contain whole, unprocessed ingredients, have balanced nutritional profiles, are free from artificial additives, and use minimal processing methods."
+              },
+              {
+                question: "How often are ratings updated?",
+                answer: "Product ratings are updated whenever new information becomes available or when manufacturers change their formulations. We regularly review and update our database."
+              },
+              {
+                question: "Can manufacturers dispute ratings?",
+                answer: "Yes, manufacturers can contact our team with updated product information or concerns about ratings. We review all submissions and update scores accordingly."
+              }
+            ].map((item, i) => (
+              <div key={i} className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-6">
+                <h4 className="font-medium text-lg mb-2">{item.question}</h4>
+                <p className="text-gray-600 dark:text-gray-400">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        
+
+        {/* Contact Section */}
+        <div className="mt-12 border-t border-gray-200 dark:border-gray-800 pt-8">
+          <h3 className="text-xl font-bold mb-6">Questions or Feedback?</h3>
+          <div className="bg-primary/5 rounded-lg p-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Have questions about our rating system or want to suggest improvements?
+              Our team is here to help.
+            </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Email:</span>
+                <a href="mailto:support@nutriscan.com" className="text-primary hover:underline">
+                  support@nutriscan.com
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Technical Support:</span>
+                <a href="mailto:tech@nutriscan.com" className="text-primary hover:underline">
+                  tech@nutriscan.com
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Business Inquiries:</span>
+                <a href="mailto:business@nutriscan.com" className="text-primary hover:underline">
+                  business@nutriscan.com
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Note */}
+        <div className="mt-12 border-t border-gray-200 dark:border-gray-800 pt-8">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+            Last updated: April 2025. Our rating system is continuously evolving to provide the most accurate and helpful information.
+          </p>
         </div>
       </div>
     </section>

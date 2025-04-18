@@ -31,6 +31,47 @@ const INGREDIENT_ANALYSIS = {
     ],
     weight: 0.5,
     reason: 'Contains beneficial nutrients and fiber'
+  },
+  processed_grains: {
+    ingredients: [
+      'refined flour', 'maida', 'corn flour', 'rice flour', 'wheat flour',
+      'enriched flour', 'bleached flour', 'modified starch'
+    ],
+    weight: -0.3,
+    reason: 'Refined grains have lower nutritional value compared to whole grains'
+  },
+  snack_additives: {
+    ingredients: [
+      'msg', 'monosodium glutamate', 'maltodextrin', 'hydrolyzed', 
+      'flavor enhancer', 'artificial flavor', 'natural flavor',
+      'E621', 'E631', 'E627'
+    ],
+    weight: -0.4,
+    reason: 'Contains flavor enhancers and additives common in processed snacks'
+  },
+  processed_oils: {
+    ingredients: [
+      'palm oil', 'hydrogenated', 'partially hydrogenated', 
+      'vegetable oil', 'interesterified', 'shortening'
+    ],
+    weight: -0.4,
+    reason: 'Contains processed oils that may have trans fats or inflammatory properties'
+  },
+  healthy_grains: {
+    ingredients: [
+      'whole wheat', 'whole grain', 'multigrain', 'ragi', 'millet',
+      'quinoa', 'oats', 'barley', 'brown rice'
+    ],
+    weight: 0.4,
+    reason: 'Contains whole grains with higher nutritional value'
+  },
+  spices_herbs: {
+    ingredients: [
+      'turmeric', 'ginger', 'garlic', 'black pepper', 'cumin',
+      'coriander', 'cardamom', 'cinnamon', 'basil'
+    ],
+    weight: 0.3,
+    reason: 'Contains natural spices with potential health benefits'
   }
 };
 
@@ -63,6 +104,18 @@ const NUTRITIONAL_GUIDELINES = {
     low: 0.3,
     high: 1.5,
     weight: -0.3,
+    isPositive: false
+  },
+  trans_fat_100g: {
+    low: 0.1,
+    high: 0.5,
+    weight: -0.6,
+    isPositive: false
+  },
+  sodium_100g: {
+    low: 120,
+    high: 500,
+    weight: -0.4,
     isPositive: false
   }
 };
@@ -115,12 +168,25 @@ function analyzeIngredients(ingredientsList) {
   return { score, analysis };
 }
 
+const SNACK_CATEGORIES = [
+  'snacks', 'chips', 'crisps', 'crackers', 'cookies',
+  'biscuits', 'namkeen', 'kurkure', 'extruded snacks'
+];
+
 function calculateHealthRating(product) {
   try {
     if (!product) return { score: 3, analysis: ['No product data available'] };
 
     let finalScore = 3;
     let analysis = [];
+    let isSnackProduct = false;
+
+    // Check if product is in snack category
+    if (product.category) {
+      isSnackProduct = SNACK_CATEGORIES.some(category => 
+        product.category.toLowerCase().includes(category)
+      );
+    }
 
     // Start with Nutri-Score if available
     if (product.nutriscore_grade) {
@@ -135,18 +201,33 @@ function calculateHealthRating(product) {
       analysis.push(`Nutri-Score ${product.nutriscore_grade.toUpperCase()}`);
     }
 
-    // Analyze nutrients
+    // Analyze nutrients with adjusted weights for snacks
     if (product.nutriments) {
       const { score: nutrientScore, analysis: nutrientAnalysis } = analyzeNutrients(product.nutriments);
-      finalScore = (finalScore + nutrientScore) / 2;
+      // Apply stricter scoring for snack products
+      finalScore = isSnackProduct 
+        ? (finalScore + nutrientScore * 1.2) / 2.2  // More weight on nutrients for snacks
+        : (finalScore + nutrientScore) / 2;
       analysis = [...analysis, ...nutrientAnalysis];
     }
 
-    // Analyze ingredients
+    // Analyze ingredients with extra scrutiny for snacks
     if (product.ingredients) {
       const { score: ingredientScore, analysis: ingredientAnalysis } = analyzeIngredients(product.ingredients);
-      finalScore = (finalScore + ingredientScore);
+      finalScore = isSnackProduct
+        ? (finalScore + ingredientScore * 1.3) / 2.3  // More weight on ingredients for snacks
+        : (finalScore + ingredientScore);
       analysis = [...analysis, ...ingredientAnalysis];
+    }
+
+    // Additional penalty for highly processed snacks with multiple additives
+    if (isSnackProduct && analysis.filter(a => 
+      a.includes('artificial') || 
+      a.includes('preservative') || 
+      a.includes('flavor enhancer')
+    ).length > 2) {
+      finalScore *= 0.9;  // 10% reduction in score
+      analysis.push('Multiple artificial additives found: Common in processed snacks');
     }
 
     // Ensure score stays within 1-5 range

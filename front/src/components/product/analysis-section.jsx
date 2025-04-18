@@ -11,61 +11,39 @@ export function AnalysisSection({ product }) {
   const { theme } = useTheme()
   const isDarkTheme = theme === "dark"
   const [showFullAnalysis, setShowFullAnalysis] = useState(false)
+  const [currentProduct, setCurrentProduct] = useState(null)
 
-  // Reset showFullAnalysis when product changes
+  // Update current product when product prop changes
   useEffect(() => {
-    setShowFullAnalysis(false);
-  }, [product?._id]);
+    if (product) {
+      setCurrentProduct(product);
+    }
+  }, [product]); // Updated dependency array
 
   useEffect(() => {
-    if (product?.healthRating) {
+    if (currentProduct?.healthRating) {
       // Cache analysis data
-      const cacheKey = `analysis-${product._id || product.code}`;
+      const cacheKey = `analysis-${currentProduct._id || currentProduct.code}`;
       localStorage.setItem(cacheKey, JSON.stringify({
-        healthRating: product.healthRating,
-        healthAnalysis: product.healthAnalysis,
-        category: product.category,
-        name: product.name,
-        brand: product.brand,
+        healthRating: currentProduct.healthRating,
+        healthAnalysis: currentProduct.healthAnalysis,
+        category: currentProduct.category,
+        name: currentProduct.name,
+        brand: currentProduct.brand,
         timestamp: Date.now()
       }));
     }
-  }, [product]);
+  }, [currentProduct]);
 
   // Use cached data if no live data is available
-  if (!product?.healthRating) {
-    const cachedData = Object.keys(localStorage)
-      .filter(key => key.startsWith('analysis-'))
-      .map(key => {
-        try {
-          return JSON.parse(localStorage.getItem(key));
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.timestamp - a.timestamp)[0];
-
-    if (cachedData) {
-      product = { ...product, ...cachedData };
-    } else {
-      return (
-        <div className="py-8 border-t border-gray-200 dark:border-gray-800">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6">Analysis</h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Analysis information is currently unavailable.
-            </p>
-          </div>
-        </div>
-      );
-    }
+  if (!currentProduct) {
+    return null;
   }
 
   // Add mock AI analysis data
   const aiAnalysis = {
     summary: "This product has been analyzed by our AI system for nutritional value and health implications.",
-    healthSummary: `Based on our analysis, this ${product?.category || 'product'} provides a balanced nutritional profile with key benefits for health-conscious consumers. The health score of ${product?.healthRating?.toFixed(1) || '3.0'} reflects its overall nutritional quality.`,
+    healthSummary: `Based on our analysis, this ${currentProduct?.category || 'product'} provides a balanced nutritional profile with key benefits for health-conscious consumers. The health score of ${currentProduct?.healthRating?.toFixed(1) || '3.0'} reflects its overall nutritional quality.`,
     recommendations: [
       "Suitable for a balanced diet when consumed in moderation",
       "Good choice for health-conscious consumers",
@@ -78,24 +56,24 @@ export function AnalysisSection({ product }) {
 
   // Transform API data or use fallbacks
   const analysis = {
-    title: product?.name || "Product Name",
-    brand: product?.brand || "Unknown Brand",
-    healthScore: product?.healthRating || 3.0,
+    title: currentProduct?.name || "Product Name",
+    brand: currentProduct?.brand || "Unknown Brand",
+    healthScore: currentProduct?.healthRating || 3.0,
     tags: [
-      product?.category,
-      product?.nutriscore_grade?.toUpperCase() && `Nutri-Score ${product.nutriscore_grade.toUpperCase()}`,
-      ...(product?.labels?.split(',') || [])
+      currentProduct?.category,
+      currentProduct?.nutriscore_grade?.toUpperCase() && `Nutri-Score ${currentProduct.nutriscore_grade.toUpperCase()}`,
+      ...(currentProduct?.labels?.split(',') || [])
     ].filter(Boolean),
-    barcode: product?.barcode || product?.code,
-    productId: product?._id,
+    barcode: currentProduct?.barcode || currentProduct?.code,
+    productId: currentProduct?._id,
     analyzedOn: new Date().toLocaleDateString(),
     description: `${aiAnalysis.healthSummary}\n\n${aiAnalysis.nutritionalInsights}\n\n${aiAnalysis.disclaimer}`,
-    pros: product?.healthAnalysis?.filter(a => !a.includes('High in') && !a.includes('Contains')) || [],
-    cons: product?.healthAnalysis?.filter(a => a.includes('High in') || a.includes('Contains')) || [],
-    nutrients: product?.nutriments || {},
-    ingredients: product?.ingredients || "Ingredients not available",
-    allergens: (product?.allergens?.split(',') || []).map(a => a.trim()),
-    harmfulIngredients: product?.harmfulIngredients || "No harmful ingredients detected",
+    pros: currentProduct?.healthAnalysis?.filter(a => !a.includes('High in') && !a.includes('Contains')) || [],
+    cons: currentProduct?.healthAnalysis?.filter(a => a.includes('High in') || a.includes('Contains')) || [],
+    nutrients: currentProduct?.nutriments || {},
+    ingredients: currentProduct?.ingredients || "Ingredients not available",
+    allergens: (currentProduct?.allergens?.split(',') || []).map(a => a.trim()),
+    harmfulIngredients: currentProduct?.harmfulIngredients || "No harmful ingredients detected",
     recommendations: aiAnalysis.recommendations
   }
 
@@ -110,7 +88,7 @@ export function AnalysisSection({ product }) {
         {/* Product Image Section */}
         <div className="relative h-100 mt-5 bg-muted">
           <img
-            src={product?.imageUrl || product?.image_url || "/placeholder.png"}
+            src={currentProduct?.imageUrl || currentProduct?.image_url || "/placeholder.png"}
             alt={analysis.title}
             className="w-full h-full object-contain"
           />
@@ -147,7 +125,7 @@ export function AnalysisSection({ product }) {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Product ID</p>
-                <p className="mt-1">{product.barcode || 'N/A'}</p>
+                <p className="mt-1">{currentProduct.barcode || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Analyzed on</p>

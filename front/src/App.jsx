@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './App.css';
 import { Link } from 'react-router-dom';
@@ -12,6 +12,16 @@ import { SettingsMenu } from './components/product/settings-menu';
 import { UserProfile } from './components/product/user-profile';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import AdminDashboard from './components/dashboard/AdminDashboard';
+
+// Protected route component
+const AdminRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/" />;
+  }
+  return children;
+};
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -84,6 +94,14 @@ function App() {
               <Route path="/" element={<Home user={user} />} />
               <Route path="/login" element={<Login onLogin={setUser} />} />
               <Route path="/signup" element={<Signup onLogin={setUser} />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                } 
+              />
             </Routes>
           </div>
 

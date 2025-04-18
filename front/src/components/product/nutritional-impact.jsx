@@ -1,27 +1,36 @@
 import { Check, X, AlertTriangle } from "lucide-react"
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export function NutritionalImpact({ product }) {
+  const [currentProduct, setCurrentProduct] = useState(null);
+
+  // Update current product when product prop changes
+  useEffect(() => {
+    if (product) {
+      setCurrentProduct(product);
+    }
+  }, [product]); // Updated dependency array
+
   // Reset state and reanalyze when product changes
   useEffect(() => {
-    if (product?.nutriments) {
-      const cacheKey = `nutritional-impact-${product._id || product.code}`;
+    if (currentProduct?.nutriments) {
+      const cacheKey = `nutritional-impact-${currentProduct._id || currentProduct.code}`;
       localStorage.setItem(cacheKey, JSON.stringify({
-        nutriments: product.nutriments,
-        ingredients: product.ingredients,
+        nutriments: currentProduct.nutriments,
+        ingredients: currentProduct.ingredients,
         timestamp: Date.now()
       }));
     }
-  }, [product?._id, product?.code, product?.nutriments, product?.ingredients]);
+  }, [currentProduct]);
 
-  if (!product) return null;
+  if (!currentProduct) return null;
 
   // Map product data to benefits
   const getBenefits = () => {
     const benefits = [];
     
     // Check fiber content
-    if (product.nutriments?.fiber_100g > 3) {
+    if (currentProduct.nutriments?.fiber_100g > 3) {
       benefits.push({
         title: "Rich in Dietary Fiber",
         description: "Supports digestive health and helps maintain healthy blood sugar levels",
@@ -29,15 +38,15 @@ export function NutritionalImpact({ product }) {
     }
 
     // Check protein content
-    if (product.nutriments?.proteins_100g > 5) {
+    if (currentProduct.nutriments?.proteins_100g > 5) {
       benefits.push({
         title: "Good Source of Protein",
-        description: `Contains ${product.nutriments.proteins_100g.toFixed(1)}g of protein per 100g`,
+        description: `Contains ${currentProduct.nutriments.proteins_100g.toFixed(1)}g of protein per 100g`,
       });
     }
 
     // Check if organic
-    if (product.labels?.toLowerCase().includes('organic')) {
+    if (currentProduct.labels?.toLowerCase().includes('organic')) {
       benefits.push({
         title: "Organic Certification",
         description: "Reduced exposure to synthetic pesticides and fertilizers",
@@ -45,7 +54,7 @@ export function NutritionalImpact({ product }) {
     }
 
     // Add benefits based on health analysis
-    product.healthAnalysis?.forEach(analysis => {
+    currentProduct.healthAnalysis?.forEach(analysis => {
       if (analysis.includes('Good source') || analysis.includes('Low in') || analysis.includes('beneficial')) {
         benefits.push({
           title: analysis.split(':')[0],
@@ -62,34 +71,34 @@ export function NutritionalImpact({ product }) {
     const concerns = [];
     
     // Check sugar content
-    if (product.nutriments?.sugars_100g > 10) {
+    if (currentProduct.nutriments?.sugars_100g > 10) {
       concerns.push({
         title: "Added Sugar Content",
-        description: `Contains ${product.nutriments.sugars_100g.toFixed(1)}g of sugars per 100g`,
+        description: `Contains ${currentProduct.nutriments.sugars_100g.toFixed(1)}g of sugars per 100g`,
         icon: <X className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />,
       });
     }
 
     // Check fat content
-    if (product.nutriments?.fat_100g > 17.5) {
+    if (currentProduct.nutriments?.fat_100g > 17.5) {
       concerns.push({
         title: "High Fat Content",
-        description: `Contains ${product.nutriments.fat_100g.toFixed(1)}g of fat per 100g`,
+        description: `Contains ${currentProduct.nutriments.fat_100g.toFixed(1)}g of fat per 100g`,
         icon: <X className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />,
       });
     }
 
     // Check allergens
-    if (product.allergens) {
+    if (currentProduct.allergens) {
       concerns.push({
         title: "Potential Allergens",
-        description: `Contains or may contain: ${product.allergens}`,
+        description: `Contains or may contain: ${currentProduct.allergens}`,
         icon: <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />,
       });
     }
 
     // Add concerns based on health analysis
-    product.healthAnalysis?.forEach(analysis => {
+    currentProduct.healthAnalysis?.forEach(analysis => {
       if (analysis.includes('High in') || analysis.includes('Contains') && !analysis.includes('Good source')) {
         concerns.push({
           title: analysis.split(':')[0],
@@ -104,7 +113,7 @@ export function NutritionalImpact({ product }) {
 
   // Determine dietary compatibility
   const getDietaryCompatibility = () => {
-    const ingredients = (product.ingredients || '').toLowerCase();
+    const ingredients = (currentProduct.ingredients || '').toLowerCase();
     
     return [
       {
@@ -124,13 +133,13 @@ export function NutritionalImpact({ product }) {
       },
       {
         diet: "Keto",
-        compatible: product.nutriments?.carbohydrates_100g < 10,
-        note: product.nutriments?.carbohydrates_100g >= 10 ? "Too high in carbs" : null,
+        compatible: currentProduct.nutriments?.carbohydrates_100g < 10,
+        note: currentProduct.nutriments?.carbohydrates_100g >= 10 ? "Too high in carbs" : null,
       },
       {
         diet: "Low-Sugar",
-        compatible: product.nutriments?.sugars_100g < 5 ? true : "caution",
-        note: product.nutriments?.sugars_100g >= 5 ? `Contains ${product.nutriments.sugars_100g.toFixed(1)}g sugars` : null,
+        compatible: currentProduct.nutriments?.sugars_100g < 5 ? true : "caution",
+        note: currentProduct.nutriments?.sugars_100g >= 5 ? `Contains ${currentProduct.nutriments.sugars_100g.toFixed(1)}g sugars` : null,
       },
       {
         diet: "Nut-Free",
@@ -142,7 +151,7 @@ export function NutritionalImpact({ product }) {
 
   // Analyze processing methods based on ingredients and product category
   const getProcessingMethods = () => {
-    const ingredients = (product.ingredients || '').toLowerCase();
+    const ingredients = (currentProduct.ingredients || '').toLowerCase();
     const methods = [];
 
     // Common processing methods based on ingredients
@@ -200,7 +209,7 @@ export function NutritionalImpact({ product }) {
 
   // Analyze additives in the product
   const getAdditivesAnalysis = () => {
-    const ingredients = (product.ingredients || '').toLowerCase();
+    const ingredients = (currentProduct.ingredients || '').toLowerCase();
     const additives = {
       artificial: false,
       types: []

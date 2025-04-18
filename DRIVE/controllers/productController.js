@@ -295,58 +295,81 @@ exports.getHealthierAlternatives = async (req, res) => {
   try {
     const { category, healthRating = 3.0 } = req.query;
     const minHealthRating = parseFloat(healthRating);
+    const productData = req.body;
     
-    // Build main query
+    // Build sophisticated query
     const mainQuery = {
-      healthRating: { $gt: minHealthRating }, // Only return products with better health ratings
+      // Exclude the current product
+      ...(productData._id && { _id: { $ne: productData._id } }),
+      ...(productData.barcode && { barcode: { $ne: productData.barcode } }),
+      
+      // Base health rating criteria
+      healthRating: { $gt: minHealthRating }
     };
     
-    // Add category matching with fallback categories
+    // Category matching with related categories
     if (category && category !== 'All Categories') {
-      // Create an array of related categories
       const categoryTerms = category.toLowerCase().split(/[,\s]+/);
       const relatedCategories = categoryTerms.flatMap(term => [
         new RegExp(term, 'i'),
-        // Add related category patterns
-        new RegExp(`${term}.*`, 'i'),  // Matches start of category
-        new RegExp(`.*${term}`, 'i'),  // Matches end of category
+        new RegExp(`${term}.*`, 'i'),
+        new RegExp(`.*${term}`, 'i')
       ]);
       
+      // Create nutritional profile matcher
+      const nutrientRanges = {};
+      if (productData.nutriments) {
+        const NUTRIENT_TOLERANCE = 0.2; // 20% tolerance
+        ['proteins_100g', 'fiber_100g', 'sugars_100g', 'fat_100g'].forEach(nutrient => {
+          const value = productData.nutriments[nutrient];
+          if (value) {
+            nutrientRanges[`nutriments.${nutrient}`] = {
+              $gte: value * (1 - NUTRIENT_TOLERANCE),
+              $lte: value * (1 + NUTRIENT_TOLERANCE)
+            };
+          }
+        });
+      }
+
+      // Combine category and nutritional matching
       mainQuery.$or = [
         { category: { $in: relatedCategories } },
-        // Include products with similar nutritional profiles
-        { 
-          'nutriments.proteins_100g': { 
-            $gte: req.body.nutriments?.proteins_100g * 0.8 || 0 
-          }
-        },
-        { 
-          'nutriments.fiber_100g': { 
-            $gte: req.body.nutriments?.fiber_100g * 0.8 || 0 
-          }
-        }
+        ...Object.entries(nutrientRanges).map(([nutrient, range]) => ({ [nutrient]: range }))
       ];
     }
 
     // Find alternatives with sophisticated sorting
     const alternatives = await Product.find(mainQuery)
       .sort({ 
-        healthRating: -1,  // Higher health ratings first
-        searchCount: -1,   // Popular products
-        'nutriments.proteins_100g': -1,  // Higher protein content
-        'nutriments.fiber_100g': -1      // Higher fiber content
+        healthRating: -1,
+        searchCount: -1,
+        'nutriments.proteins_100g': -1,
+        'nutriments.fiber_100g': -1
       })
       .limit(6)
       .lean();
 
-    // Enhance results with tags and relevance scores
-    const results = alternatives.map(alt => ({
-      ...alt,
-      tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
-           alt.healthRating >= 4.0 ? "Healthy Choice" :
-           "Better Choice",
-      relevanceScore: calculateRelevanceScore(alt, req.body)
-    }));
+    // Calculate similarity scores and enhance results
+    const results = alternatives.map(alt => {
+      const relevanceScore = calculateRelevanceScore(alt, productData);
+      const nutritionalImprovement = calculateNutritionalImprovement(alt, productData);
+      
+      return {
+        ...alt,
+        tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
+             alt.healthRating >= 4.0 ? "Healthy Choice" :
+             "Better Choice",
+        relevanceScore,
+        nutritionalImprovement,
+        description: generateAlternativeDescription(alt, nutritionalImprovement)
+      };
+    });
+
+    // Sort by relevance and improvement
+    results.sort((a, b) => (
+      (b.relevanceScore + b.nutritionalImprovement) - 
+      (a.relevanceScore + a.nutritionalImprovement)
+    ));
 
     res.json({
       success: true,
@@ -361,7 +384,54 @@ exports.getHealthierAlternatives = async (req, res) => {
   }
 };
 
-// Helper function to calculate how relevant an alternative is
+// Helper function to calculate nutritional improvement
+function calculateNutritionalImprovement(alternative, originalProduct) {
+  if (!originalProduct?.nutriments) return 0;
+  
+  let improvement = 0;
+  const nutrients = {
+    proteins_100g: { weight: 0.3, preferHigher: true },
+    fiber_100g: { weight: 0.3, preferHigher: true },
+    sugars_100g: { weight: 0.2, preferHigher: false },
+    fat_100g: { weight: 0.2, preferHigher: false }
+  };
+
+  Object.entries(nutrients).forEach(([nutrient, { weight, preferHigher }]) => {
+    const original = originalProduct.nutriments[nutrient] || 0;
+    const alternative_value = alternative.nutriments?.[nutrient] || 0;
+    
+    if (preferHigher) {
+      improvement += (alternative_value > original) ? weight : 0;
+    } else {
+      improvement += (alternative_value < original) ? weight : 0;
+    }
+  });
+
+  return improvement;
+}
+
+// Helper function to generate alternative description
+function generateAlternativeDescription(alternative, improvement) {
+  const improvements = [];
+  
+  if (alternative.nutriments?.proteins_100g > 5) {
+    improvements.push('higher in protein');
+  }
+  if (alternative.nutriments?.fiber_100g > 3) {
+    improvements.push('rich in fiber');
+  }
+  if (alternative.nutriments?.sugars_100g < 5) {
+    improvements.push('lower in sugar');
+  }
+  
+  if (improvements.length > 0) {
+    return `A healthier alternative that's ${improvements.join(', ')}.`;
+  }
+  
+  return `A better choice with a health rating of ${alternative.healthRating.toFixed(1)}.`;
+}
+
+// Helper function to calculate relevance score
 function calculateRelevanceScore(alternative, originalProduct) {
   if (!originalProduct) return 1;
   
@@ -374,15 +444,38 @@ function calculateRelevanceScore(alternative, originalProduct) {
     }
   }
   
-  // Nutritional profile similarity bonus
+  // Nutritional profile similarity
   if (alternative.nutriments && originalProduct.nutriments) {
     const nutrients = ['proteins_100g', 'fiber_100g', 'sugars_100g', 'fat_100g'];
     nutrients.forEach(nutrient => {
-      const diff = Math.abs(
-        (alternative.nutriments[nutrient] || 0) - 
-        (originalProduct.nutriments[nutrient] || 0)
-      );
+      const altValue = alternative.nutriments[nutrient] || 0;
+      const origValue = originalProduct.nutriments[nutrient] || 0;
+      const diff = Math.abs(altValue - origValue);
+      
+      // Add bonus for similar nutritional values
       if (diff <= 2) score += 0.1;
+      
+      // Add bonus for better nutritional values
+      if ((nutrient.includes('protein') || nutrient.includes('fiber')) && altValue > origValue) {
+        score += 0.1;
+      }
+      if ((nutrient.includes('sugar') || nutrient.includes('fat')) && altValue < origValue) {
+        score += 0.1;
+      }
+    });
+  }
+  
+  // Special ingredients matching
+  if (alternative.ingredients && originalProduct.ingredients) {
+    const altIngredients = alternative.ingredients.toLowerCase();
+    const origIngredients = originalProduct.ingredients.toLowerCase();
+    
+    // Common healthy ingredients bonus
+    const healthyIngredients = ['whole grain', 'oats', 'quinoa', 'nuts', 'seeds'];
+    healthyIngredients.forEach(ingredient => {
+      if (altIngredients.includes(ingredient)) {
+        score += 0.1;
+      }
     });
   }
   
