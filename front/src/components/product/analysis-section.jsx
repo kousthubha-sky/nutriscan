@@ -12,6 +12,11 @@ export function AnalysisSection({ product }) {
   const isDarkTheme = theme === "dark"
   const [showFullAnalysis, setShowFullAnalysis] = useState(false)
 
+  // Reset showFullAnalysis when product changes
+  useEffect(() => {
+    setShowFullAnalysis(false);
+  }, [product?._id]);
+
   useEffect(() => {
     if (product?.healthRating) {
       // Cache analysis data
@@ -98,7 +103,7 @@ export function AnalysisSection({ product }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`rounded-lg border ${isDarkTheme ? "border-gray-800" : "border-gray-200"} overflow-hidden bg-card`}
+      className={`rounded-lg border ${isDarkTheme ? "border-gray-800" : "border-gray-600"} overflow-hidden bg-card`}
     >
       {/* Initial Analysis Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -142,7 +147,7 @@ export function AnalysisSection({ product }) {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Product ID</p>
-                <p className="mt-1">{analysis.productId}</p>
+                <p className="mt-1">{product.barcode || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Analyzed on</p>

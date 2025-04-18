@@ -220,7 +220,9 @@ export default function ProductDetailsModal({ product, onClose }) {
                             <Box className="w-4 h-4" />
                             <span className="text-sm font-medium">Product Code</span>
                           </div>
-                          <p className="text-sm">{product._id || product.code}</p>
+                          <p className="text-sm">
+                            {product.barcode || product.code || 'N/A'}
+                          </p>
                         </div>
                         {product.category && (
                           <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-2">

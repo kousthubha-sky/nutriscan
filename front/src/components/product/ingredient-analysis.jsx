@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react"
 
 export function IngredientAnalysis({ product }) {
-  const [expandedIngredient, setExpandedIngredient] = useState(null)
+  const [expandedIngredient, setExpandedIngredient] = useState(null);
+
+  // Reset expanded state when product changes
+  useEffect(() => {
+    setExpandedIngredient(null);
+  }, [product?._id]);
 
   useEffect(() => {
     if (product?.ingredients) {

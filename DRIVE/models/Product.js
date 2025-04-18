@@ -1,18 +1,26 @@
 const mongoose = require('mongoose');
 
-const ProductSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema({
   barcode: {
     type: String,
     required: true,
     unique: true,
+    index: true
   },
   name: {
     type: String,
     required: true,
+    index: true
   },
-  brand: String,
+  brand: {
+    type: String,
+    index: true
+  },
   imageUrl: String,
-  category: String,
+  category: {
+    type: String,
+    index: true
+  },
   description: String,
   ingredients: String,
   labels: String,
@@ -32,28 +40,26 @@ const ProductSchema = new mongoose.Schema({
   healthAnalysis: [String],
   healthRatingLabel: String,
   healthRatingColor: String,
-  lastFetched: {
-    type: Date,
-    default: Date.now
-  },
   searchCount: {
     type: Number,
-    default: 0
+    default: 0,
+    index: true
+  },
+  lastFetched: {
+    type: Date,
+    default: Date.now,
+    index: true
   }
 }, {
   timestamps: true
 });
 
-// Index for text search
-ProductSchema.index({ 
-  name: 'text', 
+// Create text indexes for better search performance
+productSchema.index({ 
+  name: 'text',
   brand: 'text',
   category: 'text',
-  ingredients: 'text' 
+  description: 'text'
 });
 
-
-// Index for frequently accessed products
-ProductSchema.index({ searchCount: -1 });
-
-module.exports = mongoose.model('Product', ProductSchema);
+module.exports = mongoose.model('Product', productSchema);

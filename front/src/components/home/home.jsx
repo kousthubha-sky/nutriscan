@@ -6,11 +6,28 @@ import ProductDetailsModal from './ProductDetailsModal';
 import { FloatingFoodIcons } from '../ui/floating-food-icons';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Star, Sparkles, ArrowUpRight, Filter, Home as HomeIcon, Leaf, Utensils } from "lucide-react";
+import { 
+  ChevronDown, 
+  Star, 
+  Sparkles, 
+  ArrowUpRight, 
+  Filter, 
+  Home as HomeIcon, 
+  Leaf, 
+  Utensils,
+  Tag,
+  DollarSign,
+  Shield,
+  Check,
+  AlertTriangle,
+  X 
+} from "lucide-react";
 import { AnalysisSection } from '../product/analysis-section';
 import { IngredientAnalysis } from '../product/ingredient-analysis';
 import { HealthierAlternatives } from '../product/healthier-alternatives';
 import { NutritionalImpact } from '../product/nutritional-impact';
+import { ContributeSection } from './ContributeSection';
+import { RatingSystem } from '../product/rating-system';
 
 export default function Home({ user }) {
   const [state, setState] = useState({
@@ -24,7 +41,9 @@ export default function Home({ user }) {
       brand: '',
       healthRating: 0,
       category: '',
-      dietaryPreference: ''
+      dietaryPreference: '',
+      price: '',
+      certification: ''
     },
     unfilteredProducts: [] // Store unfiltered products
   });
@@ -37,12 +56,14 @@ export default function Home({ user }) {
     brand: '',
     healthRating: 0,
     category: '',
-    dietaryPreference: ''
+    dietaryPreference: '',
+    price: '',
+    certification: ''
   });
 
   const applyFilters = useCallback((products, filters) => {
     return products.filter(product => {
-      // Brand filter (including Indian brands)
+      // Brand filter (including more Indian and international brands)
       if (filters.brand && !product.brand?.toLowerCase().includes(filters.brand.toLowerCase())) {
         return false;
       }
@@ -53,7 +74,28 @@ export default function Home({ user }) {
       }
 
       // Category filter
-      if (filters.category && product.category?.toLowerCase() !== filters.category.toLowerCase()) {
+      if (filters.category && filters.category !== 'all' && product.category?.toLowerCase() !== filters.category.toLowerCase()) {
+        return false;
+      }
+
+      // Price range filter
+      if (filters.price) {
+        const price = parseFloat(product.price || 0);
+        switch (filters.price) {
+          case 'budget':
+            if (price > 50) return false;
+            break;
+          case 'mid':
+            if (price < 50 || price > 200) return false;
+            break;
+          case 'premium':
+            if (price < 200) return false;
+            break;
+        }
+      }
+
+      // Certification filter
+      if (filters.certification && !product.labels?.toLowerCase().includes(filters.certification.toLowerCase())) {
         return false;
       }
 
@@ -67,6 +109,12 @@ export default function Home({ user }) {
             return !ingredients.includes('meat') && !ingredients.includes('milk') && !ingredients.includes('egg');
           case 'gluten-free':
             return !ingredients.includes('wheat') && !ingredients.includes('gluten');
+          case 'keto':
+            return product.nutriments?.carbohydrates_100g < 10;
+          case 'low-sugar':
+            return product.nutriments?.sugars_100g < 5;
+          case 'organic':
+            return product.labels?.toLowerCase().includes('organic');
           default:
             return true;
         }
@@ -89,18 +137,32 @@ export default function Home({ user }) {
   }, [state.filters, state.unfilteredProducts, applyFilters]);
 
   const handleSearch = useCallback(async (searchResults) => {
-    const filteredProducts = applyFilters(searchResults.products, state.filters);
-    setState(prev => ({
-      ...prev,
-      products: filteredProducts,
-      unfilteredProducts: searchResults.products, // Store unfiltered products
-      currentPage: searchResults.currentPage,
-      totalPages: Math.ceil(filteredProducts.length / 10),
-      currentQuery: searchResults.query,
-      isLoading: false,
-      error: null
-    }));
-  }, [applyFilters, state.filters]);
+    try {
+      const results = await api.searchProducts(
+        searchResults.query,
+        1,
+        state.filters,
+        'relevance'
+      );
+      
+      setState(prev => ({
+        ...prev,
+        products: results.products,
+        unfilteredProducts: results.products,
+        currentPage: results.currentPage,
+        totalPages: results.totalPages,
+        currentQuery: searchResults.query,
+        isLoading: false,
+        error: null
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error.message,
+        isLoading: false
+      }));
+    }
+  }, [state.filters]);
 
   const handlePageChange = useCallback(async (newPage) => {
     if (!state.currentQuery) return;
@@ -127,39 +189,67 @@ export default function Home({ user }) {
     }
   }, [state.currentQuery, state.filters, applyFilters]);
 
+  useEffect(() => {
+    if (!state.products.length && !state.isLoading) {
+      setSelectedAnalysisProduct(null);
+    }
+  }, [state.products.length, state.isLoading]);
+
   const handleAnalysisSelect = useCallback((product) => {
+    // Reset previous product state
+    setSelectedProduct(null);
     setSelectedAnalysisProduct(product);
+    
     // Scroll to analysis section with smooth behavior
     const analysisSection = document.getElementById('details');
     if (analysisSection) {
-      analysisSection.scrollIntoView({ behavior: 'smooth' });
+      // Clear any existing smooth scroll animations
+      window.scrollTo({
+        top: analysisSection.offsetTop - 100,
+        behavior: 'instant'
+      });
+      // Then do the smooth scroll
+      window.scrollTo({
+        top: analysisSection.offsetTop - 100,
+        behavior: 'smooth'
+      });
     }
   }, []);
 
-  const handleApplyFilters = () => {
-    setState(prev => ({
-      ...prev,
-      filters: { ...tempFilters }
-    }));
+  const handleApplyFilters = async () => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    try {
+      const results = await api.searchProducts(
+        state.currentQuery,
+        1,
+        tempFilters,
+        'relevance'
+      );
+      
+      setState(prev => ({
+        ...prev,
+        filters: { ...tempFilters },
+        products: results.products,
+        unfilteredProducts: results.products,
+        currentPage: results.currentPage,
+        totalPages: results.totalPages,
+        isLoading: false
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error.message,
+        isLoading: false
+      }));
+    }
     setShowFilters(false);
   };
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
-        const [oatsRes, nutsRes, yogurtRes] = await Promise.all([
-          api.searchProducts('oats organic', 1),
-          api.searchProducts('nuts butter', 1),
-          api.searchProducts('yogurt protein', 1)
-        ]);
-
-        const combined = [
-          ...(oatsRes.products || []),
-          ...(nutsRes.products || []),
-          ...(yogurtRes.products || [])
-        ].filter(p => p.healthRating >= 3.0);
-
-        setFeaturedProducts(combined.slice(0, 12));
+        const products = await api.getFeaturedProducts();
+        setFeaturedProducts(products);
       } catch (error) {
         console.error('Failed to fetch featured products:', error);
       }
@@ -200,6 +290,7 @@ export default function Home({ user }) {
             <ProductSearch 
               onSearch={handleSearch}
               onSearchStart={() => setState(prev => ({ ...prev, isLoading: true }))}
+              resetQuery={state.products.length > 0}
             />
 
             {/* Enhanced Filters Section with Animation */}
@@ -248,6 +339,43 @@ export default function Home({ user }) {
                           <option value="parle">Parle</option>
                           <option value="haldirams">Haldiram's</option>
                           <option value="mtr">MTR</option>
+                          <option value="nestle">Nestle</option>
+                          <option value="dabur">Dabur</option>
+                          <option value="patanjali">Patanjali</option>
+                          <option value="mother dairy">Mother Dairy</option>
+                          <option value="cadbury">Cadbury</option>
+                          <option value="heinz">Heinz</option>
+                          <option value="kelloggs">Kellogg's</option>
+                          <option value="quaker">Quaker</option>
+                          <option value="tropicana">Tropicana</option>
+                        </select>
+                      </div>
+
+                      {/* Category Filter */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                          <Tag className="w-4 h-4 text-purple-500" /> Category
+                        </label>
+                        <select
+                          value={tempFilters.category}
+                          onChange={(e) => setTempFilters(prev => ({
+                            ...prev,
+                            category: e.target.value
+                          }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="all">All Categories</option>
+                          <option value="dairy">Dairy Products</option>
+                          <option value="snacks">Snacks</option>
+                          <option value="beverages">Beverages</option>
+                          <option value="grains">Grains & Cereals</option>
+                          <option value="fruits">Fruits & Vegetables</option>
+                          <option value="meat">Meat & Poultry</option>
+                          <option value="seafood">Seafood</option>
+                          <option value="bakery">Bakery</option>
+                          <option value="condiments">Condiments & Sauces</option>
+                          <option value="frozen">Frozen Foods</option>
+                          <option value="organic">Organic Foods</option>
                         </select>
                       </div>
 
@@ -265,9 +393,30 @@ export default function Home({ user }) {
                           className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/40"
                         >
                           <option value="0">All Health Ratings</option>
-                          <option value="4">4+ Stars</option>
-                          <option value="3">3+ Stars</option>
-                          <option value="2">2+ Stars</option>
+                          <option value="4.5">4.5+ Stars (Excellent)</option>
+                          <option value="4">4+ Stars (Very Good)</option>
+                          <option value="3.5">3.5+ Stars (Good)</option>
+                          <option value="3">3+ Stars (Average)</option>
+                        </select>
+                      </div>
+
+                      {/* Price Range Filter */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                          <DollarSign className="w-4 h-4 text-emerald-500" /> Price Range
+                        </label>
+                        <select
+                          value={tempFilters.price}
+                          onChange={(e) => setTempFilters(prev => ({
+                            ...prev,
+                            price: e.target.value
+                          }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="">All Prices</option>
+                          <option value="budget">Budget (Under ₹50)</option>
+                          <option value="mid">Mid-Range (₹50-₹200)</option>
+                          <option value="premium">Premium (Above ₹200)</option>
                         </select>
                       </div>
 
@@ -288,6 +437,30 @@ export default function Home({ user }) {
                           <option value="vegetarian">Vegetarian</option>
                           <option value="vegan">Vegan</option>
                           <option value="gluten-free">Gluten-Free</option>
+                          <option value="keto">Keto-Friendly</option>
+                          <option value="low-sugar">Low Sugar</option>
+                          <option value="organic">Organic</option>
+                        </select>
+                      </div>
+
+                      {/* Certification Filter */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                          <Shield className="w-4 h-4 text-indigo-500" /> Certification
+                        </label>
+                        <select
+                          value={tempFilters.certification}
+                          onChange={(e) => setTempFilters(prev => ({
+                            ...prev,
+                            certification: e.target.value
+                          }))}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="">All Certifications</option>
+                          <option value="fssai">FSSAI Certified</option>
+                          <option value="organic">Organic Certified</option>
+                          <option value="iso">ISO Certified</option>
+                          <option value="haccp">HACCP Certified</option>
                         </select>
                       </div>
 
@@ -299,9 +472,10 @@ export default function Home({ user }) {
                               brand: '',
                               healthRating: 0,
                               category: '',
-                              dietaryPreference: ''
+                              dietaryPreference: '',
+                              price: '',
+                              certification: ''
                             });
-                            handleApplyFilters();
                           }}
                           className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
@@ -331,7 +505,7 @@ export default function Home({ user }) {
                   </h2>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {featuredProducts.slice(0, showAllFeatured ? undefined : 10).map((product, index) => (
+                    {featuredProducts.slice(0, showAllFeatured ? undefined : 8).map((product, index) => (
                       <motion.div
                         key={product._id || product.code}
                         initial={{ opacity: 0, y: 20 }}
@@ -350,26 +524,33 @@ export default function Home({ user }) {
                               product.healthRating >= 3 ? 'border-yellow-500 text-yellow-500' :
                               'border-red-500 text-red-500'}`}>
                             <Star className="w-4 h-4" fill="currentColor" />
-                            <span className="text-sm font-medium">{product.healthRating.toFixed(1)}</span>
+                            <span className="text-sm font-medium">{product.healthRating?.toFixed(1) || "N/A"}</span>
                           </div>
                         </div>
 
                         {/* Product Image */}
-                        <div className="aspect-square w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <div className="aspect-square w-full relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-6">
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent 
+                            opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           <img
-                            src={product.imageUrl || 'default-product-image.jpg'}
-                            alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            src={product.image_url || product.imageUrl || '/placeholder.png'}
+                            alt={product.product_name || product.name}
+                            className="w-full h-full object-contain transition-transform duration-300 
+                              group-hover:scale-105"
+                            onError={(e) => {
+                              e.target.src = '/placeholder.png';
+                              e.target.onerror = null;
+                            }}
                           />
                         </div>
 
                         {/* Product Info */}
                         <div className="p-4 flex flex-col flex-grow">
                           <h3 className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-2">
-                            {product.name}
+                            {product.product_name || product.name}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            {product.brand}
+                            {product.brands || product.brand}
                           </p>
                           
                           {/* Action Buttons */}
@@ -394,20 +575,43 @@ export default function Home({ user }) {
                     ))}
                   </div>
                   
-                  {featuredProducts.length > 10 && (
-                    <button
+                  {featuredProducts.length > 8 && (
+                    <motion.button
                       onClick={() => setShowAllFeatured(!showAllFeatured)}
-                      className="mt-6 mx-auto block px-6 py-2 rounded-lg border border-gray-200 
+                      className="mt-8 mx-auto block px-6 py-2.5 rounded-lg border border-gray-200 
                         dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 
-                        transition-colors duration-200"
+                        transition-colors duration-200 font-medium text-gray-700 dark:text-gray-300
+                        hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      {showAllFeatured ? 'Show Less' : 'Show More'}
-                    </button>
+                      {showAllFeatured ? 'Show Less' : `View More Products`}
+                    </motion.button>
                   )}
                 </section>
               </>
             ) : (
               <>
+                {/* Back to Home button */}
+                <div className="mb-6">
+                  <button
+                    onClick={() => setState(prev => ({
+                      ...prev,
+                      products: [],
+                      unfilteredProducts: [],
+                      currentPage: 1,
+                      currentQuery: '',
+                      error: null
+                    }))}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                    </svg>
+                    Back to Home
+                  </button>
+                </div>
+                
                 {/* Error message */}
                 {state.error && (
                   <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -441,11 +645,12 @@ export default function Home({ user }) {
           )}
 
           {/* Static Analysis Section */}
-          {featuredProducts.length > 0 && (
+          {(featuredProducts.length > 0 || selectedAnalysisProduct) && (
             <div id='details' className="mt-12 space-y-12 scroll-mt-8">
-              <AnalysisSection product={selectedAnalysisProduct || featuredProducts[9]} />
-              <IngredientAnalysis product={selectedAnalysisProduct || featuredProducts[9]}/>
-              <NutritionalImpact product={selectedAnalysisProduct || featuredProducts[9]} />
+              <AnalysisSection product={selectedAnalysisProduct || featuredProducts[0]} />
+              <IngredientAnalysis product={selectedAnalysisProduct || featuredProducts[0]} />
+              <NutritionalImpact product={selectedAnalysisProduct || featuredProducts[0]} />
+              
             </div>
           )}
           
@@ -460,7 +665,9 @@ export default function Home({ user }) {
               onAnalysisSelect={handleAnalysisSelect}
             />
           </section>
-          
+
+          <ContributeSection />
+          <RatingSystem/>
         </div>
       </div>
     </>

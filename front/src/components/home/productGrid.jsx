@@ -15,27 +15,22 @@ const ProductCard = ({ product, onProductSelect, onAnalysisSelect, index }) => {
     >
       {/* Health Rating Badge */}
       <div className="absolute top-3 right-3 z-10">
-        <div className="flex items-center gap-1 px-2 py-1 rounded-full 
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-full 
           bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border 
-          border-gray-200 dark:border-gray-800 shadow-sm">
-          <Star className={`w-4 h-4 ${
-            product.healthRating >= 4 ? 'text-yellow-400 fill-yellow-400' :
-            product.healthRating >= 3 ? 'text-green-400 fill-green-400' :
-            'text-orange-400 fill-orange-400'
-          }`} />
-          <span className="text-sm font-medium">{product.healthRating?.toFixed(1) || "N/A"}</span>
+          ${product.healthRating >= 4 ? 'border-green-500 text-green-500' :
+            product.healthRating >= 3 ? 'border-yellow-500 text-yellow-500' :
+            'border-red-500 text-red-500'}`}>
+          <Star className="w-4 h-4" fill="currentColor" />
+          <span className="font-medium text-sm">{product.healthRating?.toFixed(1) || "N/A"}</span>
         </div>
       </div>
 
       {/* Product Image */}
-      <div className="aspect-square p-4 bg-gradient-to-br from-gray-50 to-gray-100 
-        dark:from-gray-800 dark:to-gray-900 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent 
-          opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="aspect-square w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800">
         <img
           src={product.image_url || product.imageUrl || '/placeholder.png'}
           alt={product.product_name || product.name}
-          className="w-full h-full object-contain transition-transform duration-300
+          className="w-full h-full object-cover transition-transform duration-300 
             group-hover:scale-105"
           onError={(e) => {
             e.target.src = '/placeholder.png';
@@ -45,32 +40,29 @@ const ProductCard = ({ product, onProductSelect, onAnalysisSelect, index }) => {
       </div>
 
       {/* Product Info */}
-      <div className="flex-1 p-4 space-y-4">
-        <div>
-          <h3 className="font-medium mb-1 line-clamp-2 leading-tight">
-            {product.product_name || product.name}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
-            {product.brands || product.brand || 'Unknown Brand'}
-          </p>
-        </div>
-
+      <div className="p-4 flex flex-col flex-grow">
+        <h3 className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-2">
+          {product.product_name || product.name}
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          {product.brands || product.brand}
+        </p>
+        
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
+        <div className="mt-auto flex gap-2">
           <button
             onClick={() => onProductSelect(product)}
-            className="flex-1 px-3 py-2 text-sm font-medium text-white bg-primary 
-              rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-2 px-4 rounded-lg bg-primary/10 hover:bg-primary/20 
+              text-primary font-medium transition-colors duration-200"
           >
             Details
-            <ArrowUpRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => onAnalysisSelect(product)}
-            className="flex-1 px-3 py-2 text-sm font-medium text-primary border 
-              border-primary rounded-lg hover:bg-primary/10 transition-colors"
+            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 
+              dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200"
           >
-            Analysis
+            <ArrowUpRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>

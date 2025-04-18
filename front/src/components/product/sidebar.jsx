@@ -157,7 +157,7 @@ export function Sidebar({ user, onAction }) {
                     className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 relative
                       font-medium
                       ${item.section && activeSection === item.section
-                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold border-l-4 border-green-500"
+                        ? "bg-green-100 dark:bg-green-900/30 text-white/30 dark:text-green-400 font-bold border-l-4 border-green-500"
                         : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-green-600 dark:hover:text-green-400 border-l-4 border-transparent"}
                     `}
                   >

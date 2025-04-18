@@ -1,6 +1,19 @@
 import { Check, X, AlertTriangle } from "lucide-react"
+import { useEffect } from "react";
 
 export function NutritionalImpact({ product }) {
+  // Reset state and reanalyze when product changes
+  useEffect(() => {
+    if (product?.nutriments) {
+      const cacheKey = `nutritional-impact-${product._id || product.code}`;
+      localStorage.setItem(cacheKey, JSON.stringify({
+        nutriments: product.nutriments,
+        ingredients: product.ingredients,
+        timestamp: Date.now()
+      }));
+    }
+  }, [product?._id, product?.code, product?.nutriments, product?.ingredients]);
+
   if (!product) return null;
 
   // Map product data to benefits

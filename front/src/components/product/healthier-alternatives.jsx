@@ -3,9 +3,9 @@ import { useState, useEffect } from "react"
 import api from "../../services/api"
 
 export function HealthierAlternatives({ product, onAnalysisSelect }) {
-  const [alternatives, setAlternatives] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [alternatives, setAlternatives] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAlternatives = async () => {
@@ -15,70 +15,30 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
       }
       setIsLoading(true);
       setError(null);
+      
       try {
-        // Use a broader search: prefer category, fallback to 'healthy food'
-        const searchTerm = product.category || 'healthy food';
-        const cacheKey = `healthier-alternatives-${product._id || searchTerm}`;
-        const results = await api.searchProducts(searchTerm, 1);
-        // Loosen health rating filter: allow alternatives with rating >= product.healthRating - 1
-        let healthierAlts = results.products
-          .filter(alt =>
-            alt._id !== product._id &&
-            alt.healthRating >= ((product?.healthRating || 3.0) - 1)
-          )
-          .sort((a, b) => b.healthRating - a.healthRating)
-          .slice(0, 6)
-          .map(alt => ({
-            ...alt,
-            tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
-                 alt.healthRating >= 4.0 ? "Healthy Choice" :
-                 "Better Choice"
-          }));
-        // If still no alternatives, fallback to a generic healthy food search
-        if (healthierAlts.length === 0 && searchTerm !== 'healthy food') {
-          const fallbackResults = await api.searchProducts('healthy food', 1);
-          healthierAlts = fallbackResults.products
-            .filter(alt => alt.healthRating >= 3.5)
-            .sort((a, b) => b.healthRating - a.healthRating)
-            .slice(0, 6)
-            .map(alt => ({
-              ...alt,
-              tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
-                   alt.healthRating >= 4.0 ? "Healthy Choice" :
-                   "Better Choice"
-            }));
-        }
-        // Cache the results
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify({
-            data: healthierAlts,
-            timestamp: Date.now()
-          }));
-        } catch (cacheError) {
-          console.warn('Failed to cache alternatives:', cacheError);
-        }
-        setAlternatives(healthierAlts);
+        // Pass the full product data for better matching
+        const alternatives = await api.getHealthierAlternatives(
+          product.category,
+          product?.healthRating || 3.0,
+          // Include relevant product data for matching
+          {
+            category: product.category,
+            nutriments: product.nutriments,
+            healthRating: product.healthRating,
+            ingredients: product.ingredients
+          }
+        );
+        
+        setAlternatives(alternatives);
       } catch (error) {
         console.error('Failed to fetch alternatives:', error);
-        setError(error.message || 'Failed to load alternatives');
-        // Try to load from cache if API fails
-        try {
-          const cacheKey = `healthier-alternatives-${product._id || product.category || 'healthy'}`;
-          const cachedData = localStorage.getItem(cacheKey);
-          if (cachedData) {
-            const { data, timestamp } = JSON.parse(cachedData);
-            if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-              setAlternatives(data);
-              setError('Showing cached results');
-            }
-          }
-        } catch (cacheError) {
-          console.warn('Failed to load from cache:', cacheError);
-        }
+        setError('Failed to load alternatives');
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchAlternatives();
   }, [product]);
 
@@ -106,8 +66,7 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
     );
   }
 
-  // Show message when no alternatives found
-  if (!isLoading && alternatives.length === 0) {
+  if (!alternatives.length) {
     return (
       <section id="alternatives" className="py-8 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-5xl mx-auto">
