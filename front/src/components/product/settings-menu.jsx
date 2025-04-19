@@ -13,8 +13,9 @@ export function SettingsMenu({ isOpen, onClose, user }) {
   const [openaiApiKey, setOpenaiApiKey] = useState("")
 
   const handleLogout = () => {
-    // Clear local storage
+    // Clear all auth data
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
     // Close settings menu
     onClose();
     // Redirect will be handled by parent

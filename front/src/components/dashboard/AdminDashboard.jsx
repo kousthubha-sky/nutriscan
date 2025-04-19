@@ -10,9 +10,10 @@ import {
   ChevronDown,
   Search,
   Filter,
-  MoreVertical
+  MoreVertical,
+  Loader2
 } from 'lucide-react'
-
+import { toast } from 'react-toastify'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -28,29 +29,32 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [isLoading, setIsLoading] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
+      setIsLoading(true)
       let endpoint = ''
       switch (selectedTab) {
         case 'products':
-          endpoint = 'products'
+          endpoint = 'admin/products'
           break
         case 'submissions':
-          endpoint = 'submissions'
+          endpoint = 'admin/submissions'
           break
         case 'users':
-          endpoint = 'users'
+          endpoint = 'admin/users'
           break
         default:
           return
       }
 
-      const response = await fetch(`http://localhost:3000/admin/${endpoint}`, {
+      const response = await fetch(`http://localhost:3000/${endpoint}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       })
+
       if (!response.ok) throw new Error(`Failed to fetch ${endpoint}`)
       const data = await response.json()
       
@@ -67,6 +71,9 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error fetching data:', error)
+      toast.error(`Failed to fetch ${selectedTab}. Please try again.`)
+    } finally {
+      setIsLoading(false)
     }
   }, [selectedTab])
 
@@ -81,7 +88,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetch('http://localhost:3000/admin/stats', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       })
       if (!response.ok) throw new Error('Failed to fetch stats')
@@ -89,6 +96,7 @@ export default function AdminDashboard() {
       setStats(data)
     } catch (error) {
       console.error('Error fetching stats:', error)
+      toast.error('Failed to fetch dashboard stats. Please try again.')
     }
   }
 
@@ -98,7 +106,7 @@ export default function AdminDashboard() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({ status })
       })
@@ -117,11 +125,21 @@ export default function AdminDashboard() {
   }
 
   const filterData = (data) => {
+    if (!data) return []
+    
     return data.filter(item => {
-      const matchesSearch = 
-        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.username?.toLowerCase().includes(searchTerm.toLowerCase())
+      const searchableFields = [
+        item.name,
+        item.productName,
+        item.email,
+        item.username,
+        item.barcodeNumber
+      ].filter(Boolean) // Remove undefined/null values
+      
+      const matchesSearch = searchTerm === '' || 
+        searchableFields.some(field => 
+          field.toLowerCase().includes(searchTerm.toLowerCase())
+        )
       
       const matchesFilter = 
         filterStatus === 'all' || 
@@ -236,8 +254,16 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Add loading indicator */}
+      {isLoading && (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading...</span>
+        </div>
+      )}
+
       {/* Content Tables */}
-      {selectedTab === 'products' && (
+      {!isLoading && selectedTab === 'products' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
@@ -311,13 +337,16 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {selectedTab === 'submissions' && (
+      {!isLoading && selectedTab === 'submissions' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Product
+                  Product Info
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Images
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
@@ -337,21 +366,41 @@ export default function AdminDashboard() {
               {filterData(submissions).map((submission) => (
                 <tr key={submission._id}>
                   <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <img
-                          className="h-10 w-10 rounded-full"
-                          src={submission.image || '/placeholder.png'}
-                          alt=""
-                        />
+                    <div className="flex flex-col">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {submission.productName}
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {submission.productName}
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Barcode: {submission.barcodeNumber}
+                      </div>
+                      {submission.additionalInfo && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {submission.additionalInfo}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {submission.brand}
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex space-x-4">
+                      <div className="flex flex-col items-center">
+                        <div className="h-16 w-16 mb-1">
+                          <img
+                            className="h-16 w-16 object-cover rounded-lg"
+                            src={submission.productImage || '/placeholder.png'}
+                            alt="Product"
+                          />
                         </div>
+                        <span className="text-xs text-gray-500">Product</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="h-16 w-16 mb-1">
+                          <img
+                            className="h-16 w-16 object-cover rounded-lg"
+                            src={submission.barcodeImage || '/placeholder.png'}
+                            alt="Barcode"
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500">Barcode</span>
                       </div>
                     </div>
                   </td>
@@ -368,22 +417,24 @@ export default function AdminDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {submission.submittedBy}
+                    {submission.submittedBy?.username || 'Unknown'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(submission.createdAt).toLocaleDateString()}
+                    {new Date(submission.submittedAt || submission.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => handleStatusChange(submission._id, 'approved', 'submissions')}
                         className="text-green-600 hover:text-green-900 dark:hover:text-green-400"
+                        title="Approve submission"
                       >
                         <CheckCircle className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleStatusChange(submission._id, 'rejected', 'submissions')}
                         className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                        title="Reject submission"
                       >
                         <XCircle className="h-5 w-5" />
                       </button>
@@ -396,7 +447,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {selectedTab === 'users' && (
+      {!isLoading && selectedTab === 'users' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">

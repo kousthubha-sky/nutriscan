@@ -2,14 +2,34 @@ const ProductSubmission = require('../models/ProductSubmission');
 const Product = require('../models/Product');
 const calculateHealthRating = require('../utils/healthRating');
 const User = require('../models/user.model');
+const fs = require('fs').promises;
+const path = require('path');
+
+// Helper function to delete uploaded files
+async function cleanupFiles(submission) {
+    try {
+        if (submission.productImage) {
+            await fs.unlink(submission.productImage);
+        }
+        if (submission.barcodeImage) {
+            await fs.unlink(submission.barcodeImage);
+        }
+    } catch (error) {
+        console.error('Error cleaning up files:', error);
+    }
+}
 
 // Middleware to check if user is admin
 exports.isAdmin = async (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        res.status(403).json({ success: false, message: 'Access denied. Admin only.' });
+    if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
     }
+    
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Access denied. Admin only.' });
+    }
+    
+    next();
 };
 
 // Get all pending submissions
@@ -79,20 +99,25 @@ exports.reviewSubmission = async (req, res) => {
         submission.reviewedAt = new Date();
 
         if (status === 'approved') {
-            // Calculate health rating
-            const healthRating = calculateHealthRating(submission);
-            
             // Create or update product in main database
             await Product.findOneAndUpdate(
-                { barcode: submission.barcode },
+                { barcodeNumber: submission.barcodeNumber },
                 {
-                    ...submission.toObject(),
-                    healthRating,
+                    name: submission.productName,
+                    barcodeNumber: submission.barcodeNumber,
+                    image: submission.productImage,
+                    barcodeImage: submission.barcodeImage,
+                    additionalInfo: submission.additionalInfo,
                     lastUpdated: new Date(),
+                    addedBy: submission.submittedBy,
+                    status: 'active',
                     source: 'user_submission'
                 },
                 { upsert: true, new: true }
             );
+        } else if (status === 'rejected') {
+            // Clean up files for rejected submissions
+            await cleanupFiles(submission);
         }
 
         await submission.save();
@@ -208,27 +233,36 @@ exports.updateSubmissionStatus = async (req, res) => {
             return res.status(404).json({ message: 'Submission not found' });
         }
 
+        const previousStatus = submission.status;
         submission.status = status;
         await submission.save();
 
-        // If approved, create a new product
+        // If status changed to approved, create a new product
         if (status === 'approved') {
             const newProduct = new Product({
                 name: submission.productName,
-                brand: submission.brand,
-                category: submission.category,
-                image: submission.image,
-                nutritionFacts: submission.nutritionFacts,
-                ingredients: submission.ingredients,
+                barcode: submission.barcodeNumber,
+                productImage: submission.productImage,  // Using consistent field name
+                barcodeImage: submission.barcodeImage,
+                description: submission.additionalInfo,
                 addedBy: submission.submittedBy,
                 status: 'active'
             });
             await newProduct.save();
         }
 
+        // If rejected, clean up files
+        if (status === 'rejected' && previousStatus !== 'rejected') {
+            await cleanupFiles(submission);
+        }
+
         res.json(submission);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating submission', error: error.message });
+        res.status(500).json({ 
+            message: 'Error updating submission', 
+            error: error.message,
+            details: error.errors // Include validation errors if any
+        });
     }
 };
 

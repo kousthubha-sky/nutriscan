@@ -1,38 +1,29 @@
 const mongoose = require('mongoose');
 
 const productSubmissionSchema = new mongoose.Schema({
-    name: {
+    productName: {
         type: String,
         required: true,
         trim: true
     },
-    brand: {
+    barcodeNumber: {
         type: String,
         required: true,
-        trim: true
-    },
-    category: {
-        type: String,
-        required: true
-    },
-    barcode: {
-        type: String,
         unique: true,
         sparse: true
     },
-    ingredients: {
-        type: String,
+    productImage: {
+        type: String,  // URL or path to the stored image
         required: true
     },
-    nutriments: {
-        proteins_100g: Number,
-        carbohydrates_100g: Number,
-        fat_100g: Number,
-        fiber_100g: Number,
-        sugars_100g: Number,
-        salt_100g: Number
+    barcodeImage: {
+        type: String,  // URL or path to the stored image
+        required: true
     },
-    imageUrl: String,
+    additionalInfo: {
+        type: String,
+        trim: true
+    },
     submittedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',

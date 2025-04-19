@@ -41,6 +41,8 @@ export default function Signup({onLogin}) {
             return response.json();
         })
         .then(data => {
+            // Store both user data and token
+            localStorage.setItem('authToken', data.token);
             onLogin(data.user);
             navigate("/");
         })

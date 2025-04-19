@@ -1,5 +1,8 @@
 import { useState } from "react"
 import { Upload, Barcode, Package, Info, X } from "lucide-react"
+import api from "../../services/api"
+import { toast } from "react-toastify"
+import { SuccessCheckmark } from "../ui/SuccessCheckmark"
 
 export function ContributeSection() {
   const [formData, setFormData] = useState({
@@ -14,6 +17,8 @@ export function ContributeSection() {
     productImage: null,
     barcodeImage: null
   })
+
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -52,38 +57,36 @@ export function ContributeSection() {
         submissionData.append('barcodeImage', formData.barcodeImage)
       }
 
-      const submission = {
-        ...formData,
-        productImage: preview.productImage,
-        barcodeImage: preview.barcodeImage,
-        timestamp: new Date().toISOString(),
-        status: 'pending'
-      }
-      
-      const existingSubmissions = JSON.parse(localStorage.getItem('productSubmissions') || '[]')
-      localStorage.setItem('productSubmissions', JSON.stringify([...existingSubmissions, submission]))
+      // Submit to backend
+      await api.submitProduct(submissionData)
 
-      setFormData({
-        productName: "",
-        barcodeNumber: "",
-        additionalInfo: "",
-        productImage: null,
-        barcodeImage: null
-      })
-      setPreview({
-        productImage: null,
-        barcodeImage: null
-      })
+      // Show success animation
+      setShowSuccess(true)
 
-      alert("Thank you for your contribution! Your submission will be reviewed by our team.")
+      // Reset form after delay
+      setTimeout(() => {
+        setShowSuccess(false)
+        setFormData({
+          productName: "",
+          barcodeNumber: "",
+          additionalInfo: "",
+          productImage: null,
+          barcodeImage: null
+        })
+        setPreview({
+          productImage: null,
+          barcodeImage: null
+        })
+      }, 1500)
     } catch (error) {
       console.error('Submission error:', error)
-      alert("There was an error submitting your contribution. Please try again.")
+      toast.error("There was an error submitting your contribution. Please try again.")
     }
   }
 
   return (
     <section id="contribute" className="py-8 border-t border-gray-200 dark:border-gray-800">
+      <SuccessCheckmark isVisible={showSuccess} />
       <div className="max-w-5xl mx-auto">
         <h2 className="text-2xl font-bold mb-2">Contribute Product Information</h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">

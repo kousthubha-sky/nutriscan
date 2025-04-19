@@ -42,7 +42,9 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
+    // Clean up both user data and auth token
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
     return <Navigate to="/" />;
   };
 

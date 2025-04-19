@@ -16,7 +16,8 @@ const productSchema = new mongoose.Schema({
     type: String,
     index: true
   },
-  imageUrl: String,
+  productImage: String,  // Changed from imageUrl to productImage
+  barcodeImage: String,  // Added to match ProductSubmission schema
   category: {
     type: String,
     index: true

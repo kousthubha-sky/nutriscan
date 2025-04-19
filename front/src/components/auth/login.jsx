@@ -32,6 +32,8 @@ export default function Login({ onLogin }) {
             return response.json();
         })
         .then((data) => {
+            // Store both user data and token
+            localStorage.setItem('authToken', data.token);
             onLogin(data.user);
             toast.success("Welcome back! Login successful");
             // Redirect admins to admin dashboard, regular users to home

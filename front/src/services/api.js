@@ -121,6 +121,49 @@ const api = {
     }
   },
 
+  async submitProduct(formData) {
+    try {
+      const response = await fetch(`${API_BASE}/products/submit`, {
+        method: 'POST',
+        headers: {
+          ...this.getAuthHeaders(),
+          // Don't set Content-Type here as it's handled by FormData
+        },
+        body: formData
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  },
+
+  async getSubmissionDetails(submissionId) {
+    try {
+      const response = await fetch(`${API_BASE}/admin/submissions/${submissionId}`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  },
+
+  async updateSubmissionStatus(submissionId, status) {
+    try {
+      const response = await fetch(`${API_BASE}/admin/submissions/${submissionId}/status`, {
+        method: 'PATCH',
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  },
+
   getAuthHeaders() {
     const token = localStorage.getItem('authToken');
     return {

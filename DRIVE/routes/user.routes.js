@@ -4,8 +4,6 @@ const router = express.Router()
 const userModel = require('../models/user.model')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-
 const {body, validationResult} = require('express-validator');
 
 router.get('/signup', (req, res) => {
@@ -64,7 +62,6 @@ router.post('/login',
   body('username').trim().isLength({min: 3}),
   body('password').trim().isLength({min: 5}),
   async (req, res) => {
-
     const errors = validationResult(req)
 
     if(!errors.isEmpty()){
@@ -73,53 +70,48 @@ router.post('/login',
         message: 'User login failed'
       })
     }
-    const { username, password } = req.body
-    console.log(req.body)
-    console.log('Login Request Body:', req.body);
     
-
-    //this will find the user in the database
-    //if the user is not found it will return a message
-    const user= await userModel.findOne({ 
+    const { username, password } = req.body
+    
+    const user = await userModel.findOne({ 
       username: username.toLowerCase()
     })
+    
     if(!user){
       return res.status(400).json({
         message: 'Username or password incorrect'
       })
     }
 
-    console.log('Input Password:', password);
-    
-      //if the user is not found in the database it will return this message
     const isMatch = await bcrypt.compare(password, user.password)
-    //if the password is not correct it will return this message
     if(!isMatch) {
-      return res.status(400).json({ message: 'password incorrect' });
-  }
-  // Return user data without password
-  const userData = {
+      return res.status(400).json({ message: 'Password incorrect' });
+    }
+
+    // Generate JWT token with role included
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        role: user.role 
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Return user data and token
+    const userData = {
       username: user.username,
       email: user.email,
       _id: user._id,
-      role: user.role  // Include role in response
-  };
-  return res.status(200).json({ message: 'Login successful', user: userData });
+      role: user.role
+    };
 
-  
-    //json web token
-  //   const token = jwt.sign({
-  //     userId: user._id,
-  //     email: user.email,
-  //     username: user.username
-  //   },
-  //   process.env.JWT_SECRET,
-  //   { expiresIn: '1h' } // Add expiresIn option
-  // )
-  // res.cookie('token', token)
-  
+    return res.status(200).json({
+      message: 'Login successful',
+      user: userData,
+      token: token
+    });
+  }
+);
 
-   } // Close the async function properly
-
-)
 module.exports = router
