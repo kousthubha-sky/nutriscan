@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import api from '../../services/api';
-import ProductSearch from './ProductSearch';
-import ProductGrid from './ProductGrid';
+import ProductSearch from './productSearch';
+import ProductGrid from './productGrid';
 import ProductDetailsModal from './ProductDetailsModal';
 import { FloatingFoodIcons } from '../ui/floating-food-icons';
 // eslint-disable-next-line no-unused-vars
