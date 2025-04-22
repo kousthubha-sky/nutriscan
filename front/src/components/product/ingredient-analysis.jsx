@@ -42,13 +42,14 @@ export function IngredientAnalysis({ product }) {
   }
 
   // Split ingredients string into array and clean up
-  const ingredientsList = currentProduct.ingredients
-    .split(',')
-    .map(i => i.trim())
-    .filter(i => i.length > 0);
+  const ingredientsList = Array.isArray(currentProduct.ingredients)
+    ? currentProduct.ingredients
+    : currentProduct.ingredients.split(',');
 
-  // Analyze each ingredient
-  const analyzedIngredients = ingredientsList.map(ingredient => {
+  const analyzedIngredients = ingredientsList
+    .map(i => i.trim())
+    .filter(i => i.length > 0)
+    .map(ingredient => {
     // Default analysis
     let analysis = {
       name: ingredient,

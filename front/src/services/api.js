@@ -105,17 +105,32 @@ const api = {
     }
   },
 
-  async reviewSubmission(submissionId, { status, feedback }) {
+  async reviewSubmission(submissionId, { status, adminNotes, ...productData }) {
     try {
-      const response = await fetch(`${API_BASE}/admin/submissions/${submissionId}/review`, {
-        method: 'POST',
+      // First update the status
+      const statusResponse = await fetch(`${API_BASE}/admin/submissions/${submissionId}/status`, {
+        method: 'PATCH',
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status, feedback })
+        body: JSON.stringify({ status, adminNotes })
       });
-      return this.handleResponse(response);
+      await this.handleResponse(statusResponse);
+      
+      // Then update the product data if needed
+      if (Object.keys(productData).length > 0) {
+        const updateResponse = await fetch(`${API_BASE}/admin/submissions/${submissionId}`, {
+          method: 'PATCH',
+          headers: {
+            ...this.getAuthHeaders(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(productData)
+        });
+        return this.handleResponse(updateResponse);
+      }
+      return { success: true };
     } catch (error) {
       throw this.handleError(error);
     }

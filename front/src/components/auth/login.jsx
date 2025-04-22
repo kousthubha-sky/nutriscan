@@ -96,6 +96,15 @@ export default function Login({ onLogin }) {
                         </div>
                     </div>
 
+                    <div className="flex items-center justify-end">
+                        <Link 
+                            to="/forgot-password"
+                            className="text-sm text-white/80 hover:text-white underline transition-colors"
+                        >
+                            Forgot your password?
+                        </Link>
+                    </div>
+
                     <button
                         type="submit"
                         disabled={isLoading}

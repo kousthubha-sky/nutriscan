@@ -23,9 +23,13 @@ const productSchema = new mongoose.Schema({
     index: true
   },
   description: String,
-  ingredients: String,
+  ingredients: [{
+    type: String
+  }],
   labels: String,
-  allergens: String,
+  allergens: [{
+    type: String
+  }],
   nutriments: {
     energy_kcal_100g: Number,
     carbohydrates_100g: Number,
@@ -50,6 +54,10 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
     index: true
+  },
+  addedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user'
   }
 }, {
   timestamps: true

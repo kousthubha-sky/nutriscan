@@ -1,4 +1,4 @@
-import { X, Star, Sparkles, Clock, Tag, Box, Scale, Shield, ChevronDown } from "lucide-react";
+import { X, Star, Sparkles, Clock, Tag, Box, Scale, Shield, ChevronDown, AlertTriangle } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { NutritionFacts } from '../product/NutritionFacts';
 import { IngredientAnalysis } from '../product/ingredient-analysis';
@@ -247,7 +247,24 @@ export default function ProductDetailsModal({ product, onClose }) {
                             <h4 className="font-medium">Ingredients</h4>
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {product.ingredients}
+                            {Array.isArray(product.ingredients) ? product.ingredients.join(', ') : product.ingredients || 'No ingredients listed'}
+                          </p>
+                        </motion.div>
+                      )}
+
+                      {product.allergens && product.allergens.length > 0 && (
+                        <motion.div
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.6 }}
+                          className="rounded-xl border border-gray-200 dark:border-gray-800 p-4"
+                        >
+                          <div className="flex items-center gap-2 mb-2 text-primary">
+                            <AlertTriangle className="w-4 h-4" />
+                            <h4 className="font-medium">Allergens</h4>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {Array.isArray(product.allergens) ? product.allergens.join(', ') : product.allergens}
                           </p>
                         </motion.div>
                       )}

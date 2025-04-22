@@ -85,51 +85,71 @@ exports.getSubmissionDetails = async (req, res) => {
 // Review submission (approve/reject)
 exports.reviewSubmission = async (req, res) => {
     try {
-        const { status, feedback } = req.body;
-        const submissionId = req.params.id;
+        const { id } = req.params;
+        const { 
+            status, 
+            adminNotes,
+            productName,
+            brand,
+            category,
+            ingredients,
+            nutritionalInfo,
+            allergens,
+            dietaryInfo
+        } = req.body;
 
-        const submission = await ProductSubmission.findById(submissionId);
+        const submission = await ProductSubmission.findById(id);
         if (!submission) {
-            return res.status(404).json({ success: false, message: 'Submission not found' });
+            return res.status(404).json({ message: 'Submission not found' });
         }
 
-        submission.status = status;
-        submission.adminFeedback = feedback;
-        submission.reviewedBy = req.user._id;
-        submission.reviewedAt = new Date();
+        // Update submission fields if provided
+        if (productName) submission.productName = productName;
+        if (brand) submission.brand = brand;
+        if (category) submission.category = category;
+        if (ingredients) submission.ingredients = ingredients;
+        if (nutritionalInfo) submission.nutritionalInfo = {
+            ...submission.nutritionalInfo,
+            ...nutritionalInfo
+        };
+        if (allergens) submission.allergens = allergens;
+        if (dietaryInfo) submission.dietaryInfo = dietaryInfo;
 
+        // Update status and add to review history
+        submission.status = status || submission.status;
+        submission.adminNotes = adminNotes;
+        submission.reviewHistory.push({
+            status: status || submission.status,
+            notes: adminNotes,
+            updatedBy: req.user._id
+        });
+
+        // If approved, create a new product in the main products collection
         if (status === 'approved') {
-            // Create or update product in main database
-            await Product.findOneAndUpdate(
-                { barcodeNumber: submission.barcodeNumber },
-                {
-                    name: submission.productName,
-                    barcodeNumber: submission.barcodeNumber,
-                    image: submission.productImage,
-                    barcodeImage: submission.barcodeImage,
-                    additionalInfo: submission.additionalInfo,
-                    lastUpdated: new Date(),
-                    addedBy: submission.submittedBy,
-                    status: 'active',
-                    source: 'user_submission'
-                },
-                { upsert: true, new: true }
-            );
-        } else if (status === 'rejected') {
-            // Clean up files for rejected submissions
-            await cleanupFiles(submission);
+            const newProduct = new Product({
+                name: submission.productName,
+                barcode: submission.barcodeNumber,
+                brand: submission.brand,
+                category: submission.category,
+                ingredients: Array.isArray(submission.ingredients) ? submission.ingredients : [submission.ingredients].filter(Boolean),
+                nutritionalInfo: submission.nutritionalInfo,
+                allergens: Array.isArray(submission.allergens) ? submission.allergens : [submission.allergens].filter(Boolean),
+                dietaryInfo: submission.dietaryInfo,
+                productImage: submission.productImage,
+                barcodeImage: submission.barcodeImage,
+                addedBy: submission.submittedBy,
+                lastFetched: new Date()
+            });
+            await newProduct.save();
         }
 
         await submission.save();
-
-        res.json({
-            success: true,
-            message: `Submission ${status}`,
+        res.json({ 
+            message: 'Submission reviewed successfully',
             submission
         });
     } catch (error) {
-        console.error('Error reviewing submission:', error);
-        res.status(500).json({ success: false, message: 'Failed to review submission' });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -200,12 +220,28 @@ exports.getProducts = async (req, res) => {
 exports.getSubmissions = async (req, res) => {
     try {
         const submissions = await ProductSubmission.find()
-            .sort({ createdAt: -1 })
-            .populate('submittedBy', 'username');
-        
+            .populate('submittedBy', 'username email')
+            .sort({ submittedAt: -1 });
         res.json(submissions);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching submissions', error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get submission by ID
+exports.getSubmissionById = async (req, res) => {
+    try {
+        const submission = await ProductSubmission.findById(req.params.id)
+            .populate('submittedBy', 'username email')
+            .populate('reviewHistory.updatedBy', 'username');
+        
+        if (!submission) {
+            return res.status(404).json({ message: 'Submission not found' });
+        }
+        
+        res.json(submission);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -227,42 +263,18 @@ exports.updateSubmissionStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-
+        
         const submission = await ProductSubmission.findById(id);
         if (!submission) {
             return res.status(404).json({ message: 'Submission not found' });
         }
 
-        const previousStatus = submission.status;
         submission.status = status;
         await submission.save();
 
-        // If status changed to approved, create a new product
-        if (status === 'approved') {
-            const newProduct = new Product({
-                name: submission.productName,
-                barcode: submission.barcodeNumber,
-                productImage: submission.productImage,  // Using consistent field name
-                barcodeImage: submission.barcodeImage,
-                description: submission.additionalInfo,
-                addedBy: submission.submittedBy,
-                status: 'active'
-            });
-            await newProduct.save();
-        }
-
-        // If rejected, clean up files
-        if (status === 'rejected' && previousStatus !== 'rejected') {
-            await cleanupFiles(submission);
-        }
-
-        res.json(submission);
+        res.json({ message: 'Status updated successfully', submission });
     } catch (error) {
-        res.status(500).json({ 
-            message: 'Error updating submission', 
-            error: error.message,
-            details: error.errors // Include validation errors if any
-        });
+        res.status(500).json({ message: error.message });
     }
 };
 

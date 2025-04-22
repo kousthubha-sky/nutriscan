@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import Login from './components/auth/login';
 import Home from './components/home/home';
 import Signup from './components/auth/signup';
+import ForgotPassword from './components/auth/ForgotPassword';
 import { Sidebar } from './components/product/sidebar';
 import { ThemeProvider } from './components/ui/theme-provider';
 import Navbar from './components/shared/Navbar';
@@ -96,6 +97,7 @@ function App() {
               <Route path="/" element={<Home user={user} />} />
               <Route path="/login" element={<Login onLogin={setUser} />} />
               <Route path="/signup" element={<Signup onLogin={setUser} />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route 
                 path="/admin" 
                 element={

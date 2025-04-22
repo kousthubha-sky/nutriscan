@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { ArrowLeft, User, Mail, MapPin, Edit, Save, Camera, Shield, Download, Lock } from "lucide-react"
+import { ChangePassword } from "../auth/ChangePassword"
+import { toast } from "react-toastify"
 
 export function UserProfile({ isOpen, onClose, user }) {
   const [isEditing, setIsEditing] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [userData, setUserData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -30,6 +34,13 @@ export function UserProfile({ isOpen, onClose, user }) {
         savedProducts: user.savedProducts || 0,
         scanHistory: user.scanHistory || 0,
       })
+      setEditForm({
+        username: user.username,
+        email: user.email,
+        location: user.location || 'Not specified',
+        dietaryPreferences: user.dietaryPreferences || [],
+        allergies: user.allergies || [],
+      })
     }
   }, [user])
 
@@ -38,14 +49,59 @@ export function UserProfile({ isOpen, onClose, user }) {
     setEditForm({ ...userData })
   }
 
-  const handleSave = () => {
-    setUserData({ ...editForm })
-    setIsEditing(false)
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      const response = await fetch("http://localhost:3000/user/preferences", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          location: editForm.location,
+          dietaryPreferences: editForm.dietaryPreferences,
+          allergies: editForm.allergies,
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update preferences")
+      }
+
+      setUserData(prev => ({
+        ...prev,
+        location: data.user.location,
+        dietaryPreferences: data.user.dietaryPreferences,
+        allergies: data.user.allergies,
+      }))
+
+      // Update the user in localStorage
+      const currentUser = JSON.parse(localStorage.getItem('user'))
+      localStorage.setItem('user', JSON.stringify({
+        ...currentUser,
+        location: data.user.location,
+        dietaryPreferences: data.user.dietaryPreferences,
+        allergies: data.user.allergies,
+      }))
+
+      setIsEditing(false)
+      toast.success("Preferences updated successfully")
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setEditForm({ ...editForm, [name]: value })
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }))
   }
 
   if (!isOpen) return null
@@ -83,10 +139,11 @@ export function UserProfile({ isOpen, onClose, user }) {
             ) : (
               <button
                 onClick={handleSave}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                disabled={isSaving}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                <span>Save Changes</span>
+                <span>{isSaving ? "Saving..." : "Save Changes"}</span>
               </button>
             )}
           </div>
@@ -270,7 +327,10 @@ export function UserProfile({ isOpen, onClose, user }) {
                   <div className="rounded-xl border border-border p-6 space-y-4">
                     <h4 className="font-medium text-lg">Account Actions</h4>
                     <div className="space-y-3">
-                      <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-accent rounded-lg transition-colors">
+                      <button 
+                        onClick={() => setShowChangePassword(true)}
+                        className="w-full flex items-center gap-3 p-3 text-left hover:bg-accent rounded-lg transition-colors"
+                      >
                         <Lock className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium">Change Password</p>
@@ -301,6 +361,11 @@ export function UserProfile({ isOpen, onClose, user }) {
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <ChangePassword onClose={() => setShowChangePassword(false)} />
+      )}
     </div>
   )
 }

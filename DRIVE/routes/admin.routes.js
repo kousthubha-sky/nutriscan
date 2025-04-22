@@ -15,7 +15,7 @@ router.get('/submissions/stats', adminController.getSubmissionStats);
 // Submissions management
 router.get('/submissions', adminController.getSubmissions);
 router.get('/submissions/pending', adminController.getPendingSubmissions);
-router.get('/submissions/:id', adminController.getSubmissionDetails);
+router.get('/submissions/:id', adminController.getSubmissionById);
 router.patch('/submissions/:id/status', adminController.updateSubmissionStatus);
 router.post('/submissions/:id/review', adminController.reviewSubmission);
 

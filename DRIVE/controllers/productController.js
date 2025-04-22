@@ -177,9 +177,9 @@ exports.searchProducts = async (req, res) => {
               imageUrl: p.image_url || p.image_small_url || p.image_thumb_url,
               category: p.categories?.split(',')[0]?.trim(),
               description: p.generic_name || p.product_name,
-              ingredients: p.ingredients_text || '',
+              ingredients: p.ingredients_text ? p.ingredients_text.split(',').map(i => i.trim()).filter(Boolean) : [],
               labels: p.labels || '',
-              allergens: p.allergens || '',
+              allergens: p.allergens ? p.allergens.split(',').map(a => a.trim()).filter(Boolean) : [],
               nutriments: {
                 energy_kcal_100g: p.nutriments?.energy_kcal_100g,
                 carbohydrates_100g: p.nutriments?.carbohydrates_100g,

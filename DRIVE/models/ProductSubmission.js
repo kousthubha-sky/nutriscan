@@ -12,6 +12,33 @@ const productSubmissionSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    brand: {
+        type: String,
+        default: 'Not specified'
+    },
+    category: {
+        type: String,
+        default: 'Uncategorized'
+    },
+    ingredients: [{
+        type: String
+    }],
+    nutritionalInfo: {
+        servingSize: String,
+        calories: Number,
+        protein: Number,
+        carbohydrates: Number,
+        fat: Number,
+        fiber: Number,
+        sugar: Number,
+        sodium: Number
+    },
+    allergens: [{
+        type: String
+    }],
+    dietaryInfo: [{
+        type: String
+    }],
     productImage: {
         type: String,  // URL or path to the stored image
         required: true
@@ -20,30 +47,44 @@ const productSubmissionSchema = new mongoose.Schema({
         type: String,  // URL or path to the stored image
         required: true
     },
-    additionalInfo: {
+    status: {
         type: String,
-        trim: true
+        enum: ['pending', 'in_review', 'approved', 'rejected'],
+        default: 'pending'
     },
+    adminNotes: {
+        type: String
+    },
+    reviewHistory: [{
+        status: String,
+        notes: String,
+        updatedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'user'
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     submittedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
         required: true
     },
-    status: {
-        type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending'
-    },
-    adminFeedback: String,
-    reviewedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user'
-    },
-    reviewedAt: Date,
     submittedAt: {
         type: Date,
         default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
+});
+
+productSubmissionSchema.pre('save', function(next) {
+    this.updatedAt = new Date();
+    next();
 });
 
 const ProductSubmission = mongoose.model('ProductSubmission', productSubmissionSchema);

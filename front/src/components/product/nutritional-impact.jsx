@@ -92,7 +92,7 @@ export function NutritionalImpact({ product }) {
     if (currentProduct.allergens) {
       concerns.push({
         title: "Potential Allergens",
-        description: `Contains or may contain: ${currentProduct.allergens}`,
+        description: `Contains or may contain: ${Array.isArray(currentProduct.allergens) ? currentProduct.allergens.join(', ') : currentProduct.allergens}`,
         icon: <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />,
       });
     }
@@ -113,7 +113,9 @@ export function NutritionalImpact({ product }) {
 
   // Determine dietary compatibility
   const getDietaryCompatibility = () => {
-    const ingredients = (currentProduct.ingredients || '').toLowerCase();
+    const ingredients = Array.isArray(currentProduct.ingredients) 
+      ? currentProduct.ingredients.join(' ').toLowerCase()
+      : (currentProduct.ingredients || '').toLowerCase();
     
     return [
       {
@@ -128,7 +130,7 @@ export function NutritionalImpact({ product }) {
       },
       {
         diet: "Gluten-Free",
-        compatible: !ingredients.includes('wheat') && !ingredients.includes('gluten') ? true : "caution",
+        compatible: !ingredients.includes('wheat') && !ingredients.includes('gluten'),
         note: ingredients.includes('wheat') ? "Contains wheat" : "May contain traces of gluten",
       },
       {
@@ -151,7 +153,10 @@ export function NutritionalImpact({ product }) {
 
   // Analyze processing methods based on ingredients and product category
   const getProcessingMethods = () => {
-    const ingredients = (currentProduct.ingredients || '').toLowerCase();
+    const ingredients = Array.isArray(currentProduct.ingredients)
+      ? currentProduct.ingredients.join(' ').toLowerCase()
+      : (currentProduct.ingredients || '').toLowerCase();
+
     const methods = [];
 
     // Common processing methods based on ingredients
@@ -209,7 +214,10 @@ export function NutritionalImpact({ product }) {
 
   // Analyze additives in the product
   const getAdditivesAnalysis = () => {
-    const ingredients = (currentProduct.ingredients || '').toLowerCase();
+    const ingredients = Array.isArray(currentProduct.ingredients)
+      ? currentProduct.ingredients.join(' ').toLowerCase()
+      : (currentProduct.ingredients || '').toLowerCase();
+
     const additives = {
       artificial: false,
       types: []
