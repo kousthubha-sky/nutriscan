@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { ProductReviewForm } from './ProductReviewForm';
-import {
+import { 
   Clock,
   CheckCircle,
   XCircle,
@@ -12,9 +12,12 @@ import {
   Users,
   Package,
   BarChart,
-  Layers
+  Layers,
+  Check,
+  Store 
 } from 'lucide-react';
-import api from '../../services/api'; // Assuming api is imported from a separate file
+import { FloatingFoodIcons } from '../ui/floating-food-icons';
+import api from '../../services/api';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -32,6 +35,29 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [indianProducts, setIndianProducts] = useState([]);
+  const [isLoadingIndian, setIsLoadingIndian] = useState(false);
+
+  const fetchIndianProducts = async () => {
+    try {
+      setIsLoadingIndian(true);
+      const response = await fetch('http://localhost:3000/products/indian', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch Indian products');
+      }
+      const data = await response.json();
+      setIndianProducts(data.products);
+    } catch (error) {
+      toast.error(error.message);
+      setIndianProducts([]);
+    } finally {
+      setIsLoadingIndian(false);
+    }
+  };
 
   const fetchSubmissions = useCallback(async () => {
     try {
@@ -63,6 +89,8 @@ export default function AdminDashboard() {
       fetchProducts();
     } else if (activeTab === 'users') {
       fetchUsers();
+    } else if (activeTab === 'indian') {
+      fetchIndianProducts();
     }
   }, [activeTab, filter, fetchSubmissions]);
 
@@ -133,13 +161,45 @@ export default function AdminDashboard() {
 
   const handleReviewSubmit = async (formData) => {
     try {
-      await api.reviewSubmission(selectedSubmission._id, formData);
+      setIsLoading(true);
+      const response = await api.reviewSubmission(selectedSubmission._id, formData);
+      
+      // Check if the response has an error message
+      if (!response.success && response.message) {
+        throw new Error(response.message);
+      }
+      
       await fetchSubmissions();
       setIsReviewModalOpen(false);
       setSelectedSubmission(null);
       toast.success('Review submitted successfully');
     } catch (error) {
-      toast.error(error.message);
+      console.error('Review submission error:', error);
+      toast.error(error.message || 'Failed to submit review. Please ensure all required fields are filled.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuickApprove = async (submission) => {
+    try {
+      // Use the existing submission data but set status to approved
+      const approvalData = {
+        ...submission,
+        status: 'approved',
+        adminNotes: 'Quick approved by admin'
+      };
+      
+      const response = await api.reviewSubmission(submission._id, approvalData);
+      if (response.success) {
+        await fetchSubmissions();
+        toast.success('Product approved successfully');
+      } else {
+        throw new Error(response.message || 'Failed to approve product');
+      }
+    } catch (error) {
+      console.error('Quick approval error:', error);
+      toast.error(error.message || 'Failed to approve product. Please try again.');
     }
   };
 
@@ -168,11 +228,13 @@ export default function AdminDashboard() {
     { id: 'overview', label: 'Overview', icon: <BarChart className="h-5 w-5" /> },
     { id: 'submissions', label: 'Submissions', icon: <Layers className="h-5 w-5" /> },
     { id: 'products', label: 'Products', icon: <Package className="h-5 w-5" /> },
+    { id: 'indian', label: 'Indian Products', icon: <Store className="h-5 w-5" /> },
     { id: 'users', label: 'Users', icon: <Users className="h-5 w-5" /> },
   ];
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      <FloatingFoodIcons/>
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
         
@@ -316,15 +378,26 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       
-                      <button
-                        onClick={() => {
-                          setSelectedSubmission(submission);
-                          setIsReviewModalOpen(true);
-                        }}
-                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
-                      >
-                        Review
-                      </button>
+                      <div className="flex gap-2">
+                        {submission.status === 'pending' && (
+                          <button
+                            onClick={() => handleQuickApprove(submission)}
+                            className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 flex items-center gap-2"
+                          >
+                            <Check className="w-4 h-4" />
+                            Approve
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedSubmission(submission);
+                            setIsReviewModalOpen(true);
+                          }}
+                          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                          Review
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -365,6 +438,67 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'indian' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Indian Products</h2>
+              <button
+                onClick={fetchIndianProducts}
+                className="p-2 rounded-lg border border-border hover:bg-accent"
+              >
+                <RefreshCw className="h-5 w-5" />
+              </button>
+            </div>
+
+            {isLoadingIndian ? (
+              <div className="flex justify-center items-center h-64">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : indianProducts.length === 0 ? (
+              <div className="text-center py-12 bg-accent/50 rounded-lg">
+                <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium">No Indian products found</h3>
+                <p className="text-muted-foreground">
+                  Start by adding some Indian products to the database
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {indianProducts.map((product) => (
+                  <div
+                    key={product._id}
+                    className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-medium">{product.name}</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mt-2">
+                          <div>
+                            <span className="block font-medium text-foreground">Brand</span>
+                            {product.brand || 'Not specified'}
+                          </div>
+                          <div>
+                            <span className="block font-medium text-foreground">Category</span>
+                            {product.category || 'Uncategorized'}
+                          </div>
+                          <div>
+                            <span className="block font-medium text-foreground">Health Rating</span>
+                            {product.healthRating?.toFixed(1) || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="block font-medium text-foreground">Search Count</span>
+                            {product.searchCount || 0}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

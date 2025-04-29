@@ -23,9 +23,9 @@ const uploadsDir = path.join(__dirname, 'uploads', 'products');
   process.exit(1);
 });
 
-// Configure CORS
+// Configure CORS to allow all origins
 app.use(cors({
-  origin: "*",
+  origin: true, // Allow all origins
   credentials: true
 }));
 
@@ -70,7 +70,8 @@ app.use('/admin', adminRoutes);
 app.use('/products', productRouter);
 
 const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Listen on all network interfaces
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`Server is running on http://${HOST}:${PORT}`);
 });

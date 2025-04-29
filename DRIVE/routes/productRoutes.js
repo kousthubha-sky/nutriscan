@@ -1,6 +1,6 @@
 const express = require('express');
 const fs = require('fs').promises;
-const { searchProducts, getFeaturedProducts, getHealthierAlternatives } = require('../controllers/productController');
+const { searchProducts, getFeaturedProducts, getHealthierAlternatives, getIndianProducts } = require('../controllers/productController');
 const { uploadProductImages, handleUploadError } = require('../middleware/upload');
 const auth = require('../middleware/auth');
 const ProductSubmission = require('../models/ProductSubmission');
@@ -9,7 +9,8 @@ const router = express.Router();
 // Public routes
 router.get('/search', searchProducts);
 router.get('/featured', getFeaturedProducts);
-router.post('/alternatives', getHealthierAlternatives);
+router.get('/indian', getIndianProducts);
+router.post('/alternatives', getHealthierAlternatives); // Ensure this route is properly configured
 
 // Protected routes
 router.post('/submit', 

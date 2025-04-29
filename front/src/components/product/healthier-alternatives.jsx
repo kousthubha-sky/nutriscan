@@ -9,31 +9,43 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
 
   useEffect(() => {
     const fetchAlternatives = async () => {
-      if (!product) {
+      if (!product?.category) {
         setIsLoading(false);
         return;
       }
+
       setIsLoading(true);
       setError(null);
       
       try {
-        // Pass the full product data for better matching
+        console.log('Fetching alternatives for:', product);
         const alternatives = await api.getHealthierAlternatives(
           product.category,
           product?.healthRating || 3.0,
-          // Include relevant product data for matching
           {
+            _id: product._id,
             category: product.category,
-            nutriments: product.nutriments,
-            healthRating: product.healthRating,
-            ingredients: product.ingredients
+            nutriments: product.nutriments || {},
+            healthRating: product.healthRating || 3.0,
+            ingredients: Array.isArray(product.ingredients) 
+              ? product.ingredients 
+              : typeof product.ingredients === 'string'
+              ? product.ingredients.split(',').map(i => i.trim())
+              : [],
+            name: product.name
           }
         );
         
-        setAlternatives(alternatives);
+        const filteredAlternatives = alternatives.filter(alt => 
+          alt._id !== product._id && 
+          alt.healthRating > (product.healthRating || 3.0)
+        );
+        
+        console.log('Received alternatives:', filteredAlternatives);
+        setAlternatives(filteredAlternatives);
       } catch (error) {
         console.error('Failed to fetch alternatives:', error);
-        setError('Failed to load alternatives');
+        setError(error.message || 'Failed to load alternatives');
       } finally {
         setIsLoading(false);
       }
@@ -42,6 +54,7 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
     fetchAlternatives();
   }, [product]);
 
+  // Loading state
   if (isLoading) {
     return (
       <section id="alternatives" className="py-8 border-t border-gray-200 dark:border-gray-800">
@@ -60,17 +73,27 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-3" />
               </div>
             ))}
+
           </div>
         </div>
       </section>
     );
   }
 
-  if (!alternatives.length) {
+  // No alternatives found or error state
+  if (!alternatives.length || error) {
     return (
       <section id="alternatives" className="py-8 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold mb-6">Healthier Alternatives</h2>
+          <h2 className="text-2xl font-bold mb-6">
+            Healthier Alternatives
+            {error && (
+              <span className="ml-2 text-sm font-normal text-yellow-600 dark:text-yellow-500 flex items-center gap-1">
+                <AlertTriangle className="h-4 w-4" />
+                {error}
+              </span>
+            )}
+          </h2>
           <div className="text-center p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <p className="text-gray-600 dark:text-gray-400">
               {error ? (
@@ -102,9 +125,9 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {alternatives.map((alt, index) => (
+          {alternatives.map((alt) => (
             <div
-              key={alt._id || index}
+              key={alt._id}
               className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden bg-card hover:border-primary/50 transition-all duration-300"
             >
               <div className="p-4">
@@ -134,8 +157,8 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
                           alt.tag === "Healthiest Choice"
                             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                             : alt.tag === "Healthy Choice"
-                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                              : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
                         }`}
                       >
                         {alt.tag}

@@ -98,9 +98,28 @@ exports.reviewSubmission = async (req, res) => {
             dietaryInfo
         } = req.body;
 
+        // Validate required fields
+        if (!status) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Status is required for review submission' 
+            });
+        }
+
         const submission = await ProductSubmission.findById(id);
         if (!submission) {
-            return res.status(404).json({ message: 'Submission not found' });
+            return res.status(404).json({ 
+                success: false,
+                message: 'Submission not found' 
+            });
+        }
+
+        // Validate submission status
+        if (!['pending', 'in_review', 'approved', 'rejected'].includes(status)) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Invalid status value' 
+            });
         }
 
         // Update submission fields if provided
@@ -108,48 +127,82 @@ exports.reviewSubmission = async (req, res) => {
         if (brand) submission.brand = brand;
         if (category) submission.category = category;
         if (ingredients) submission.ingredients = ingredients;
-        if (nutritionalInfo) submission.nutritionalInfo = {
-            ...submission.nutritionalInfo,
-            ...nutritionalInfo
-        };
+        if (nutritionalInfo) submission.nutritionalInfo = nutritionalInfo;
         if (allergens) submission.allergens = allergens;
         if (dietaryInfo) submission.dietaryInfo = dietaryInfo;
 
         // Update status and add to review history
-        submission.status = status || submission.status;
+        submission.status = status;
         submission.adminNotes = adminNotes;
         submission.reviewHistory.push({
-            status: status || submission.status,
+            status,
             notes: adminNotes,
             updatedBy: req.user._id
         });
 
         // If approved, create a new product in the main products collection
         if (status === 'approved') {
-            const newProduct = new Product({
-                name: submission.productName,
-                barcode: submission.barcodeNumber,
-                brand: submission.brand,
-                category: submission.category,
-                ingredients: Array.isArray(submission.ingredients) ? submission.ingredients : [submission.ingredients].filter(Boolean),
-                nutritionalInfo: submission.nutritionalInfo,
-                allergens: Array.isArray(submission.allergens) ? submission.allergens : [submission.allergens].filter(Boolean),
-                dietaryInfo: submission.dietaryInfo,
-                productImage: submission.productImage,
-                barcodeImage: submission.barcodeImage,
-                addedBy: submission.submittedBy,
-                lastFetched: new Date()
-            });
-            await newProduct.save();
+            try {
+                // Map nutritional info to product schema format
+                const nutriments = {
+                    energy_kcal_100g: nutritionalInfo?.calories || 0,
+                    carbohydrates_100g: nutritionalInfo?.carbohydrates || 0,
+                    sugars_100g: nutritionalInfo?.sugar || 0,
+                    fat_100g: nutritionalInfo?.fat || 0,
+                    proteins_100g: nutritionalInfo?.protein || 0,
+                    fiber_100g: nutritionalInfo?.fiber || 0
+                };
+
+                // Calculate health rating based on nutritional info
+                const healthAnalysis = calculateHealthRating({
+                    ingredients: Array.isArray(ingredients) ? ingredients.join(', ') : '',
+                    nutriments,
+                    nutriscore_grade: 'unknown'
+                });
+
+                const newProduct = new Product({
+                    name: submission.productName,
+                    barcode: submission.barcodeNumber,
+                    brand: submission.brand,
+                    category: submission.category,
+                    ingredients: Array.isArray(submission.ingredients) ? submission.ingredients : [submission.ingredients].filter(Boolean),
+                    nutriments,
+                    allergens: Array.isArray(submission.allergens) ? submission.allergens : [submission.allergens].filter(Boolean),
+                    labels: submission.dietaryInfo ? submission.dietaryInfo.join(', ') : '',
+                    productImage: submission.productImage,
+                    barcodeImage: submission.barcodeImage,
+                    addedBy: submission.submittedBy,
+                    lastFetched: new Date(),
+                    healthRating: healthAnalysis.score,
+                    healthAnalysis: healthAnalysis.analysis,
+                    healthRatingLabel: healthAnalysis.rating,
+                    healthRatingColor: healthAnalysis.color
+                });
+
+                await newProduct.save();
+            } catch (productError) {
+                console.error('Error creating product:', productError);
+                return res.status(500).json({ 
+                    success: false,
+                    message: 'Failed to create product from submission',
+                    error: productError.message
+                });
+            }
         }
 
         await submission.save();
         res.json({ 
+            success: true,
             message: 'Submission reviewed successfully',
             submission
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Review submission error:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error processing review submission',
+            error: error.message
+        });
     }
 };
 

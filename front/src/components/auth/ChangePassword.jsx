@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { Lock, Eye, EyeOff } from "lucide-react";
+import { Lock, Eye, EyeOff, Check, X } from "lucide-react";
 
 export function ChangePassword({ onClose }) {
   const [formData, setFormData] = useState({
@@ -15,12 +15,35 @@ export function ChangePassword({ onClose }) {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  // Password validation state
+  const [validations, setValidations] = useState({
+    minLength: false,
+    hasNumber: false,
+    hasLetter: false,
+    matches: false
+  });
+
+  const validatePassword = (password, confirm = "") => {
+    setValidations({
+      minLength: password.length >= 5,
+      hasNumber: /\d/.test(password),
+      hasLetter: /[a-zA-Z]/.test(password),
+      matches: password === confirm
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    if (name === 'newPassword') {
+      validatePassword(value, formData.confirmPassword);
+    } else if (name === 'confirmPassword') {
+      validatePassword(formData.newPassword, value);
+    }
   };
 
   const togglePasswordVisibility = (field) => {
@@ -33,13 +56,14 @@ export function ChangePassword({ onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (formData.newPassword !== formData.confirmPassword) {
-      toast.error("New passwords don't match");
+    // Validate all requirements are met
+    if (!validations.minLength || !validations.hasNumber || !validations.hasLetter) {
+      toast.error("Please ensure your password meets all requirements");
       return;
     }
 
-    if (formData.newPassword.length < 5) {
-      toast.error("New password must be at least 5 characters long");
+    if (!validations.matches) {
+      toast.error("Passwords don't match");
       return;
     }
 
@@ -72,6 +96,18 @@ export function ChangePassword({ onClose }) {
       setIsLoading(false);
     }
   };
+
+  // Validation check component
+  const ValidationCheck = ({ passed, text }) => (
+    <div className="flex items-center gap-2 text-sm">
+      {passed ? (
+        <Check className="h-4 w-4 text-green-500" />
+      ) : (
+        <X className="h-4 w-4 text-gray-300" />
+      )}
+      <span className={passed ? "text-green-500" : "text-gray-500"}>{text}</span>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -126,6 +162,14 @@ export function ChangePassword({ onClose }) {
             </div>
           </div>
 
+          {/* Password Requirements */}
+          <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-2">
+            <ValidationCheck passed={validations.minLength} text="At least 5 characters" />
+            <ValidationCheck passed={validations.hasLetter} text="Contains a letter" />
+            <ValidationCheck passed={validations.hasNumber} text="Contains a number" />
+            <ValidationCheck passed={validations.matches} text="Passwords match" />
+          </div>
+
           {/* Confirm New Password */}
           <div>
             <label className="block text-sm font-medium mb-1">Confirm New Password</label>
@@ -158,7 +202,7 @@ export function ChangePassword({ onClose }) {
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !validations.minLength || !validations.hasLetter || !validations.hasNumber || !validations.matches}
               className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {isLoading ? "Changing..." : "Change Password"}

@@ -31,7 +31,7 @@ export function ProductReviewForm({ submission, onSubmit, onClose }) {
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
+          [child]: parent === 'nutritionalInfo' ? Number(value) || '' : value
         }
       }));
     } else {
@@ -45,12 +45,26 @@ export function ProductReviewForm({ submission, onSubmit, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Convert comma-separated strings back to arrays
+    // Convert comma-separated strings back to arrays and ensure numeric values
     const processedData = {
-      ...formData,
-      ingredients: formData.ingredients ? formData.ingredients.split(',').map(i => i.trim()) : [],
-      allergens: formData.allergens ? formData.allergens.split(',').map(i => i.trim()) : [],
-      dietaryInfo: formData.dietaryInfo ? formData.dietaryInfo.split(',').map(i => i.trim()) : []
+      status: formData.status,
+      adminNotes: formData.adminNotes,
+      productName: formData.productName,
+      brand: formData.brand,
+      category: formData.category,
+      ingredients: formData.ingredients ? formData.ingredients.split(',').map(i => i.trim()).filter(Boolean) : [],
+      nutritionalInfo: {
+        servingSize: formData.nutritionalInfo.servingSize,
+        calories: Number(formData.nutritionalInfo.calories) || 0,
+        protein: Number(formData.nutritionalInfo.protein) || 0,
+        carbohydrates: Number(formData.nutritionalInfo.carbohydrates) || 0,
+        fat: Number(formData.nutritionalInfo.fat) || 0,
+        fiber: Number(formData.nutritionalInfo.fiber) || 0,
+        sugar: Number(formData.nutritionalInfo.sugar) || 0,
+        sodium: Number(formData.nutritionalInfo.sodium) || 0
+      },
+      allergens: formData.allergens ? formData.allergens.split(',').map(i => i.trim()).filter(Boolean) : [],
+      dietaryInfo: formData.dietaryInfo ? formData.dietaryInfo.split(',').map(i => i.trim()).filter(Boolean) : []
     };
     
     onSubmit(processedData);
@@ -308,7 +322,6 @@ export function ProductReviewForm({ submission, onSubmit, onClose }) {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end gap-4 mt-8 border-t border-border pt-4">
           <button
             type="button"

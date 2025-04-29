@@ -115,72 +115,126 @@ router.post('/login',
   }
 );
 
-// Forgot Password - Request Reset
+// Generate OTP
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Forgot Password - Request OTP
 router.post('/forgot-password',
   body('email').isEmail().normalizeEmail(),
   async (req, res) => {
     try {
-      const { email } = req.body;
-      const user = await userModel.findOne({ email });
-      
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          message: 'Invalid email format'
+        });
       }
 
-      // Generate reset token
-      const resetToken = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
+      const { email } = req.body;
+      const user = await userModel.findOne({ email: email.toLowerCase() });
+      
+      if (!user) {
+        return res.status(404).json({ message: 'No account found with this email address' });
+      }
 
-      // Save reset token and expiry to user
-      user.resetToken = resetToken;
-      user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+      if (!user.canRequestOTP()) {
+        return res.status(429).json({ 
+          message: 'Please wait 1 minute before requesting another OTP'
+        });
+      }
+
+      // Generate and save OTP
+      const otp = generateOTP();
+      user.resetOTP = otp;
+      user.otpExpiry = Date.now() + 600000; // 10 minutes
+      user.lastOTPAttempt = Date.now();
+      user.otpAttempts += 1;
       await user.save();
 
-      // In a real application, send email with reset link
-      // For demo, just return the token
-      res.json({ 
-        message: 'Password reset email sent',
-        resetToken // In production, this would be sent via email
+      // In production, send email with OTP
+      // For development, just return the OTP
+      res.json({
+        message: 'OTP sent successfully',
+        otp // Remove in production
       });
     } catch (error) {
-      res.status(500).json({ message: 'Error initiating password reset', error: error.message });
+      console.error('Password reset error:', error);
+      res.status(500).json({ message: 'Error sending OTP' });
     }
   }
 );
 
-// Reset Password with Token
-router.post('/reset-password',
-  body('password').isLength({ min: 5 }),
-  body('token').notEmpty(),
+// Verify OTP
+router.post('/verify-otp',
+  body('email').isEmail().normalizeEmail(),
+  body('otp').isLength({ min: 6, max: 6 }),
   async (req, res) => {
     try {
-      const { token, password } = req.body;
-      
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await userModel.findOne({
-        _id: decoded.userId,
-        resetToken: token,
-        resetTokenExpiry: { $gt: Date.now() }
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          message: 'Invalid input'
+        });
+      }
+
+      const { email, otp } = req.body;
+      const user = await userModel.findOne({ 
+        email: email.toLowerCase(),
+        resetOTP: otp,
+        otpExpiry: { $gt: Date.now() }
       });
 
       if (!user) {
-        return res.status(400).json({ message: 'Invalid or expired reset token' });
+        return res.status(400).json({ message: 'Invalid or expired OTP' });
+      }
+
+      res.json({ message: 'OTP verified successfully' });
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      res.status(500).json({ message: 'Error verifying OTP' });
+    }
+  }
+);
+
+// Reset Password with OTP
+router.post('/reset-password',
+  body('email').isEmail().normalizeEmail(),
+  body('otp').isLength({ min: 6, max: 6 }),
+  body('password').isLength({ min: 5 }).trim(),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          message: 'Invalid input'
+        });
+      }
+
+      const { email, otp, password } = req.body;
+      const user = await userModel.findOne({ 
+        email: email.toLowerCase(),
+        resetOTP: otp,
+        otpExpiry: { $gt: Date.now() }
+      });
+
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid or expired OTP' });
       }
 
       // Update password
       const hashedPassword = await bcrypt.hash(password, 10);
       user.password = hashedPassword;
-      user.resetToken = undefined;
-      user.resetTokenExpiry = undefined;
+      user.resetOTP = undefined;
+      user.otpExpiry = undefined;
+      user.otpAttempts = 0;
       await user.save();
 
       res.json({ message: 'Password reset successful' });
     } catch (error) {
-      res.status(500).json({ message: 'Error resetting password', error: error.message });
+      console.error('Password reset error:', error);
+      res.status(500).json({ message: 'Error resetting password' });
     }
   }
 );

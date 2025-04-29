@@ -35,11 +35,18 @@ const userSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
-    resetToken: {
+    resetOTP: {
         type: String
     },
-    resetTokenExpiry: {
+    otpExpiry: {
         type: Date
+    },
+    lastOTPAttempt: {
+        type: Date
+    },
+    otpAttempts: {
+        type: Number,
+        default: 0
     },
     createdAt: {
         type: Date,
@@ -49,6 +56,15 @@ const userSchema = new mongoose.Schema({
         type: Date
     }
 })
+
+// Add method to check if user can request new OTP
+userSchema.methods.canRequestOTP = function() {
+    if (!this.lastOTPAttempt) return true;
+    
+    // Allow new OTP request after 1 minute
+    const timeSinceLastAttempt = Date.now() - this.lastOTPAttempt;
+    return timeSinceLastAttempt >= 60000; // 1 minute in milliseconds
+};
 
 const user = mongoose.model('user', userSchema)
 module.exports = user;

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Upload, Barcode, Package, Info, X } from "lucide-react"
+import { Upload, Barcode, Package, Info, X, AlertCircle } from "lucide-react"
 import api from "../../services/api"
 import { toast } from "react-toastify"
 import { SuccessCheckmark } from "../ui/SuccessCheckmark"
@@ -20,6 +20,16 @@ export function ContributeSection() {
 
   const [showSuccess, setShowSuccess] = useState(false)
 
+  const submissionCriteria = [
+    "Product name must be accurate and complete",
+    "Barcode number must be valid and visible in the photo",
+    "Product photos must be clear and well-lit",
+    "Image size should not exceed 5MB",
+    "Only JPEG, PNG and GIF formats are accepted",
+    "Barcode must be clearly visible and scannable",
+    "Product face should show nutritional information if available"
+  ]
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -31,6 +41,18 @@ export function ContributeSection() {
   const handleImageChange = (e, type) => {
     const file = e.target.files[0]
     if (file) {
+      // Validate file size
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB")
+        return
+      }
+
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+        toast.error("Only JPEG, PNG and GIF images are allowed")
+        return
+      }
+
       setFormData(prev => ({
         ...prev,
         [type]: file
@@ -43,46 +65,75 @@ export function ContributeSection() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     
     try {
-      const submissionData = new FormData()
-      submissionData.append('productName', formData.productName)
-      submissionData.append('barcodeNumber', formData.barcodeNumber)
-      submissionData.append('additionalInfo', formData.additionalInfo)
+      // Validate required fields first
+      if (!formData.productName || !formData.barcodeNumber) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
+      // Validate images
+      if (!formData.productImage || !formData.barcodeImage) {
+        toast.error("Both product and barcode images are required");
+        return;
+      }
+
+      const submissionData = new FormData();
+      submissionData.append('productName', formData.productName);
+      submissionData.append('barcodeNumber', formData.barcodeNumber);
+      submissionData.append('additionalInfo', formData.additionalInfo);
+
       if (formData.productImage) {
-        submissionData.append('productImage', formData.productImage)
+        submissionData.append('productImage', formData.productImage);
       }
       if (formData.barcodeImage) {
-        submissionData.append('barcodeImage', formData.barcodeImage)
+        submissionData.append('barcodeImage', formData.barcodeImage);
       }
 
       // Submit to backend
-      await api.submitProduct(submissionData)
+      const response = await api.submitProduct(submissionData);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Submission failed');
+      }
 
       // Show success animation
-      setShowSuccess(true)
+      setShowSuccess(true);
 
       // Reset form after delay
       setTimeout(() => {
-        setShowSuccess(false)
+        setShowSuccess(false);
         setFormData({
           productName: "",
           barcodeNumber: "",
           additionalInfo: "",
           productImage: null,
           barcodeImage: null
-        })
+        });
         setPreview({
           productImage: null,
           barcodeImage: null
-        })
-      }, 1500)
+        });
+      }, 1500);
+
+      toast.success('Product submitted successfully!');
     } catch (error) {
-      console.error('Submission error:', error)
-      toast.error("There was an error submitting your contribution. Please try again.")
+      console.error('Submission error:', error);
+      
+      // Handle specific error cases
+      if (error.message?.includes('LIMIT_FILE_SIZE')) {
+        toast.error("File size too large. Maximum size is 5MB");
+      } else if (error.message?.includes('Invalid file type')) {
+        toast.error("Invalid file type. Only JPEG, PNG and GIF images are allowed");
+      } else if (error.message?.includes('Authentication')) {
+        toast.error("Please log in to submit a product");
+      } else {
+        toast.error(error.message || "There was an error submitting your contribution. Please try again.");
+      }
     }
-  }
+  };
 
   return (
     <section id="contribute" className="py-8 border-t border-gray-200 dark:border-gray-800">
@@ -92,6 +143,22 @@ export function ContributeSection() {
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           Help improve our database by contributing product information. Please provide clear photos and accurate details.
         </p>
+
+        {/* Submission Criteria */}
+        <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle className="h-5 w-5 text-blue-500" />
+            <h3 className="font-medium">Submission Criteria</h3>
+          </div>
+          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            {submissionCriteria.map((criterion, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-blue-500 mt-1">•</span>
+                {criterion}
+              </li>
+            ))}
+          </ul>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

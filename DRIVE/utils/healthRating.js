@@ -72,6 +72,66 @@ const INGREDIENT_ANALYSIS = {
     ],
     weight: 0.3,
     reason: 'Contains natural spices with potential health benefits'
+  },
+  healthy_proteins: {
+    ingredients: [
+      'whey protein', 'soy protein', 'pea protein', 'egg white',
+      'milk protein', 'casein', 'protein isolate', 'quinoa protein'
+    ],
+    weight: 0.4,
+    reason: 'Contains quality protein sources'
+  },
+  healthy_fats: {
+    ingredients: [
+      'olive oil', 'avocado oil', 'coconut oil', 'peanut', 'almond',
+      'cashew', 'sunflower seeds', 'pumpkin seeds', 'chia seeds'
+    ],
+    weight: 0.3,
+    reason: 'Contains healthy fats and omega fatty acids'
+  },
+  fortified_nutrients: {
+    ingredients: [
+      'vitamin d', 'vitamin b12', 'folate', 'iron', 'calcium',
+      'zinc', 'magnesium', 'potassium', 'dha', 'epa'
+    ],
+    weight: 0.3,
+    reason: 'Fortified with essential nutrients'
+  },
+  probiotics: {
+    ingredients: [
+      'lactobacillus', 'bifidobacterium', 'probiotics', 'live cultures',
+      'fermented', 'cultured', 'yogurt cultures'
+    ],
+    weight: 0.3,
+    reason: 'Contains beneficial probiotics'
+  }
+};
+
+const PRODUCT_CATEGORIES = {
+  beverages: {
+    keywords: ['drink', 'beverage', 'juice', 'smoothie', 'shake', 'tea', 'coffee', 'water'],
+    nutritionalFocus: ['sugar', 'caffeine', 'artificial_sweeteners'],
+    scoreAdjustment: 0.9 // Slightly stricter scoring for beverages
+  },
+  spreads: {
+    keywords: ['butter', 'spread', 'paste', 'jam', 'margarine', 'nutella'],
+    nutritionalFocus: ['fats', 'sugar', 'protein'],
+    scoreAdjustment: 1.0
+  },
+  dairy: {
+    keywords: ['milk', 'yogurt', 'cheese', 'curd', 'cream', 'dairy'],
+    nutritionalFocus: ['protein', 'calcium', 'fats'],
+    scoreAdjustment: 1.1
+  },
+  protein_supplements: {
+    keywords: ['protein', 'supplement', 'whey', 'mass gainer', 'protein powder'],
+    nutritionalFocus: ['protein', 'vitamins', 'minerals'],
+    scoreAdjustment: 1.2
+  },
+  breakfast_cereals: {
+    keywords: ['cereal', 'muesli', 'granola', 'oats', 'porridge'],
+    nutritionalFocus: ['fiber', 'sugar', 'whole_grains'],
+    scoreAdjustment: 1.0
   }
 };
 
@@ -116,6 +176,30 @@ const NUTRITIONAL_GUIDELINES = {
     low: 120,
     high: 500,
     weight: -0.4,
+    isPositive: false
+  },
+  calcium_100g: {
+    low: 120,
+    high: 240,
+    weight: 0.3,
+    isPositive: true
+  },
+  vitamin_d_100g: {
+    low: 1,
+    high: 2.5,
+    weight: 0.3,
+    isPositive: true
+  },
+  potassium_100g: {
+    low: 300,
+    high: 600,
+    weight: 0.3,
+    isPositive: true
+  },
+  calories_100g: {
+    low: 50,
+    high: 300,
+    weight: -0.3,
     isPositive: false
   }
 };
@@ -173,64 +257,72 @@ const SNACK_CATEGORIES = [
   'biscuits', 'namkeen', 'kurkure', 'extruded snacks'
 ];
 
+function detectProductCategory(product) {
+  if (!product.name && !product.category) return null;
+  
+  const productText = `${product.name} ${product.category}`.toLowerCase();
+  
+  for (const [category, data] of Object.entries(PRODUCT_CATEGORIES)) {
+    if (data.keywords.some(keyword => productText.includes(keyword))) {
+      return { category, ...data };
+    }
+  }
+  
+  return null;
+}
+
 function calculateHealthRating(product) {
   try {
     if (!product) return { score: 3, analysis: ['No product data available'] };
 
     let finalScore = 3;
     let analysis = [];
-    let isSnackProduct = false;
-
-    // Check if product is in snack category
-    if (product.category) {
-      isSnackProduct = SNACK_CATEGORIES.some(category => 
-        product.category.toLowerCase().includes(category)
-      );
-    }
+    
+    // Detect product category for specialized analysis
+    const productCategory = detectProductCategory(product);
+    let categoryMultiplier = productCategory?.scoreAdjustment || 1;
 
     // Start with Nutri-Score if available
     if (product.nutriscore_grade) {
-      const nutriScoreValues = {
-        'a': 5,
-        'b': 4,
-        'c': 3,
-        'd': 2,
-        'e': 1
-      };
+      const nutriScoreValues = { 'a': 5, 'b': 4, 'c': 3, 'd': 2, 'e': 1 };
       finalScore = nutriScoreValues[product.nutriscore_grade.toLowerCase()] || 3;
       analysis.push(`Nutri-Score ${product.nutriscore_grade.toUpperCase()}`);
     }
 
-    // Analyze nutrients with adjusted weights for snacks
+    // Analyze nutrients with category-specific focus
     if (product.nutriments) {
       const { score: nutrientScore, analysis: nutrientAnalysis } = analyzeNutrients(product.nutriments);
-      // Apply stricter scoring for snack products
-      finalScore = isSnackProduct 
-        ? (finalScore + nutrientScore * 1.2) / 2.2  // More weight on nutrients for snacks
-        : (finalScore + nutrientScore) / 2;
-      analysis = [...analysis, ...nutrientAnalysis];
+      if (productCategory) {
+        const focusNutrients = productCategory.nutritionalFocus;
+        const relevantAnalysis = nutrientAnalysis.filter(a => 
+          focusNutrients.some(nutrient => a.toLowerCase().includes(nutrient))
+        );
+        analysis = [...analysis, ...relevantAnalysis];
+      } else {
+        analysis = [...analysis, ...nutrientAnalysis];
+      }
+      
+      // Weight nutrient score more heavily (60%)
+      finalScore = (finalScore * 0.4) + (nutrientScore * 0.6);
     }
 
-    // Analyze ingredients with extra scrutiny for snacks
+    // Analyze ingredients
     if (product.ingredients) {
       const { score: ingredientScore, analysis: ingredientAnalysis } = analyzeIngredients(product.ingredients);
-      finalScore = isSnackProduct
-        ? (finalScore + ingredientScore * 1.3) / 2.3  // More weight on ingredients for snacks
-        : (finalScore + ingredientScore);
+      // Weight ingredient analysis (40%)
+      finalScore = (finalScore * 0.6) + (ingredientScore * 0.4);
       analysis = [...analysis, ...ingredientAnalysis];
     }
 
-    // Additional penalty for highly processed snacks with multiple additives
-    if (isSnackProduct && analysis.filter(a => 
-      a.includes('artificial') || 
-      a.includes('preservative') || 
-      a.includes('flavor enhancer')
-    ).length > 2) {
-      finalScore *= 0.9;  // 10% reduction in score
-      analysis.push('Multiple artificial additives found: Common in processed snacks');
+    // Apply category-specific adjustments
+    finalScore *= categoryMultiplier;
+
+    // Add category-specific analysis
+    if (productCategory) {
+      analysis.push(`Analyzed as ${productCategory.category.replace('_', ' ')} product`);
     }
 
-    // Ensure score stays within 1-5 range
+    // Ensure score stays within 1-5 range and round to 1 decimal
     finalScore = Math.max(1, Math.min(5, Math.round(finalScore * 10) / 10));
 
     // Enhanced analysis to separate pros and cons

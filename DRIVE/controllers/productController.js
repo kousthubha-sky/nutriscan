@@ -293,19 +293,29 @@ exports.getFeaturedProducts = async (req, res) => {
 
 exports.getHealthierAlternatives = async (req, res) => {
   try {
+    console.log('Received alternatives request:', { query: req.query, body: req.body });
+    
     const { category, healthRating = 3.0 } = req.query;
     const minHealthRating = parseFloat(healthRating);
     const productData = req.body;
     
+    if (!productData) {
+      console.log('Missing product data');
+      return res.status(400).json({
+        success: false,
+        error: 'Product data is required'
+      });
+    }
+
     // Build sophisticated query
     const mainQuery = {
       // Exclude the current product
       ...(productData._id && { _id: { $ne: productData._id } }),
-      ...(productData.barcode && { barcode: { $ne: productData.barcode } }),
-      
       // Base health rating criteria
       healthRating: { $gt: minHealthRating }
     };
+    
+    console.log('Built query:', mainQuery);
     
     // Category matching with related categories
     if (category && category !== 'All Categories') {
@@ -338,6 +348,8 @@ exports.getHealthierAlternatives = async (req, res) => {
       ];
     }
 
+    console.log('Finding alternatives with query:', JSON.stringify(mainQuery, null, 2));
+
     // Find alternatives with sophisticated sorting
     const alternatives = await Product.find(mainQuery)
       .sort({ 
@@ -348,6 +360,46 @@ exports.getHealthierAlternatives = async (req, res) => {
       })
       .limit(6)
       .lean();
+
+    console.log(`Found ${alternatives.length} initial alternatives`);
+
+    if (!alternatives.length) {
+      console.log('No strict matches found, trying broader search');
+      // If no alternatives found with strict criteria, try a broader search
+      const broadQuery = {
+        _id: { $ne: productData._id },
+        healthRating: { $gt: minHealthRating }
+      };
+
+      const broadAlternatives = await Product.find(broadQuery)
+        .sort({ healthRating: -1 })
+        .limit(6)
+        .lean();
+
+      console.log(`Found ${broadAlternatives.length} broad alternatives`);
+
+      if (broadAlternatives.length) {
+        const results = broadAlternatives.map(alt => {
+          const relevanceScore = calculateRelevanceScore(alt, productData);
+          const nutritionalImprovement = calculateNutritionalImprovement(alt, productData);
+          
+          return {
+            ...alt,
+            tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
+                 alt.healthRating >= 4.0 ? "Healthy Choice" :
+                 "Better Choice",
+            relevanceScore,
+            nutritionalImprovement,
+            description: generateAlternativeDescription(alt, nutritionalImprovement)
+          };
+        });
+
+        return res.json({
+          success: true,
+          alternatives: results
+        });
+      }
+    }
 
     // Calculate similarity scores and enhance results
     const results = alternatives.map(alt => {
@@ -371,6 +423,8 @@ exports.getHealthierAlternatives = async (req, res) => {
       (a.relevanceScore + a.nutritionalImprovement)
     ));
 
+    console.log(`Returning ${results.length} alternatives`);
+
     res.json({
       success: true,
       alternatives: results
@@ -379,7 +433,8 @@ exports.getHealthierAlternatives = async (req, res) => {
     console.error('Failed to fetch healthier alternatives:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch healthier alternatives'
+      error: 'Failed to fetch healthier alternatives',
+      details: error.message
     });
   }
 };
@@ -481,3 +536,97 @@ function calculateRelevanceScore(alternative, originalProduct) {
   
   return Math.min(2, score);
 }
+
+// Add Indian brands list
+const INDIAN_BRANDS = [
+  'amul', 'britannia', 'parle', 'haldirams', 'mtr', 'dabur', 
+  'patanjali', 'mother dairy', 'tata', 'itc', 'nestle india', 
+  'himalaya', 'fortune', 'bikaji', 'vadilal', 'everest', 
+  'lijjat', 'bikano', 'aashirvaad', 'godrej'
+];
+
+exports.getIndianProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 12 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const query = {
+      $or: [
+        { brand: { $in: INDIAN_BRANDS.map(brand => new RegExp(brand, 'i')) } },
+        { category: { $in: ['indian', 'masala', 'curry', 'spices'].map(cat => new RegExp(cat, 'i')) } }
+      ]
+    };
+
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .sort({ healthRating: -1, searchCount: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Product.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      products,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit)),
+      total
+    });
+  } catch (error) {
+    console.error('Failed to fetch Indian products:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch Indian products'
+    });
+  }
+};
+
+// Update health ratings for products
+async function updateHealthRatings() {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const productsToUpdate = await Product.find({
+      $or: [
+        { lastFetched: { $lt: thirtyDaysAgo } },
+        { healthRating: { $exists: false } },
+        { healthRating: null }
+      ]
+    }).limit(100);
+
+    for (const product of productsToUpdate) {
+      const healthAnalysis = calculateHealthRating({
+        ingredients: Array.isArray(product.ingredients) ? product.ingredients.join(', ') : product.ingredients,
+        nutriments: product.nutriments,
+        nutriscore_grade: product.nutriscore_grade,
+        name: product.name,
+        category: product.category
+      });
+
+      await Product.updateOne(
+        { _id: product._id },
+        {
+          $set: {
+            healthRating: healthAnalysis.score,
+            healthAnalysis: healthAnalysis.analysis,
+            healthRatingLabel: healthAnalysis.rating,
+            healthRatingColor: healthAnalysis.color,
+            lastFetched: new Date()
+          }
+        }
+      );
+    }
+
+    console.log(`Updated health ratings for ${productsToUpdate.length} products`);
+  } catch (error) {
+    console.error('Error updating health ratings:', error);
+  }
+}
+
+// Run health rating updates every 12 hours
+setInterval(updateHealthRatings, 12 * 60 * 60 * 1000);
+
+// Run initial update
+updateHealthRatings();
