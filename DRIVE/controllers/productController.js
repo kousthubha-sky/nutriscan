@@ -599,23 +599,35 @@ async function updateHealthRatings() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Find products that need rating updates
     const productsToUpdate = await Product.find({
       $or: [
         { lastFetched: { $lt: thirtyDaysAgo } },
         { healthRating: { $exists: false } },
-        { healthRating: null }
+        { healthRating: null },
+        { healthRating: 3 }  // Update default ratings
       ]
     }).limit(100);
 
+    let updatedCount = 0;
     for (const product of productsToUpdate) {
+      // Enhanced ingredient processing
+      const processedIngredients = Array.isArray(product.ingredients) 
+        ? product.ingredients.join(', ') 
+        : typeof product.ingredients === 'string' 
+          ? product.ingredients 
+          : '';
+
+      // Calculate health rating with enhanced context
       const healthAnalysis = calculateHealthRating({
-        ingredients: Array.isArray(product.ingredients) ? product.ingredients.join(', ') : product.ingredients,
-        nutriments: product.nutriments,
+        ingredients: processedIngredients,
+        nutriments: product.nutriments || {},
         nutriscore_grade: product.nutriscore_grade,
         name: product.name,
         category: product.category
       });
 
+      // Update product with new rating
       await Product.updateOne(
         { _id: product._id },
         {
@@ -628,16 +640,17 @@ async function updateHealthRatings() {
           }
         }
       );
+      updatedCount++;
     }
 
-    console.log(`Updated health ratings for ${productsToUpdate.length} products`);
+    console.log(`Updated health ratings for ${updatedCount} products`);
   } catch (error) {
     console.error('Error updating health ratings:', error);
   }
 }
 
-// Run health rating updates every 12 hours
-setInterval(updateHealthRatings, 12 * 60 * 60 * 1000);
+// Run health rating updates every 6 hours instead of 12
+setInterval(updateHealthRatings, 6 * 60 * 60 * 1000);
 
 // Run initial update
 updateHealthRatings();

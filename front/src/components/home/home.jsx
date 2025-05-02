@@ -28,7 +28,7 @@ import { HealthierAlternatives } from '../product/healthier-alternatives';
 import { NutritionalImpact } from '../product/nutritional-impact';
 import { ContributeSection } from './ContributeSection';
 import { RatingSystem } from '../product/rating-system';
-
+import { MenuBar } from '../ui/menu-bar';
 export default function Home({ user }) {
   const [state, setState] = useState({
     products: [],

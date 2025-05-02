@@ -1,25 +1,51 @@
 "use client"
 
 import { useState } from "react"
-import { Settings, Bell, Moon, Sun, Globe, Lock, Shield, LogOut, Info } from "lucide-react"
+import { Settings, Moon, Sun, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useNavigate } from "react-router-dom"
+import { toast } from "react-toastify"
 
 export function SettingsMenu({ isOpen, onClose, user }) {
   const { theme, setTheme } = useTheme()
   const isDarkTheme = theme === "dark"
+  const navigate = useNavigate();
 
-  const [notifications, setNotifications] = useState(true)
-  const [language, setLanguage] = useState("english")
-  const [openaiApiKey, setOpenaiApiKey] = useState("")
+  // Editable fields
+  const [dietaryPreferences, setDietaryPreferences] = useState(user?.dietaryPreferences?.join(", ") || "");
+  const [allergies, setAllergies] = useState(user?.allergies?.join(", ") || "");
+  const [saving, setSaving] = useState(false);
 
   const handleLogout = () => {
-    // Clear all auth data
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');
-    // Close settings menu
     onClose();
-    // Redirect will be handled by parent
     window.location.href = '/';
+  };
+
+  const handleSavePreferences = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch("http://localhost:3000/user/preferences", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          dietaryPreferences: dietaryPreferences.split(',').map(s => s.trim()).filter(Boolean),
+          allergies: allergies.split(',').map(s => s.trim()).filter(Boolean)
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to save preferences");
+      toast.success("Preferences updated!");
+    } catch (e) {
+      toast.error(e.message || "Error saving preferences");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!isOpen) return null
@@ -27,6 +53,7 @@ export function SettingsMenu({ isOpen, onClose, user }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex justify-end">
       <div className="w-full max-w-md bg-white dark:bg-gray-900 h-full overflow-y-auto shadow-lg">
+        {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -55,8 +82,46 @@ export function SettingsMenu({ isOpen, onClose, user }) {
                     <p className="text-sm text-gray-500">{user.email}</p>
                   </div>
                 </div>
+                <button
+                  className="mt-4 w-full py-2 px-4 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+                  onClick={() => { onClose(); navigate('/change-password'); }}
+                >
+                  Change Password
+                </button>
               </div>
             )}
+
+            {/* Preferences */}
+            <div>
+              <h3 className="text-lg font-medium mb-3">Preferences</h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Dietary Preferences</label>
+                <input
+                  type="text"
+                  value={dietaryPreferences}
+                  onChange={e => setDietaryPreferences(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:bg-gray-800 dark:text-white"
+                  placeholder="e.g. vegetarian, vegan, keto"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Allergies</label>
+                <input
+                  type="text"
+                  value={allergies}
+                  onChange={e => setAllergies(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:bg-gray-800 dark:text-white"
+                  placeholder="e.g. peanuts, gluten, dairy"
+                />
+              </div>
+              <button
+                onClick={handleSavePreferences}
+                disabled={saving}
+                className="w-full py-2 px-4 rounded-lg bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Preferences"}
+              </button>
+            </div>
 
             {/* Theme */}
             <div>
@@ -78,104 +143,15 @@ export function SettingsMenu({ isOpen, onClose, user }) {
               </div>
             </div>
 
-            {/* Notifications */}
-            <div>
-              <h3 className="text-lg font-medium mb-3">Notifications</h3>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  <span>Push Notifications</span>
-                </div>
-                <button
-                  onClick={() => setNotifications(!notifications)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full ${notifications ? "bg-green-600" : "bg-gray-200"}`}
-                >
-                  <span className="sr-only">Toggle notifications</span>
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${notifications ? "translate-x-6" : "translate-x-1"}`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Language */}
-            <div>
-              <h3 className="text-lg font-medium mb-3">Language</h3>
-              <div className="flex items-center gap-2 mb-2">
-                <Globe className="h-5 w-5" />
-                <span>Select Language</span>
-              </div>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
+            {/* Logout Button */}
+            <div className="pt-4">
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 w-full p-3 text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
               >
-                <option value="english">English</option>
-                <option value="spanish">Spanish</option>
-                <option value="french">French</option>
-                <option value="german">German</option>
-              </select>
-            </div>
-
-            {/* API Settings */}
-            <div>
-              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-                API Settings
-                <div className="relative group">
-                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
-                  <div className="absolute left-0 bottom-full mb-2 w-64 p-2 bg-black text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity">
-                    The OpenAI API key is required for the AI-powered ingredient analysis. This allows NutriScan to
-                    generate health ratings and detailed nutritional insights.
-                  </div>
-                </div>
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  <span>OpenAI API Key</span>
-                </div>
-                <input
-                  type="password"
-                  value={openaiApiKey}
-                  onChange={(e) => setOpenaiApiKey(e.target.value)}
-                  placeholder="Enter your OpenAI API key"
-                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
-                />
-                <p className="text-xs text-gray-500">
-                  Required for AI-powered analysis. Get your key at{" "}
-                  <a
-                    href="https://platform.openai.com/account/api-keys"
-                    className="text-green-600 hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    OpenAI
-                  </a>
-                  .
-                </p>
-              </div>
-            </div>
-
-            {/* Privacy */}
-            <div>
-              <h3 className="text-lg font-medium mb-3">Privacy & Security</h3>
-              <div className="space-y-3">
-                <button className="flex items-center gap-2 w-full p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md">
-                  <Shield className="h-5 w-5" />
-                  <span>Privacy Policy</span>
-                </button>
-                <button className="flex items-center gap-2 w-full p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md">
-                  <Shield className="h-5 w-5" />
-                  <span>Terms of Service</span>
-                </button>
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 w-full p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
-                >
-                  <LogOut className="h-5 w-5 text-red-500" />
-                  <span className="text-red-500">Log Out</span>
-                </button>
-              </div>
+                <LogOut className="h-5 w-5" />
+                <span>Log Out</span>
+              </button>
             </div>
 
             <div className="pt-4 text-center text-sm text-gray-500">

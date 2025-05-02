@@ -104,6 +104,31 @@ const INGREDIENT_ANALYSIS = {
     ],
     weight: 0.3,
     reason: 'Contains beneficial probiotics'
+  },
+  dairy_positive: {
+    ingredients: [
+      'milk', 'whole milk', 'skimmed milk', 'low fat milk', 'toned milk',
+      'a2 milk', 'organic milk', 'pasteurized milk', 'homogenized milk',
+      'fresh milk', 'buffalo milk', 'cow milk', 'goat milk'
+    ],
+    weight: 0.5,
+    reason: 'Contains natural dairy milk with essential nutrients'
+  },
+  dairy_additives: {
+    ingredients: [
+      'milk solids', 'milk powder', 'reconstituted milk',
+      'ultra filtered', 'milk protein concentrate'
+    ],
+    weight: -0.2,
+    reason: 'Contains processed dairy ingredients'
+  },
+  dairy_enrichment: {
+    ingredients: [
+      'vitamin d3', 'vitamin d', 'calcium fortified', 'omega 3',
+      'dha', 'vitamin a', 'vitamin b12', 'folate'
+    ],
+    weight: 0.3,
+    reason: 'Fortified with essential nutrients'
   }
 };
 
@@ -119,9 +144,9 @@ const PRODUCT_CATEGORIES = {
     scoreAdjustment: 1.0
   },
   dairy: {
-    keywords: ['milk', 'yogurt', 'cheese', 'curd', 'cream', 'dairy'],
-    nutritionalFocus: ['protein', 'calcium', 'fats'],
-    scoreAdjustment: 1.1
+    keywords: ['milk', 'yogurt', 'cheese', 'curd', 'cream', 'dairy', 'dahi', 'buttermilk', 'lassi'],
+    nutritionalFocus: ['protein', 'calcium', 'vitamin_d', 'fats'],
+    scoreAdjustment: 1.2  // Increased from 1.1 to better reflect dairy nutritional value
   },
   protein_supplements: {
     keywords: ['protein', 'supplement', 'whey', 'mass gainer', 'protein powder'],
@@ -179,15 +204,15 @@ const NUTRITIONAL_GUIDELINES = {
     isPositive: false
   },
   calcium_100g: {
-    low: 120,
-    high: 240,
-    weight: 0.3,
+    low: 100,
+    high: 200,
+    weight: 0.5,
     isPositive: true
   },
   vitamin_d_100g: {
-    low: 1,
-    high: 2.5,
-    weight: 0.3,
+    low: 0.75,
+    high: 1.5,
+    weight: 0.4,
     isPositive: true
   },
   potassium_100g: {
