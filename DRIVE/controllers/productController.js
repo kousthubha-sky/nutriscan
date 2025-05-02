@@ -522,8 +522,19 @@ function calculateRelevanceScore(alternative, originalProduct) {
   
   // Special ingredients matching
   if (alternative.ingredients && originalProduct.ingredients) {
-    const altIngredients = alternative.ingredients.toLowerCase();
-    const origIngredients = originalProduct.ingredients.toLowerCase();
+    // Handle different ingredient formats (string or array)
+    const getIngredientsString = (ingredients) => {
+      if (typeof ingredients === 'string') return ingredients;
+      if (Array.isArray(ingredients)) {
+        return ingredients
+          .map(ing => typeof ing === 'object' ? ing.text || ing.name || '' : ing)
+          .join(' ');
+      }
+      return '';
+    };
+
+    const altIngredients = getIngredientsString(alternative.ingredients).toLowerCase();
+    const origIngredients = getIngredientsString(originalProduct.ingredients).toLowerCase();
     
     // Common healthy ingredients bonus
     const healthyIngredients = ['whole grain', 'oats', 'quinoa', 'nuts', 'seeds'];
