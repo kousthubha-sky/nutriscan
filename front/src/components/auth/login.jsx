@@ -27,7 +27,9 @@ export default function Login({ onLogin }) {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error("Login failed. Please check your credentials.");
+                return response.json().then(data => {
+                    throw new Error(data.message || "Login failed. Please check your credentials.");
+                });
             }
             return response.json();
         })

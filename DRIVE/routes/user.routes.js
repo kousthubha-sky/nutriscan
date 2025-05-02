@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const {body, validationResult} = require('express-validator');
 const auth = require('../middleware/auth');
+const { sendEmail } = require('../config/email');
 
 router.get('/signup', (req, res) => {
   res.render('register')
@@ -13,7 +14,7 @@ router.get('/signup', (req, res) => {
 router.post('/signup',
   body('username').trim().isLength({min: 3}).withMessage('Username must be at least 3 characters long'),
   body('email').trim().isEmail().withMessage('Invalid email address'),
-  body('password').trim().isLength({min: 5}).withMessage('Password must be at least 8 characters long'),
+  body('password').trim().isLength({min: 5}).withMessage('Password must be at least 5 characters long'),
 
   async (req, res) => {
     const errors = validationResult(req)
@@ -44,6 +45,16 @@ router.post('/signup',
       role: role === 'admin' ? 'admin' : 'user'  // Only set admin if explicitly specified
     })
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: newUser._id,
+        role: newUser.role 
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     // Remove password from response
     const userResponse = {
       _id: newUser._id,
@@ -52,7 +63,11 @@ router.post('/signup',
       role: newUser.role
     }
     
-    res.json(userResponse)
+    res.json({
+      message: 'Registration successful',
+      user: userResponse,
+      token: token
+    });
   }
 )
 
@@ -153,15 +168,28 @@ router.post('/forgot-password',
       user.otpAttempts += 1;
       await user.save();
 
-      // In production, send email with OTP
-      // For development, just return the OTP
+      // Send OTP via email
+      const emailSent = await sendEmail(
+        email,
+        'Password Reset OTP',
+        `
+        <h2>Password Reset Request</h2>
+        <p>Your OTP for password reset is: <strong>${otp}</strong></p>
+        <p>This OTP will expire in 10 minutes.</p>
+        <p>If you didn't request this password reset, please ignore this email.</p>
+        `
+      );
+
+      if (!emailSent) {
+        throw new Error('Failed to send OTP email');
+      }
+
       res.json({
-        message: 'OTP sent successfully',
-        otp // Remove in production
+        message: 'OTP sent successfully to your email'
       });
     } catch (error) {
       console.error('Password reset error:', error);
-      res.status(500).json({ message: 'Error sending OTP' });
+      res.status(500).json({ message: error.message || 'Error sending OTP' });
     }
   }
 );

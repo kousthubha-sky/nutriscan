@@ -1,13 +1,12 @@
 const express = require('express')
 const cors = require("cors");
 const path = require('path');
-const env = require('dotenv');
+require('dotenv').config();
 const cookieParser = require('cookie-parser');
 const { body, validationResult } = require('express-validator');
 const fs = require('fs').promises;
 
 const app = express();
-env.config();
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads', 'products');

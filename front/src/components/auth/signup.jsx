@@ -25,11 +25,15 @@ export default function Signup({onLogin}) {
             })
         })
         .then(response => {
-            if (!response.ok) throw new Error('Signup failed');
-            toast.success("Account created successfully!");
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Signup failed');
+                });
+            }
             return response.json();
         })
-        .then(() => {
+        .then(() => {  // Removed unused 'data' parameter
+            toast.success("Account created successfully!");
             return fetch("http://localhost:3000/user/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
