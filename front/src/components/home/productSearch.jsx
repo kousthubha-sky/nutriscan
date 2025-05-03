@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import api from '../../services/api';
-import { Search, Barcode, Camera } from 'lucide-react';
+import { Search, Barcode, Camera, X, Plus } from 'lucide-react';
 import { BarcodeScanner } from './BarcodeScanner';
 
-export default function ProductSearch({ onSearch, onError, resetQuery, onSearchStart }) {
+export default function ProductSearch({ onSearch, onError, resetQuery, onSearchStart, onAddFilter, activeFilters = [], onRemoveFilter }) {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [searchMode, setSearchMode] = useState('text'); // 'text' or 'barcode'
+  const [searchMode, setSearchMode] = useState('text');
   const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
@@ -49,9 +49,9 @@ export default function ProductSearch({ onSearch, onError, resetQuery, onSearchS
   }, [handleSearch]);
 
   return (
-    <div className="search-container space-y-4">
+    <div className="search-container ">
       {/* Search Mode Tabs */}
-      <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
+      <div className="flex gap-2 p-1 bg-gray-100 dark:bg-black rounded-lg w-fit">
         <button
           type="button"
           onClick={() => setSearchMode('text')}
@@ -78,6 +78,25 @@ export default function ProductSearch({ onSearch, onError, resetQuery, onSearchS
         </button>
       </div>
 
+      {/* Filter Chips Section - Always visible */}
+      <div className="flex flex-wrap gap-2 items-center min-h-[2.5rem]">
+        {activeFilters.map((filter, index) => (
+          <div
+            key={index}
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium group hover:bg-primary/20 transition-colors"
+          >
+            <span>{filter}</span>
+            <button
+              onClick={() => onRemoveFilter(filter)}
+              className="p-0.5 rounded-full hover:bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+        
+      </div>
+
       <form onSubmit={handleSearch} className="flex gap-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -92,20 +111,19 @@ export default function ProductSearch({ onSearch, onError, resetQuery, onSearchS
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={searchMode === 'text' ? "Search products..." : "Enter barcode number..."}
-            className="w-full pl-10 pr-16 py-2 border border-gray-200 dark:border-gray-700 rounded-lg 
-              bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/40 focus:border-transparent"
+            className="w-full pl-10 pr-16 py-2 border  dark:border-gray-700 rounded-lg 
+              bg-white dark:bg-transparent focus:ring-2 focus:ring-primary/40 focus:border-transparent"
             disabled={isLoading}
             minLength={searchMode === 'text' ? 2 : 1}
             pattern={searchMode === 'barcode' ? '[0-9]*' : undefined}
             inputMode={searchMode === 'barcode' ? 'numeric' : 'text'}
             required
           />
-          {/* Camera button for barcode mode */}
           {searchMode === 'barcode' && (
             <button
               type="button"
               onClick={() => setShowScanner(true)}
-              className="absolute inset-y-0 right-3 px-2 flex items-center justify-center
+              className="absolute inset-y-0 right-3 h-9 px-4 mt-0.5 flex items-center justify-center
                 text-gray-400 hover:text-primary transition-colors"
             >
               <Camera className="w-5 h-5" />
@@ -126,6 +144,13 @@ export default function ProductSearch({ onSearch, onError, resetQuery, onSearchS
           ) : (
             'Search'
           )}
+        </button>
+        <button
+          onClick={onAddFilter}
+          className="flex items-center gap-1 px-3 py-1.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary transition-colors"
+        >
+          <Plus className="w-3 h-3" />
+          Add filter
         </button>
       </form>
 

@@ -145,24 +145,29 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
 
                   <div className="flex-1">
                     <h3 className="font-medium line-clamp-2">{alt.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center">
-                        <span className="font-medium text-sm mr-1">
-                          {alt.healthRating?.toFixed(1) || "4.0"}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full border shadow-sm
+                          ${alt.healthRating >= 4 ? 'border-yellow-400' :
+                            alt.healthRating >= 3 ? 'border-green-400' :
+                            'border-orange-400'}`}>
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium text-sm">
+                            {alt.healthRating?.toFixed(1) || "3.0"}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            alt.tag === "Healthiest Choice"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : alt.tag === "Healthy Choice"
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                              : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
+                          }`}
+                        >
+                          {alt.tag}
                         </span>
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       </div>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          alt.tag === "Healthiest Choice"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : alt.tag === "Healthy Choice"
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                            : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
-                        }`}
-                      >
-                        {alt.tag}
-                      </span>
                     </div>
                   </div>
                 </div>

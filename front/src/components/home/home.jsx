@@ -20,7 +20,8 @@ import {
   Shield,
   Check,
   AlertTriangle,
-  X 
+  X,
+  Plus 
 } from "lucide-react";
 import { AnalysisSection } from '../product/analysis-section';
 import { IngredientAnalysis } from '../product/ingredient-analysis';
@@ -60,6 +61,69 @@ export default function Home({ user }) {
     price: '',
     certification: ''
   });
+  const [activeFilters, setActiveFilters] = useState([]);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  
+  const predefinedFilters = [
+    "Gluten-free",
+    "No preservatives",
+    "Vegan",
+    "Organic",
+    "Low sugar",
+    "High protein",
+    "No artificial colors",
+    "Whole grain",
+    "Dairy-free",
+    "Low fat"
+  ];
+
+  const handleAddFilter = () => {
+    setShowFilterModal(true);
+  };
+
+  const handleRemoveFilter = (filterToRemove) => {
+    setActiveFilters(prev => prev.filter(f => f !== filterToRemove));
+    // Update search with new filters
+    updateSearchWithFilters(activeFilters.filter(f => f !== filterToRemove));
+  };
+
+  const handleFilterSelect = (filter) => {
+    if (!activeFilters.includes(filter)) {
+      const newFilters = [...activeFilters, filter];
+      setActiveFilters(newFilters);
+      // Update search with new filters
+      updateSearchWithFilters(newFilters);
+    }
+    setShowFilterModal(false);
+  };
+
+  const updateSearchWithFilters = async (filters) => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    try {
+      const results = await api.searchProducts(
+        state.currentQuery || '',
+        1,
+        {
+          ...state.filters,
+          dietary: filters.map(f => f.toLowerCase())
+        }
+      );
+      setState(prev => ({
+        ...prev,
+        products: results.products,
+        unfilteredProducts: results.products,
+        currentPage: results.currentPage,
+        totalPages: results.totalPages,
+        isLoading: false
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error.message,
+        isLoading: false
+      }));
+    }
+  };
 
   const applyFilters = useCallback((products, filters) => {
     return products.filter(product => {
@@ -257,18 +321,50 @@ export default function Home({ user }) {
     fetchFeaturedProducts();
   }, []);
 
+  const handleBackToHome = () => {
+    setState({
+      products: [],
+      isLoading: false,
+      currentPage: 1,
+      totalPages: 1,
+      currentQuery: '',
+      error: null,
+      filters: {
+        brand: '',
+        healthRating: 0,
+        category: '',
+        dietaryPreference: '',
+        price: '',
+        certification: ''
+      },
+      unfilteredProducts: []
+    });
+    setSelectedProduct(null);
+    setSelectedAnalysisProduct(null);
+    setActiveFilters([]);
+    setShowFilters(false);
+    setTempFilters({
+      brand: '',
+      healthRating: 0,
+      category: '',
+      dietaryPreference: '',
+      price: '',
+      certification: ''
+    });
+  };
+
   return (
     <>
-      {/* Add floating food icons as background */}
       <FloatingFoodIcons />
       
       <div className="p-10 pl-10 relative z-10">
         <div className="max-w-[1920px] mx-auto px-4"> {/* Increased max width and added padding */}
+          
           {/* Welcome message with user info */}
           <div className="mb-6">
             {user ? (
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">
                   Welcome back, {user.username}!
                 </h1>
                 
@@ -291,7 +387,40 @@ export default function Home({ user }) {
               onSearch={handleSearch}
               onSearchStart={() => setState(prev => ({ ...prev, isLoading: true }))}
               resetQuery={state.products.length > 0}
+              onAddFilter={handleAddFilter}
+              activeFilters={activeFilters}
+              onRemoveFilter={handleRemoveFilter}
             />
+
+            {/* Filter Selection Modal */}
+            {showFilterModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Add Filter</h3>
+                    <button 
+                      onClick={() => setShowFilterModal(false)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {predefinedFilters
+                      .filter(filter => !activeFilters.includes(filter))
+                      .map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => handleFilterSelect(filter)}
+                          className="text-left px-4 py-2 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
+                        >
+                          {filter}
+                        </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Enhanced Filters Section with Animation */}
             {state.products.length > 0 && (
@@ -501,82 +630,83 @@ export default function Home({ user }) {
                 <section className="mt-12 mb-8">
                   <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
                     <Sparkles className="w-6 h-6 text-primary" />
-                    Healthy Picks
+                    Featured Products
                   </h2>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {featuredProducts.slice(0, showAllFeatured ? undefined : 8).map((product, index) => (
-                      <motion.div
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols gap-6">
+                    {featuredProducts.slice(0, showAllFeatured ? undefined : 8).map((product) => (
+                      <div
                         key={product._id || product.code}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="group relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden
-                          border border-gray-200 dark:border-gray-800 hover:border-primary/50 
-                          dark:hover:border-primary/50 transition-all duration-300
-                          hover:shadow-lg hover:shadow-primary/5 flex flex-col"
+                        className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden bg-card hover:border-primary/50 transition-all duration-300"
                       >
-                        {/* Health Rating Badge */}
-                        <div className="absolute top-3 right-3 z-10">
-                          <div className={`flex items-center gap-1 px-2 py-1 rounded-full 
-                            bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border 
-                            ${product.healthRating >= 4 ? 'border-green-500 text-green-500' :
-                              product.healthRating >= 3 ? 'border-yellow-500 text-yellow-500' :
-                              'border-red-500 text-red-500'}`}>
-                            <Star className="w-4 h-4" fill="currentColor" />
-                            <span className="text-sm font-medium">{product.healthRating?.toFixed(1) || "N/A"}</span>
+                        <div className="p-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded overflow-hidden">
+                              <img
+                                src={product.image_url || product.imageUrl || '/placeholder.png'}
+                                alt={product.product_name || product.name}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  e.target.src = "/placeholder.svg";
+                                }}
+                              />
+                            </div>
+
+                            <div className="flex-1">
+                              <h3 className="font-medium line-clamp-2">{product.product_name || product.name}</h3>
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full  shadow-sm
+                                    `}>
+                                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                    <span className="font-medium text-sm">
+                                      {product.healthRating?.toFixed(1) || "3.0"}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded-full ${
+                                      product.healthRating >= 4.5
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                        : product.healthRating >= 4
+                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                                        : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
+                                    }`}
+                                  >
+                                    {product.healthRating >= 4.5 ? "Excellent Choice" :
+                                     product.healthRating >= 4 ? "Healthy Choice" :
+                                     "Good Choice"}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {product.brands || product.brand || 'Unknown Brand'}
+                              </p>
+                            </div>
                           </div>
                         </div>
 
-                        {/* Product Image */}
-                        <div className="aspect-square w-full relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-6">
-                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent 
-                            opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          <img
-                            src={product.image_url || product.imageUrl || '/placeholder.png'}
-                            alt={product.product_name || product.name}
-                            className="w-full h-full object-contain transition-transform duration-300 
-                              group-hover:scale-105"
-                            onError={(e) => {
-                              e.target.src = '/placeholder.png';
-                              e.target.onerror = null;
-                            }}
-                          />
+                        <div className="flex gap-2 p-3 border-t border-gray-200 dark:border-gray-800">
+                          <button
+                            onClick={() => setSelectedProduct(product)}
+                            className="flex-1 py-2 px-4 rounded-lg bg-primary/10 hover:bg-primary/20 
+                              text-primary font-medium transition-colors duration-200 flex items-center justify-center gap-1"
+                          >
+                            Details
+                          </button>
+                          <button
+                            onClick={() => handleAnalysisSelect(product)}
+                            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 
+                              dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200"
+                          >
+                            <ArrowUpRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                          </button>
                         </div>
-
-                        {/* Product Info */}
-                        <div className="p-4 flex flex-col flex-grow">
-                          <h3 className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-2">
-                            {product.product_name || product.name}
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            {product.brands || product.brand}
-                          </p>
-                          
-                          {/* Action Buttons */}
-                          <div className="mt-auto flex gap-2">
-                            <button
-                              onClick={() => setSelectedProduct(product)}
-                              className="flex-1 py-2 px-4 rounded-lg bg-primary/10 hover:bg-primary/20 
-                                text-primary font-medium transition-colors duration-200"
-                            >
-                              Details
-                            </button>
-                            <button
-                              onClick={() => handleAnalysisSelect(product)}
-                              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 
-                                dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200"
-                            >
-                              <ArrowUpRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
-                  
+
                   {featuredProducts.length > 8 && (
-                    <motion.button
+                    <motion.button 
                       onClick={() => setShowAllFeatured(!showAllFeatured)}
                       className="mt-8 mx-auto block px-6 py-2.5 rounded-lg border border-gray-200 
                         dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 
@@ -595,20 +725,13 @@ export default function Home({ user }) {
                 {/* Back to Home button */}
                 <div className="mb-6">
                   <button
-                    onClick={() => setState(prev => ({
-                      ...prev,
-                      products: [],
-                      unfilteredProducts: [],
-                      currentPage: 1,
-                      currentQuery: '',
-                      error: null
-                    }))}
+                    onClick={handleBackToHome}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 011.414-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                     </svg>
-                    Back to Home
+                    Back to Home 
                   </button>
                 </div>
                 

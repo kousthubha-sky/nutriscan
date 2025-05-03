@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight, Sparkles, ArrowUpRight, Search } from "lucide-react";
 
 const ProductCard = ({ product, onProductSelect, onAnalysisSelect, index }) => {
+  const rating = product.healthRating || 3.0;
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -16,12 +18,13 @@ const ProductCard = ({ product, onProductSelect, onAnalysisSelect, index }) => {
       {/* Health Rating Badge */}
       <div className="absolute top-3 right-3 z-10">
         <div className={`flex items-center gap-1 px-2 py-1 rounded-full 
-          bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border 
-          ${product.healthRating >= 4 ? 'border-green-500 text-green-500' :
-            product.healthRating >= 3 ? 'border-yellow-500 text-yellow-500' :
-            'border-red-500 text-red-500'}`}>
-          <Star className="w-4 h-4" fill="currentColor" />
-          <span className="font-medium text-sm">{product.healthRating?.toFixed(1) || "N/A"}</span>
+          bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border shadow-sm
+          ${rating >= 4 ? 'border-yellow-400 text-yellow-500' :
+            rating >= 3 ? 'border-green-400 text-green-500' :
+            'border-orange-400 text-orange-500'}`}
+        >
+          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          <span className="font-medium text-sm">{rating.toFixed(1)}</span>
         </div>
       </div>
 

@@ -6,7 +6,7 @@ import { IngredientAnalysis } from '../product/ingredient-analysis';
 import { motion, AnimatePresence } from "framer-motion";
 
 function HealthRating({ product }) {
-  const rating = product.healthRating || 3;
+  const rating = product.healthRating || 3.0;
 
   const getNutriScoreColor = (grade) => {
     switch (grade?.toLowerCase()) {
@@ -35,10 +35,13 @@ function HealthRating({ product }) {
 
         {/* Star Rating */}
         <div className="flex items-center gap-2">
-          <Star className={`h-6 w-6 ${rating >= 4 ? 'fill-yellow-400 text-yellow-400' : 
-            rating >= 3 ? 'fill-green-400 text-green-400' : 
-            'fill-orange-400 text-orange-400'}`} />
-          <span className="font-medium">{rating.toFixed(1)}</span>/5.0<br />
+          <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full border shadow-sm
+            ${rating >= 4 ? 'border-yellow-400' :
+              rating >= 3 ? 'border-green-400' :
+              'border-orange-400'}`}>
+            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+            <span className="font-medium">{rating.toFixed(1)}</span>
+          </div>
           <span className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 
             px-2 py-1 rounded text-sm">Health Rating</span>
         </div>
@@ -46,10 +49,11 @@ function HealthRating({ product }) {
 
       {/* Rating Description */}
       <p className="text-sm text-gray-600 dark:text-gray-400">
-        {rating >= 4 ? 'Excellent nutritional value' :
-         rating >= 3 ? 'Good nutritional value' :
-         rating >= 2 ? 'Average nutritional value' :
-         'Poor nutritional value'}
+        {rating >= 4.5 ? 'Excellent nutritional value with minimal processing' :
+         rating >= 4 ? 'Very good nutritional value' :
+         rating >= 3 ? 'Good nutritional value with some concerns' :
+         rating >= 2 ? 'Average nutritional value with notable concerns' :
+         'Poor nutritional value with significant concerns'}
       </p>
     </div>
   );

@@ -32,18 +32,20 @@ function escapeRegExp(string) {
 }
 
 exports.searchProducts = async (req, res) => {
+  const limit = 10;
   try {
-    const { q: query, page = 1, limit = 24, sortBy = 'relevance', filters = {} } = req.query;
+    const { q:query, page = 1, filters = {}, sortBy = 'relevance' } = req.query;
     console.log('Search request:', { query, page, sortBy, filters });
 
-    if (!query || typeof query !== 'string' || query.trim().length === 0) {
+    // Relaxed validation - allow minimum 1 character
+    if (!query || typeof query !== 'string' || query.trim().length === 0)  {
       return res.status(400).json({
         success: false,
         error: 'Please enter a valid search term'
       });
     }
 
-    const skip = (parseInt(page) - 1) * limit;
+    const skip = (parseInt(page) - 1) *parseInt(limit);
     const sanitizedQuery = escapeRegExp(query.trim());
 
     // Build base search query
@@ -67,25 +69,44 @@ exports.searchProducts = async (req, res) => {
       if (filters.healthRating > 0) {
         searchQuery.healthRating = { $gte: parseFloat(filters.healthRating) };
       }
-      if (filters.dietaryPreference) {
-        switch (filters.dietaryPreference) {
-          case 'vegetarian':
-            searchQuery.ingredients = { $not: /meat|chicken|fish/i };
-            break;
-          case 'vegan':
-            searchQuery.ingredients = { $not: /meat|milk|egg|honey/i };
-            break;
-          case 'gluten-free':
-            searchQuery.ingredients = { $not: /wheat|gluten/i };
-            break;
-          case 'keto':
-            searchQuery['nutriments.carbohydrates_100g'] = { $lt: 10 };
-            break;
-          case 'low-sugar':
-            searchQuery['nutriments.sugars_100g'] = { $lt: 5 };
-            break;
+
+      // Handle filter chips (dietary preferences)
+      if (filters.dietary && Array.isArray(filters.dietary)) {
+        const dietaryFilters = filters.dietary.map(pref => {
+          switch(pref) {
+            case 'gluten-free':
+              return { ingredients: { $not: /wheat|gluten/i } };
+            case 'no preservatives':
+              return { ingredients: { $not: /preservative|sulfite|nitrite|bha|bht/i } };
+            case 'vegan':
+              return { ingredients: { $not: /meat|milk|egg|honey|gelatin/i } };
+            case 'organic':
+              return { $or: [
+                { labels: /organic/i },
+                { name: /organic/i }
+              ]};
+            case 'low sugar':
+              return { 'nutriments.sugars_100g': { $lt: 5 } };
+            case 'high protein':
+              return { 'nutriments.proteins_100g': { $gt: 10 } };
+            case 'no artificial colors':
+              return { ingredients: { $not: /artificial color|food coloring|red 40|yellow 5|blue 1/i } };
+            case 'whole grain':
+              return { ingredients: /whole grain|whole wheat|whole oat/i };
+            case 'dairy-free':
+              return { ingredients: { $not: /milk|cream|cheese|yogurt|butter/i } };
+            case 'low fat':
+              return { 'nutriments.fat_100g': { $lt: 3 } };
+            default:
+              return {};
+          }
+        });
+        if (dietaryFilters.length > 0) {
+          searchQuery.$and = searchQuery.$and || [];
+          searchQuery.$and.push(...dietaryFilters);
         }
       }
+
       if (filters.price) {
         const priceQuery = {};
         switch (filters.price) {

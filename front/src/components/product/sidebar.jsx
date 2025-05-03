@@ -165,14 +165,13 @@ export function Sidebar({ user, onAction }) {
                     className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 relative
                       font-medium
                       ${item.section && activeSection === item.section
-                        ? "bg-green-100 dark:bg-green-900/30 text-white/30 dark:text-green-400 font-bold border-l-4 border-green-500"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-green-600 dark:hover:text-green-400 border-l-4 border-transparent"}
-                    `}
+                        ? "bg-green-100 dark:bg-green-900/30 text-gray-900 dark:text-gray-100 font-bold border-l-4 border-green-500"
+                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-gray-900 dark:hover:text-gray-200 border-l-4 border-transparent"}`}
                   >
                     <span className={`transition-colors duration-200 ${
                       item.section && activeSection === item.section
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-gray-400 group-hover:text-green-600 dark:text-gray-500 dark:group-hover:text-green-400'
+                        ? 'text-gray-900 dark:text-gray-100'
+                        : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200'
                     }`}>
                       {item.icon}
                     </span>
@@ -187,10 +186,10 @@ export function Sidebar({ user, onAction }) {
                   <Link
                     to={adminMenuItem.href}
                     className="group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 relative
-                      font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 
-                      hover:text-green-600 dark:hover:text-green-400 border-l-4 border-transparent"
+                      font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 
+                      hover:text-gray-900 dark:hover:text-gray-200 border-l-4 border-transparent"
                   >
-                    <span className="text-gray-400 group-hover:text-green-600 dark:text-gray-500 dark:group-hover:text-green-400">
+                    <span className="text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200">
                       {adminMenuItem.icon}
                     </span>
                     <span className="text-inherit">{adminMenuItem.label}</span>
@@ -213,8 +212,8 @@ export function Sidebar({ user, onAction }) {
                   <span className="text-xs">{user.username.charAt(0).toUpperCase()}</span>
                 </div>
                 <div>
-                  <p className="font-medium">{user.username}</p>
-                  <p className="text-xs text-gray-500">{user.email || 'user@example.com'}</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{user.username}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{user.email || 'user@example.com'}</p>
                 </div>
               </div>
               <nav>
@@ -224,8 +223,9 @@ export function Sidebar({ user, onAction }) {
                       <a
                         href={item.href}
                         onClick={(e) => handleMenuItemClick(e, item)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium
-                          hover:bg-gray-100 dark:hover:bg-gray-800/60 hover:text-green-600 dark:hover:text-green-400`}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium
+                          text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60 
+                          hover:text-gray-900 dark:hover:text-gray-200"
                       >
                         {item.icon}
                         <span>{item.label}</span>
@@ -239,17 +239,17 @@ export function Sidebar({ user, onAction }) {
             <div className="flex flex-col gap-2">
               <Link
                 to="/login"
-                className={`w-full text-center py-2 px-3 rounded-lg transition-colors ${
-                  isDarkTheme ?  "hover:bg-white text-black" : " hover:bg-gray-900 text-white"
-                } text-gray-900 dark:text-white`}
+                className="w-full text-center py-2 px-3 rounded-lg transition-colors
+                  text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60
+                  hover:text-gray-900 dark:hover:text-gray-200"
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className={`w-full text-center py-2 px-3 rounded-lg transition-colors ${
-                  isDarkTheme ? " hover:bg-white text-black" : " hover:bg-gray-900 text-white"
-                } text-white`}
+                className="w-full text-center py-2 px-3 rounded-lg transition-colors
+                  text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60
+                  hover:text-gray-900 dark:hover:text-gray-200"
               >
                 Sign Up
               </Link>
