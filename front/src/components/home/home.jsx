@@ -30,7 +30,9 @@ import { NutritionalImpact } from '../product/nutritional-impact';
 import { ContributeSection } from './ContributeSection';
 import { RatingSystem } from '../product/rating-system';
 import { MenuBar } from '../ui/menu-bar';
-export default function Home({ user }) {
+  import { Link } from 'react-router-dom';
+
+export default function Home({ user, onModalStateChange }) {
   const [state, setState] = useState({
     products: [],
     isLoading: false,
@@ -353,6 +355,16 @@ export default function Home({ user }) {
     });
   };
 
+  const handleSelectProduct = (product) => {
+    setSelectedProduct(product);
+    onModalStateChange?.(true);
+  };
+
+  const handleCloseProductModal = () => {
+    setSelectedProduct(null);
+    onModalStateChange?.(false);
+  };
+
   return (
     <>
       <FloatingFoodIcons />
@@ -367,7 +379,16 @@ export default function Home({ user }) {
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white">
                   Welcome back, {user.username}!
                 </h1>
-                
+                {user.role === 'admin' && (
+                  <div className="mt-6">
+                    <Link 
+                      to="/admin"
+                      className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Go to Admin Dashboard
+                    </Link>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
@@ -687,7 +708,7 @@ export default function Home({ user }) {
 
                         <div className="flex gap-2 p-3 border-t border-gray-200 dark:border-gray-800">
                           <button
-                            onClick={() => setSelectedProduct(product)}
+                            onClick={() => handleSelectProduct(product)}
                             className="flex-1 py-2 px-4 rounded-lg bg-primary/10 hover:bg-primary/20 
                               text-primary font-medium transition-colors duration-200 flex items-center justify-center gap-1"
                           >
@@ -762,7 +783,7 @@ export default function Home({ user }) {
           {selectedProduct && (
             <ProductDetailsModal
               product={selectedProduct}
-              onClose={() => setSelectedProduct(null)}
+              onClose={handleCloseProductModal}
               user={user}
             />
           )}
@@ -773,24 +794,12 @@ export default function Home({ user }) {
               <AnalysisSection product={selectedAnalysisProduct || featuredProducts[0]} />
               <IngredientAnalysis product={selectedAnalysisProduct || featuredProducts[0]} />
               <NutritionalImpact product={selectedAnalysisProduct || featuredProducts[0]} />
-              
+              <HealthierAlternatives product={selectedAnalysisProduct || featuredProducts[0]} />
             </div>
           )}
           
-          {/* Add Healthier Alternatives Section */}
-          <section className="w-full max-w-7xl mx-auto py-12">
-            <h2 className="text-3xl font-bold mb-8">Recommended Healthy Products</h2>
-            <HealthierAlternatives 
-              product={selectedAnalysisProduct || {
-                healthRating: 4.0,
-                category: "All Categories"
-              }}
-              onAnalysisSelect={handleAnalysisSelect}
-            />
-          </section>
-
           <ContributeSection />
-          <RatingSystem/>
+          <RatingSystem />
         </div>
       </div>
     </>

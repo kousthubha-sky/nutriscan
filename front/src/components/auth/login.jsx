@@ -54,7 +54,7 @@ export default function Login({ onLogin }) {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-emerald-950 animate-gradient-xy w-320">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-emerald-950 animate-gradient-xy w-390">
             <FloatingFoodIcons className="absolute inset-0 z-0" />
             <div className="backdrop-blur-lg  p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all hover:scale-105">
                 

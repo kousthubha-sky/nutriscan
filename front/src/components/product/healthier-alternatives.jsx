@@ -19,19 +19,16 @@ export function HealthierAlternatives({ product, onAnalysisSelect }) {
       
       try {
         console.log('Fetching alternatives for:', product);
+        // Modify the API call to ensure correct data format:
         const alternatives = await api.getHealthierAlternatives(
           product.category,
           product?.healthRating || 3.0,
-          {
+          { // Ensure all required fields are passed
             _id: product._id,
             category: product.category,
             nutriments: product.nutriments || {},
             healthRating: product.healthRating || 3.0,
-            ingredients: Array.isArray(product.ingredients) 
-              ? product.ingredients 
-              : typeof product.ingredients === 'string'
-              ? product.ingredients.split(',').map(i => i.trim())
-              : [],
+            ingredients: product.ingredients || [],
             name: product.name
           }
         );

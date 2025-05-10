@@ -140,24 +140,30 @@ const api = {
 
   async reviewSubmission(submissionId, { status, adminNotes, ...productData }) {
     try {
+      console.log('Submitting review:', { submissionId, status, adminNotes, ...productData });
+      
       const response = await fetch(`${API_BASE}/admin/submissions/${submissionId}/review`, {
         method: 'POST',
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status, adminNotes, ...productData })
+        body: JSON.stringify({ 
+          status, 
+          adminNotes,
+          ...productData
+        })
       });
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to submit review');
+        throw new Error(data.message || data.error || 'Failed to submit review');
       }
       
       return data;
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('Review submission error:', error);
       throw error;
     }
   },

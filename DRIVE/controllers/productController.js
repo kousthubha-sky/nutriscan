@@ -1,4 +1,5 @@
 const axios = require('axios');
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const calculateHealthRating = require('../utils/healthRating');
 
@@ -328,65 +329,75 @@ exports.getHealthierAlternatives = async (req, res) => {
       });
     }
 
-    // Build sophisticated query
+    // Build base query
     const mainQuery = {
-      // Exclude the current product
-      ...(productData._id && { _id: { $ne: productData._id } }),
-      // Base health rating criteria
-      healthRating: { $gt: minHealthRating }
+      healthRating: { $gt: Math.max(minHealthRating, productData.healthRating || 3.0) }
     };
-    
-    console.log('Built query:', mainQuery);
-    
-    // Category matching with related categories
+
+    // Add ID exclusion if provided
+    if (productData._id) {
+      try {
+        mainQuery._id = { $ne: new mongoose.Types.ObjectId(productData._id) };
+      } catch (error) {
+        console.warn('Invalid ObjectId for product exclusion:', productData._id);
+      }
+    }
+
+    // Add category matching if available
     if (category && category !== 'All Categories') {
       const categoryTerms = category.toLowerCase().split(/[,\s]+/);
-      const relatedCategories = categoryTerms.flatMap(term => [
-        new RegExp(term, 'i'),
-        new RegExp(`${term}.*`, 'i'),
-        new RegExp(`.*${term}`, 'i')
-      ]);
-      
-      // Create nutritional profile matcher
-      const nutrientRanges = {};
-      if (productData.nutriments) {
-        const NUTRIENT_TOLERANCE = 0.2; // 20% tolerance
-        ['proteins_100g', 'fiber_100g', 'sugars_100g', 'fat_100g'].forEach(nutrient => {
-          const value = productData.nutriments[nutrient];
-          if (value) {
-            nutrientRanges[`nutriments.${nutrient}`] = {
-              $gte: value * (1 - NUTRIENT_TOLERANCE),
-              $lte: value * (1 + NUTRIENT_TOLERANCE)
-            };
-          }
-        });
-      }
+      const categoryPatterns = categoryTerms.map(term => new RegExp(term, 'i'));
+      mainQuery.category = { $in: categoryPatterns };
+    }
 
-      // Combine category and nutritional matching
-      mainQuery.$or = [
-        { category: { $in: relatedCategories } },
-        ...Object.entries(nutrientRanges).map(([nutrient, range]) => ({ [nutrient]: range }))
-      ];
+    // Add nutritional profile matching if available
+    if (productData.nutriments) {
+      const nutrientRanges = {};
+      const NUTRIENT_TOLERANCE = 0.3; // 30% tolerance for nutrient matching
+
+      // Check key nutrients
+      ['proteins_100g', 'fiber_100g', 'sugars_100g', 'fat_100g'].forEach(nutrient => {
+        const value = productData.nutriments[nutrient];
+        if (value) {
+          // For positive nutrients (protein, fiber), look for higher values
+          if (nutrient === 'proteins_100g' || nutrient === 'fiber_100g') {
+            nutrientRanges[`nutriments.${nutrient}`] = { $gte: value };
+          }
+          // For negative nutrients (sugars, fat), look for lower values
+          else {
+            nutrientRanges[`nutriments.${nutrient}`] = { $lte: value };
+          }
+        }
+      });
+
+      // Add nutritional criteria to query
+      if (Object.keys(nutrientRanges).length > 0) {
+        mainQuery.$or = [
+          // Match either by category or by nutritional profile
+          { category: mainQuery.category },
+          nutrientRanges
+        ];
+        delete mainQuery.category; // Remove from main query since it's in $or
+      }
     }
 
     console.log('Finding alternatives with query:', JSON.stringify(mainQuery, null, 2));
 
-    // Find alternatives with sophisticated sorting
+    // Find alternatives
     const alternatives = await Product.find(mainQuery)
       .sort({ 
         healthRating: -1,
-        searchCount: -1,
         'nutriments.proteins_100g': -1,
         'nutriments.fiber_100g': -1
       })
       .limit(6)
       .lean();
 
-    console.log(`Found ${alternatives.length} initial alternatives`);
+    console.log(`Found ${alternatives.length} alternatives`);
 
-    if (!alternatives.length) {
-      console.log('No strict matches found, trying broader search');
-      // If no alternatives found with strict criteria, try a broader search
+    if (alternatives.length === 0) {
+      console.log('No matches found, trying broader search');
+      // Try a broader search focusing only on health rating
       const broadQuery = {
         _id: { $ne: productData._id },
         healthRating: { $gt: minHealthRating }
@@ -399,13 +410,13 @@ exports.getHealthierAlternatives = async (req, res) => {
 
       console.log(`Found ${broadAlternatives.length} broad alternatives`);
 
-      if (broadAlternatives.length) {
+      if (broadAlternatives.length > 0) {
         const results = broadAlternatives.map(alt => {
           const relevanceScore = calculateRelevanceScore(alt, productData);
           const nutritionalImprovement = calculateNutritionalImprovement(alt, productData);
           
           return {
-            ...alt,
+            ...alt._doc || alt,
             tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
                  alt.healthRating >= 4.0 ? "Healthy Choice" :
                  "Better Choice",
@@ -422,13 +433,13 @@ exports.getHealthierAlternatives = async (req, res) => {
       }
     }
 
-    // Calculate similarity scores and enhance results
+    // Process and return the alternatives with scores
     const results = alternatives.map(alt => {
       const relevanceScore = calculateRelevanceScore(alt, productData);
       const nutritionalImprovement = calculateNutritionalImprovement(alt, productData);
       
       return {
-        ...alt,
+        ...alt._doc || alt,
         tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
              alt.healthRating >= 4.0 ? "Healthy Choice" :
              "Better Choice",
@@ -438,7 +449,7 @@ exports.getHealthierAlternatives = async (req, res) => {
       };
     });
 
-    // Sort by relevance and improvement
+    // Sort by combined score
     results.sort((a, b) => (
       (b.relevanceScore + b.nutritionalImprovement) - 
       (a.relevanceScore + a.nutritionalImprovement)

@@ -51,8 +51,8 @@ export function SettingsMenu({ isOpen, onClose, user }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex justify-end">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 h-full overflow-y-auto shadow-lg">
+    <div className="fixed inset-0 bg-black/50 z-[100] flex justify-end">
+      <div className="w-full max-w-md bg-white dark:bg-gray-900 h-full overflow-y-auto shadow-lg relative z-[102]">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
           <h2 className="text-xl font-bold flex items-center gap-2">

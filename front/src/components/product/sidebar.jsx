@@ -122,19 +122,27 @@ export function Sidebar({ user, onAction }) {
 
   return (
     <>
+      {/* Mobile menu backdrop */}
+      <div
+        className={`md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[50] transition-opacity duration-300
+          ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        onClick={() => setIsOpen(false)}
+      />
+
+      {/* Hamburger menu button */}
       <button
-        className="md:hidden fixed top-4 right-4 z-50"
+        className="md:hidden fixed top-4 right-4 z-[60] p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-sm"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Sidebar container */}
       <div
         className={`sidebar ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} 
-          w-64 h-screen flex flex-col fixed left-0 top-0 z-30 bg-background
-          border-r border-gray-200/10 transition-transform duration-300
-          ${isDarkTheme ? "border-gray-800/10" : "border-gray-200/20"}`}
+          w-64 h-screen flex flex-col fixed left-0 top-0 z-[100] 
+          bg-white dark:bg-gray-900 border-r border-white 
+          shadow-lg transition-transform duration-300 ease-in-out overflow-y-auto`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-200/10 dark:border-gray-800/10 flex items-center gap-2">
@@ -146,14 +154,14 @@ export function Sidebar({ user, onAction }) {
             <span className="font-bold text-lg">NS</span>
           </div>
           <span className="font-bold text-xl text-green-600">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 ">
               NutriScan
             </Link>
           </span>
         </div>
 
         {/* Updated Main menu */}
-        <div className="p-4">
+        <div className="p-4 border-t border-gray-200/10 ">
           <p className="text-xs font-semibold text-gray-400/50 mb-4">MAIN MENU</p>
           <nav>
             <ul className="space-y-1">

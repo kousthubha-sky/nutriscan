@@ -88,7 +88,7 @@ export function FloatingFoodIcons() {
   }, [])
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-black/70 ">
       {floatingIcons.map((icon) => (
         <motion.div
           key={icon.id}

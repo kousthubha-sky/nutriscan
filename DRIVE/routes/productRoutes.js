@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/search', searchProducts);
 router.get('/featured', getFeaturedProducts);
 router.get('/indian', getIndianProducts);
-router.post('/alternatives', getHealthierAlternatives); // Ensure this route is properly configured
+router.post('/alternatives', getHealthierAlternatives); // Fixed route path to avoid double products prefix
 
 // Protected routes
 router.post('/submit', 

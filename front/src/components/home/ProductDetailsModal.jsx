@@ -127,236 +127,240 @@ export default function ProductDetailsModal({ product, onClose }) {
   return (
     <AnimatePresence>
       {!isClosing && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={handleClose}
-          aria-modal="true"
-          role="dialog"
-        >
-          <motion.div 
-            variants={modalVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="bg-white dark:bg-gray-900 rounded-2xl w-11/12 max-w-4xl max-h-[90vh] 
-              flex flex-col overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header - Sticky */}
-            <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 border-b 
-              border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between
-              backdrop-blur-md z-10">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground 
-                  bg-clip-text text-transparent">Product Details</h2>
-              </div>
-              <button 
-                onClick={handleClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full 
-                  transition-all duration-200 hover:rotate-90"
-                aria-label="Close modal"
+        <div className="fixed inset-0 isolate z-[9999]">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60"
+            onClick={handleClose}
+          />
+          
+          {/* Modal Container */}
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <motion.div 
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="relative bg-white dark:bg-gray-900 rounded-2xl w-11/12 max-w-4xl 
+                  flex flex-col overflow-hidden shadow-2xl border border-gray-200 
+                  dark:border-gray-800"
+                onClick={e => e.stopPropagation()}
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+                {/* Header - Sticky */}
+                <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 border-b 
+                  border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between
+                  backdrop-blur-md z-10">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground 
+                      bg-clip-text text-transparent">Product Details</h2>
+                  </div>
+                  <button 
+                    onClick={handleClose}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full 
+                      transition-all duration-200 hover:rotate-90"
+                    aria-label="Close modal"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                {/* Product Overview */}
-                <div className="p-6">
-                  <div className="grid md:grid-cols-2 gap-8">
-                    {/* Left Column - Image and Health Rating */}
-                    <div className="space-y-6">
-                      <motion.div 
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br 
-                          from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900
-                          p-6 relative group"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent 
-                          opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <img
-                          src={getImageUrl(product)}
-                          alt={product.product_name || product.name}
-                          className="w-full h-full object-contain transition-transform duration-300
-                            group-hover:scale-105"
-                          onError={(e) => {
-                            e.target.src = '/placeholder.png';
-                            e.target.onerror = null;
-                          }}
-                        />
-                      </motion.div>
-                      
-                      <HealthRating product={product} />
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-y-auto">
+                  <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                    {/* Product Overview */}
+                    <div className="p-6">
+                      <div className="grid md:grid-cols-2 gap-8">
+                        {/* Left Column - Image and Health Rating */}
+                        <div className="space-y-6">
+                          <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br 
+                              from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900
+                              p-6 relative group"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent 
+                              opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <img
+                              src={getImageUrl(product)}
+                              alt={product.product_name || product.name}
+                              className="w-full h-full object-contain transition-transform duration-300
+                                group-hover:scale-105"
+                              onError={(e) => {
+                                e.target.src = '/placeholder.png';
+                                e.target.onerror = null;
+                              }}
+                            />
+                          </motion.div>
+                          
+                          <HealthRating product={product} />
+                        </div>
+
+                        {/* Right Column - Product Details */}
+                        <div className="space-y-6">
+                          <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                          >
+                            <h3 className="text-2xl font-bold mb-2 leading-tight">
+                              {product.product_name || product.name}
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                              <Tag className="w-4 h-4" />
+                              {product.brands || product.brand || 'N/A'}
+                            </p>
+                          </motion.div>
+
+                          <motion.div 
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.4 }}
+                            className="grid grid-cols-2 gap-4"
+                          >
+                            <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-2">
+                              <div className="flex items-center gap-2 text-primary">
+                                <Box className="w-4 h-4" />
+                                <span className="text-sm font-medium">Product Code</span>
+                              </div>
+                              <p className="text-sm">
+                                {product.barcode || product.code || 'N/A'}
+                              </p>
+                            </div>
+                            {product.category && (
+                              <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-2">
+                                <div className="flex items-center gap-2 text-primary">
+                                  <Tag className="w-4 h-4" />
+                                  <span className="text-sm font-medium">Category</span>
+                                </div>
+                                <p className="text-sm">{product.category}</p>
+                              </div>
+                            )}
+                          </motion.div>
+
+                          {product.ingredients && (
+                            <motion.div
+                              initial={{ y: 20, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ delay: 0.5 }}
+                              className="rounded-xl border border-gray-200 dark:border-gray-800 p-4"
+                            >
+                              <div className="flex items-center gap-2 mb-2 text-primary">
+                                <Scale className="w-4 h-4" />
+                                <h4 className="font-medium">Ingredients</h4>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                {Array.isArray(product.ingredients) ? product.ingredients.join(', ') : product.ingredients || 'No ingredients listed'}
+                              </p>
+                            </motion.div>
+                          )}
+
+                          {product.allergens && product.allergens.length > 0 && (
+                            <motion.div
+                              initial={{ y: 20, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ delay: 0.6 }}
+                              className="rounded-xl border border-gray-200 dark:border-gray-800 p-4"
+                            >
+                              <div className="flex items-center gap-2 mb-2 text-primary">
+                                <AlertTriangle className="w-4 h-4" />
+                                <h4 className="font-medium">Allergens</h4>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                {Array.isArray(product.allergens) ? product.allergens.join(', ') : product.allergens}
+                              </p>
+                            </motion.div>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Right Column - Product Details */}
-                    <div className="space-y-6">
+                    {/* Expandable Sections */}
+                    <div className="p-6 space-y-6">
+                      {/* Nutrition Facts Section */}
+                      <motion.div 
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
+                      >
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === "nutrition" ? "" : "nutrition")}
+                          className="w-full px-4 py-3 flex items-center justify-between 
+                            hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 text-primary">
+                            <Shield className="w-5 h-5" />
+                            <span className="font-medium">Nutrition Facts</span>
+                          </div>
+                          <ChevronDown 
+                            className={`w-5 h-5 transition-transform duration-200 
+                              ${expandedSection === "nutrition" ? "rotate-180" : ""}`}
+                          />
+                        </button>
+                        
+                        <motion.div
+                          variants={sectionVariants}
+                          initial="collapsed"
+                          animate={expandedSection === "nutrition" ? "expanded" : "collapsed"}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+                            <div className="max-h-[60vh] overflow-y-auto scrollbar-thin 
+                              scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 
+                              scrollbar-track-transparent pr-2">
+                              <NutritionFacts 
+                                nutriments={product.nutriments} 
+                                serving_size={product.serving_size} 
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+
+                      {/* Ingredient Analysis Section */}
                       <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.3 }}
+                        transition={{ delay: 0.7 }}
+                        className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
                       >
-                        <h3 className="text-2xl font-bold mb-2 leading-tight">
-                          {product.product_name || product.name}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                          <Tag className="w-4 h-4" />
-                          {product.brands || product.brand || 'N/A'}
-                        </p>
-                      </motion.div>
-
-                      <motion.div 
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="grid grid-cols-2 gap-4"
-                      >
-                        <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-2">
+                        <button 
+                          onClick={() => setExpandedSection(expandedSection === "analysis" ? "" : "analysis")}
+                          className="w-full px-4 py-3 flex items-center justify-between 
+                            hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
                           <div className="flex items-center gap-2 text-primary">
-                            <Box className="w-4 h-4" />
-                            <span className="text-sm font-medium">Product Code</span>
+                            <Sparkles className="w-5 h-5" />
+                            <span className="font-medium">Ingredient Analysis</span>
                           </div>
-                          <p className="text-sm">
-                            {product.barcode || product.code || 'N/A'}
-                          </p>
-                        </div>
-                        {product.category && (
-                          <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 space-y-2">
-                            <div className="flex items-center gap-2 text-primary">
-                              <Tag className="w-4 h-4" />
-                              <span className="text-sm font-medium">Category</span>
-                            </div>
-                            <p className="text-sm">{product.category}</p>
+                          <ChevronDown 
+                            className={`w-5 h-5 transition-transform duration-200 
+                              ${expandedSection === "analysis" ? "rotate-180" : ""}`}
+                          />
+                        </button>
+                        
+                        <motion.div
+                          variants={sectionVariants}
+                          initial="collapsed"
+                          animate={expandedSection === "analysis" ? "expanded" : "collapsed"}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+                            <IngredientAnalysis product={product} />
                           </div>
-                        )}
+                        </motion.div>
                       </motion.div>
-
-                      {product.ingredients && (
-                        <motion.div
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.5 }}
-                          className="rounded-xl border border-gray-200 dark:border-gray-800 p-4"
-                        >
-                          <div className="flex items-center gap-2 mb-2 text-primary">
-                            <Scale className="w-4 h-4" />
-                            <h4 className="font-medium">Ingredients</h4>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {Array.isArray(product.ingredients) ? product.ingredients.join(', ') : product.ingredients || 'No ingredients listed'}
-                          </p>
-                        </motion.div>
-                      )}
-
-                      {product.allergens && product.allergens.length > 0 && (
-                        <motion.div
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.6 }}
-                          className="rounded-xl border border-gray-200 dark:border-gray-800 p-4"
-                        >
-                          <div className="flex items-center gap-2 mb-2 text-primary">
-                            <AlertTriangle className="w-4 h-4" />
-                            <h4 className="font-medium">Allergens</h4>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {Array.isArray(product.allergens) ? product.allergens.join(', ') : product.allergens}
-                          </p>
-                        </motion.div>
-                      )}
                     </div>
                   </div>
                 </div>
-
-                {/* Expandable Sections */}
-                <div className="p-6 space-y-6">
-                  {/* Nutrition Facts Section */}
-                  <motion.div 
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
-                  >
-                    <button 
-                      onClick={() => setExpandedSection(expandedSection === "nutrition" ? "" : "nutrition")}
-                      className="w-full px-4 py-3 flex items-center justify-between 
-                        hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 text-primary">
-                        <Shield className="w-5 h-5" />
-                        <span className="font-medium">Nutrition Facts</span>
-                      </div>
-                      <ChevronDown 
-                        className={`w-5 h-5 transition-transform duration-200 
-                          ${expandedSection === "nutrition" ? "rotate-180" : ""}`}
-                      />
-                    </button>
-                    
-                    <motion.div
-                      variants={sectionVariants}
-                      initial="collapsed"
-                      animate={expandedSection === "nutrition" ? "expanded" : "collapsed"}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-                        <div className="max-h-[60vh] overflow-y-auto scrollbar-thin 
-                          scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 
-                          scrollbar-track-transparent pr-2">
-                          <NutritionFacts 
-                            nutriments={product.nutriments} 
-                            serving_size={product.serving_size} 
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-
-                  {/* Ingredient Analysis Section */}
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                    className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
-                  >
-                    <button 
-                      onClick={() => setExpandedSection(expandedSection === "analysis" ? "" : "analysis")}
-                      className="w-full px-4 py-3 flex items-center justify-between 
-                        hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 text-primary">
-                        <Sparkles className="w-5 h-5" />
-                        <span className="font-medium">Ingredient Analysis</span>
-                      </div>
-                      <ChevronDown 
-                        className={`w-5 h-5 transition-transform duration-200 
-                          ${expandedSection === "analysis" ? "rotate-180" : ""}`}
-                      />
-                    </button>
-                    
-                    <motion.div
-                      variants={sectionVariants}
-                      initial="collapsed"
-                      animate={expandedSection === "analysis" ? "expanded" : "collapsed"}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-                        <IngredientAnalysis product={product} />
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                </div>
-              </div>
+              </motion.div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </AnimatePresence>
   );

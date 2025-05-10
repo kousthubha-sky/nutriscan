@@ -109,11 +109,11 @@ export function UserProfile({ isOpen, onClose, user }) {
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto">
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[101]"
         onClick={onClose}
       />
       
-      <div className="relative min-h-screen md:flex md:items-center md:justify-center py-10">
+      <div className="relative min-h-screen md:flex md:items-center md:justify-center py-10 z-[102]">
         <div className="relative bg-background max-w-4xl mx-auto rounded-2xl shadow-xl flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-border">

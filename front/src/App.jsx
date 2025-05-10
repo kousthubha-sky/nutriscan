@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './App.css';
 import { Link } from 'react-router-dom';
@@ -15,7 +15,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AdminDashboard from './components/dashboard/AdminDashboard';
 
-// Protected route component
+// Protected route componentxx
 const AdminRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user || user.role !== 'admin') {
@@ -24,7 +24,7 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-function App() {
+function AppContent() {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -32,6 +32,11 @@ function App() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const location = useLocation();
+
+  // Hide sidebar on auth pages
+  const hideOnPaths = ['/login', '/signup', '/forgot-password'];
+  const shouldShowSidebar = !hideOnPaths.includes(location.pathname);
 
   useEffect(() => {
     if (user) {
@@ -66,6 +71,58 @@ function App() {
   };
 
   return (
+    <div className="min-h-screen bg-background">
+      {/* Main layout container */}
+      <div className="flex">
+        {/* Sidebar - hidden on auth pages */}
+        {shouldShowSidebar && (
+          <Sidebar 
+            user={user}
+            onAction={handleAction}
+          />
+        )}
+
+        {/* Main content */}
+        <main className={`flex-1 w-full transition-all duration-300 ${shouldShowSidebar ? 'md:pl-64' : ''}`}>
+          <Routes>
+            <Route path="/" element={<Home user={user} />} />
+            <Route path="/login" element={<Login onLogin={setUser} />} />
+            <Route path="/signup" element={<Signup onLogin={setUser} />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route 
+              path="/admin" 
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } 
+            />
+          </Routes>
+        </main>
+      </div>
+
+      {/* Modals */}
+      {isSettingsOpen && (
+        <SettingsMenu 
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          user={user}
+        />
+      )}
+
+      {isProfileOpen && (
+        <UserProfile 
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          user={user}
+        />
+      )}
+    </div>
+  );
+}
+
+function App() {
+  return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <BrowserRouter>
         <ToastContainer
@@ -80,52 +137,7 @@ function App() {
           pauseOnHover
           theme="colored"
         />
-        <div className="app-container flex min-h-screen bg-background text-foreground">
-          {/* Static sidebar */}
-          <div className="fixed inset-y-0 left-0 w-64 bg-background border-r border-border">
-            <div className="flex min-h-screen bg-background text-foreground">
-              <Sidebar 
-                user={user}
-                onAction={handleAction}
-              />
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div className="flex md:ml-64 pl-">
-            <Routes>
-              <Route path="/" element={<Home user={user} />} />
-              <Route path="/login" element={<Login onLogin={setUser} />} />
-              <Route path="/signup" element={<Signup onLogin={setUser} />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route 
-                path="/admin" 
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                } 
-              />
-            </Routes>
-          </div>
-
-          {/* Settings Modal */}
-          {isSettingsOpen && (
-            <SettingsMenu 
-              isOpen={isSettingsOpen}
-              onClose={() => setIsSettingsOpen(false)}
-            />
-          )}
-
-          {/* User Profile Modal */}
-          {isProfileOpen && (
-            <UserProfile 
-              isOpen={isProfileOpen}
-              onClose={() => setIsProfileOpen(false)}
-              user={user}
-            />
-          )}
-        </div>
+        <AppContent />
       </BrowserRouter>
     </ThemeProvider>
   );

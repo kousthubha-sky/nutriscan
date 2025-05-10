@@ -61,7 +61,7 @@ export default function Signup({onLogin}) {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br w-300 from-gray-900 to-black m-0 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br w-390 from-gray-900 to-black m-0 py-12 px-4 sm:px-6 lg:px-8">
             <FloatingFoodIcons className="absolute inset-0 z-0" />
             <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl">
                 <div>
