@@ -1,11 +1,12 @@
-
 import * as React from "react"
 import { motion } from "framer-motion"
-import { Home, Settings, Bell, User } from "lucide-react"
+import { Home, ScanLine, BarChart2, GitCompare, PlusCircle } from "lucide-react"
 import { useTheme } from "next-themes"
 
+type IconComponent = React.ComponentType<{ className?: string }>
+
 interface MenuItem {
-  icon: React.ReactNode
+  Icon: IconComponent
   label: string
   href: string
   gradient: string
@@ -14,138 +15,85 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    icon: <Home className="h-5 w-5" />,
+    Icon: Home,
     label: "Home",
-    href: "#",
+    href: "#top",
     gradient: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.06) 50%, rgba(29,78,216,0) 100%)",
     iconColor: "text-blue-500",
   },
   {
-    icon: <Bell className="h-5 w-5" />,
-    label: "Notifications",
+    Icon: ScanLine,
+    label: "Scan",
     href: "#",
     gradient: "radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(234,88,12,0.06) 50%, rgba(194,65,12,0) 100%)",
     iconColor: "text-orange-500",
   },
   {
-    icon: <Settings className="h-5 w-5" />,
-    label: "Settings",
-    href: "#",
+    Icon: BarChart2,
+    label: "Food Analysis",
+    href: "#details",
     gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
     iconColor: "text-green-500",
   },
   {
-    icon: <User className="h-5 w-5" />,
-    label: "Profile",
-    href: "#",
+    Icon: GitCompare,
+    label: "Alternatives",
+    href: "#alternatives",
+    gradient: "radial-gradient(circle, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.06) 50%, rgba(185,28,28,0) 100%)",
+    iconColor: "text-red-500",
+  },
+  {
+    Icon: PlusCircle,
+    label: "Add Product",
+    href: "#contribute",
     gradient: "radial-gradient(circle, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.06) 50%, rgba(185,28,28,0) 100%)",
     iconColor: "text-red-500",
   },
 ]
 
 const itemVariants = {
-  initial: { rotateX: 0, opacity: 1 },
-  hover: { rotateX: -90, opacity: 0 },
+  initial: { scale: 0.9, opacity: 0 },
+  animate: { scale: 1, opacity: 1 },
+  tap: { scale: 0.95 },
 }
 
-const backVariants = {
-  initial: { rotateX: 90, opacity: 0 },
-  hover: { rotateX: 0, opacity: 1 },
-}
-
-const glowVariants = {
-  initial: { opacity: 0, scale: 0.8 },
-  hover: {
-    opacity: 1,
-    scale: 2,
-    transition: {
-      opacity: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
-      scale: { duration: 0.5, type: "spring", stiffness: 300, damping: 25 },
-    },
-  },
-}
-
-const navGlowVariants = {
-  initial: { opacity: 0 },
-  hover: {
-    opacity: 1,
-    transition: {
-      duration: 0.5,
-      ease: [0.4, 0, 0.2, 1],
-    },
-  },
-}
-
-const sharedTransition = {
-  type: "spring",
-  stiffness: 100,
-  damping: 20,
-  duration: 0.5,
+const MenuItem = ({ item }: { item: MenuItem }) => {
+  const { Icon } = item
+  
+  return (
+    <motion.li className="relative flex-1">
+      <motion.div
+        className="block relative"
+        variants={itemVariants}
+        initial="initial"
+        animate="animate"
+        whileTap="tap"
+      >
+        <a
+          href={item.href}
+          className="flex flex-col items-center gap-1 px-3 py-1.5 relative z-10 bg-transparent text-muted-foreground group-hover:text-amber-300 transition-colors rounded-xl min-w-[60px]"
+        >
+          <Icon className={`h-5 w-5 ${item.iconColor}`} />
+          <span className="text-xs font-medium truncate w-full text-center">{item.label}</span>
+        </a>
+      </motion.div>
+    </motion.li>
+  )
 }
 
 export function MenuBar() {
   const { theme } = useTheme()
-
   const isDarkTheme = theme === "dark"
 
   return (
     <motion.nav
-      className="p-2 rounded-2xl bg-gradient-to-b from-background/80 to-background/40 backdrop-blur-lg border border-border/40 shadow-lg relative overflow-hidden"
+      className="md:hidden fixed top-0 left-0 right-0 z-50 p-2 mb-2 bg-white/10 backdrop-blur-lg shadow-md overflow-x-auto overflow-y-hidden"
       initial="initial"
-      whileHover="hover"
+      animate="animate"
     >
-      <motion.div
-        className={`absolute -inset-2 bg-gradient-radial from-transparent ${
-          isDarkTheme
-            ? "via-[#60A5FA]/30 via-[30%] via-[#A78BFA]/30 via-[60%] via-[#F87171]/30 via-[90%]"
-            : "via-blue-400/25 via-30% via-purple-400/20 via-60% via-red-400/15 via-90%"
-        } to-transparent rounded-3xl z-0 pointer-events-none`}
-        variants={navGlowVariants}
-      />
-      <ul className="flex items-center gap-2 relative z-10">
-        {menuItems.map((item, index) => (
-          <motion.li key={item.label} className="relative">
-            <motion.div
-              className="block rounded-xl overflow-visible group relative"
-              style={{ perspective: "600px" }}
-              whileHover="hover"
-              initial="initial"
-            >
-              <motion.div
-                className="absolute inset-0 z-0 pointer-events-none"
-                variants={glowVariants}
-                style={{
-                  background: item.gradient,
-                  opacity: 0,
-                  borderRadius: "16px",
-                }}
-              />
-              <motion.a
-                href={item.href}
-                className="flex items-center gap-2 px-4 py-2 relative z-10 bg-transparent text-muted-foreground group-hover:text-foreground transition-colors rounded-xl"
-                variants={itemVariants}
-                transition={sharedTransition}
-                style={{ transformStyle: "preserve-3d", transformOrigin: "center bottom" }}
-              >
-                <span className={`transition-colors duration-300 group-hover:${item.iconColor} text-foreground`}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </motion.a>
-              <motion.a
-                href={item.href}
-                className="flex items-center gap-2 px-4 py-2 absolute inset-0 z-10 bg-transparent text-muted-foreground group-hover:text-foreground transition-colors rounded-xl"
-                variants={backVariants}
-                transition={sharedTransition}
-                style={{ transformStyle: "preserve-3d", transformOrigin: "center top", rotateX: 90 }}
-              >
-                <span className={`transition-colors duration-300 group-hover:${item.iconColor} text-foreground`}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </motion.a>
-            </motion.div>
-          </motion.li>
+      <ul className="flex items-center gap-2 relative z-10 px-2 py-1 mx-auto max-w-screen-xl justify-between">
+        {menuItems.map((item) => (
+          <MenuItem key={item.label} item={item} />
         ))}
       </ul>
     </motion.nav>

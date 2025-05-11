@@ -11,11 +11,9 @@ import {
   Filter,
   RefreshCw,
   Users,
-  Package,
   BarChart,
   Layers,
   Check,
-  Store,
   Home 
 } from 'lucide-react';
 import api from '../../services/api';
@@ -30,37 +28,12 @@ export default function AdminDashboard() {
     pendingSubmissions: 0
   });
   const [submissions, setSubmissions] = useState([]);
-  const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
-  // Fix the form state initialization:
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
   const [searchQuery, setSearchQuery] = useState('');
-  const [indianProducts, setIndianProducts] = useState([]);
-  const [isLoadingIndian, setIsLoadingIndian] = useState(false);
-
-  const fetchIndianProducts = async () => {
-    try {
-      setIsLoadingIndian(true);
-      const response = await fetch('http://localhost:3000/products/indian', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch Indian products');
-      }
-      const data = await response.json();
-      setIndianProducts(data.products);
-    } catch (error) {
-      toast.error(error.message);
-      setIndianProducts([]);
-    } finally {
-      setIsLoadingIndian(false);
-    }
-  };
 
   const fetchSubmissions = useCallback(async () => {
     try {
@@ -88,12 +61,8 @@ export default function AdminDashboard() {
       fetchStats();
     } else if (activeTab === 'submissions') {
       fetchSubmissions();
-    } else if (activeTab === 'products') {
-      fetchProducts();
     } else if (activeTab === 'users') {
       fetchUsers();
-    } else if (activeTab === 'indian') {
-      fetchIndianProducts();
     }
   }, [activeTab, filter, fetchSubmissions]);
 
@@ -117,27 +86,6 @@ export default function AdminDashboard() {
         totalProducts: 0,
         pendingSubmissions: 0
       });
-    }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('http://localhost:3000/admin/products', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      const data = await response.json();
-      setProducts(data);
-    } catch (error) {
-      toast.error(error.message);
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -230,8 +178,6 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <BarChart className="h-5 w-5" /> },
     { id: 'submissions', label: 'Submissions', icon: <Layers className="h-5 w-5" /> },
-    { id: 'products', label: 'Products', icon: <Package className="h-5 w-5" /> },
-    { id: 'indian', label: 'Indian Products', icon: <Store className="h-5 w-5" /> },
     { id: 'users', label: 'Users', icon: <Users className="h-5 w-5" /> },
   ];
 
@@ -304,7 +250,7 @@ export default function AdminDashboard() {
             <div className="group p-6 rounded-xl bg-background border border-border shadow-sm hover:shadow-lg hover:border-blue-500/50 transition-all duration-300">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                  <Package className="h-8 w-8 text-blue-500" />
+                  <BarChart className="h-8 w-8 text-blue-500" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Products</p>
@@ -433,114 +379,6 @@ export default function AdminDashboard() {
                           <Layers className="w-4 h-4" />
                           Review Details
                         </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'products' && (
-          <div className="space-y-6">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 bg-card/50 backdrop-blur-sm rounded-xl border border-border">
-                <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium text-foreground">No products found</h3>
-                <p className="text-muted-foreground">There are no products available</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {products.map((product) => (
-                  <div
-                    key={product._id}
-                    className="group p-6 rounded-xl bg-background border border-border shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <Package className="h-5 w-5 text-primary" />
-                          </div>
-                          <h3 className="text-lg font-medium text-foreground">{product.name}</h3>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Brand</span>
-                            <span className="text-foreground">{product.brand || 'Not specified'}</span>
-                          </div>
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Barcode</span>
-                            <span className="text-foreground">{product.barcodeNumber}</span>
-                          </div>
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Category</span>
-                            <span className="text-foreground">{product.category || 'Uncategorized'}</span>
-                          </div>
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Added</span>
-                            <span className="text-foreground">{new Date(product.createdAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'indian' && (
-          <div className="space-y-6">
-            {isLoadingIndian ? (
-              <div className="flex justify-center items-center h-64">
-                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : indianProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 bg-card/50 backdrop-blur-sm rounded-xl border border-border">
-                <Store className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium text-foreground">No Indian products found</h3>
-                <p className="text-muted-foreground">There are no Indian products available</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {indianProducts.map((product) => (
-                  <div
-                    key={product._id}
-                    className="group p-6 rounded-xl bg-background border border-border shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <Package className="h-5 w-5 text-primary" />
-                          </div>
-                          <h3 className="text-lg font-medium text-foreground">{product.name}</h3>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Brand</span>
-                            <span className="text-foreground">{product.brand || 'Not specified'}</span>
-                          </div>
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Barcode</span>
-                            <span className="text-foreground">{product.barcodeNumber}</span>
-                          </div>
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Category</span>
-                            <span className="text-foreground">{product.category || 'Uncategorized'}</span>
-                          </div>
-                          <div>
-                            <span className="block font-medium text-muted-foreground mb-1">Added</span>
-                            <span className="text-foreground">{new Date(product.createdAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>

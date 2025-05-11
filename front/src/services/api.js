@@ -1,9 +1,13 @@
+import { cacheService, CACHE_CONFIG } from './cacheService';
+
 const API_BASE = 'http://localhost:3000';
 
 const api = {
   async searchProducts(query, page = 1, filters = {}, sortBy = 'relevance') {
-    console.log('Searching with query:', query, 'page:', page, 'filters:', filters, 'sortBy:', sortBy);
-    
+    const cacheKey = cacheService.generateKey('searchProducts', { query, page, filters, sortBy });
+    const cachedData = cacheService.get(cacheKey);
+    if (cachedData) return cachedData;
+
     try {
       const params = new URLSearchParams({
         q: query,
@@ -13,24 +17,23 @@ const api = {
       });
       
       const url = `${API_BASE}/products/search?${params.toString()}`;
-      console.log('Request URL:', url);
-      
       const response = await fetch(url);
       const data = await response.json();
-      
-      console.log('API Response:', data);
       
       if (!response.ok) {
         throw new Error(data.message || 'Search failed');
       }
       
-      return {
+      const result = {
         products: data.products || [],
         currentPage: Number(data.currentPage) || page,
         totalPages: Number(data.totalPages) || 1,
         query,
         sources: data.sources
       };
+
+      cacheService.set(cacheKey, result, CACHE_CONFIG.searchProducts);
+      return result;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -38,6 +41,10 @@ const api = {
   },
 
   async getFeaturedProducts() {
+    const cacheKey = cacheService.generateKey('getFeaturedProducts');
+    const cachedData = cacheService.get(cacheKey);
+    if (cachedData) return cachedData;
+
     try {
       const response = await fetch(`${API_BASE}/products/featured`);
       const data = await response.json();
@@ -46,7 +53,9 @@ const api = {
         throw new Error(data.message || 'Failed to fetch featured products');
       }
       
-      return data.products || [];
+      const products = data.products || [];
+      cacheService.set(cacheKey, products, CACHE_CONFIG.getFeaturedProducts);
+      return products;
     } catch (error) {
       console.error('Failed to fetch featured products:', error);
       throw error;
@@ -54,19 +63,22 @@ const api = {
   },
 
   async getHealthierAlternatives(category, minHealthRating = 3.0, productData = null) {
-    try {
-      if (!productData) {
-        throw new Error('Product data is required');
-      }
+    if (!productData) {
+      throw new Error('Product data is required');
+    }
 
+    const cacheKey = cacheService.generateKey('getHealthierAlternatives', { 
+      category, 
+      minHealthRating, 
+      productId: productData._id 
+    });
+    const cachedData = cacheService.get(cacheKey);
+    if (cachedData) return cachedData;
+
+    try {
       const params = new URLSearchParams({
         category: category || 'All Categories',
         healthRating: minHealthRating.toString()
-      });
-      
-      console.log('Fetching alternatives:', {
-        url: `${API_BASE}/products/alternatives?${params}`,
-        productData
       });
       
       const response = await fetch(`${API_BASE}/products/alternatives?${params}`, {
@@ -75,12 +87,12 @@ const api = {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          _id: productData?._id,
-          category: productData?.category,
-          nutriments: productData?.nutriments || {},
-          healthRating: productData?.healthRating || 3.0,
-          ingredients: productData?.ingredients || [],
-          name: productData?.name
+          _id: productData._id,
+          category: productData.category,
+          nutriments: productData.nutriments || {},
+          healthRating: productData.healthRating || 3.0,
+          ingredients: productData.ingredients || [],
+          name: productData.name
         })
       });
       
@@ -90,7 +102,9 @@ const api = {
         throw new Error(data.message || data.error || 'Failed to fetch alternatives');
       }
       
-      return data.alternatives || [];
+      const alternatives = data.alternatives || [];
+      cacheService.set(cacheKey, alternatives, CACHE_CONFIG.getHealthierAlternatives);
+      return alternatives;
     } catch (error) {
       console.error('Failed to fetch healthier alternatives:', error);
       throw error;
@@ -98,6 +112,10 @@ const api = {
   },
 
   async getIndianProducts(page = 1, limit = 12) {
+    const cacheKey = cacheService.generateKey('getIndianProducts', { page, limit });
+    const cachedData = cacheService.get(cacheKey);
+    if (cachedData) return cachedData;
+
     try {
       const params = new URLSearchParams({ page, limit });
       const response = await fetch(`${API_BASE}/products/indian?${params}`);
@@ -107,11 +125,18 @@ const api = {
         throw new Error(data.message || 'Failed to fetch Indian products');
       }
       
-      return data.products || [];
+      const products = data.products || [];
+      cacheService.set(cacheKey, products, CACHE_CONFIG.getIndianProducts);
+      return products;
     } catch (error) {
       console.error('Failed to fetch Indian products:', error);
       throw error;
     }
+  },
+
+  // Clear cache when user logs out
+  clearCache() {
+    cacheService.clear();
   },
 
   // Admin API methods
@@ -239,32 +264,27 @@ const api = {
   },
 
   handleError(error) {
-    // Log the error for debugging
     console.error('API Error:', error);
 
-    // If it's a network error
     if (!error.response && !error.status) {
       return new Error('Network error. Please check your connection.');
     }
 
-    // If it's a 401 Unauthorized error
     if (error.status === 401) {
-      // Clear invalid auth token
+      // Clear invalid auth token and cache
       localStorage.removeItem('authToken');
+      cacheService.clear();
       return new Error('Please log in to continue.');
     }
 
-    // If it's a 413 Payload Too Large error
     if (error.status === 413) {
       return new Error('File size too large. Maximum size is 5MB.');
     }
 
-    // If it's an API error with a message
     if (error.data && (error.data.message || error.data.error)) {
       return new Error(error.data.message || error.data.error);
     }
 
-    // Default error message
     return new Error('An unexpected error occurred. Please try again.');
   }
 };

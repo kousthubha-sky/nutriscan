@@ -29,8 +29,9 @@ import { HealthierAlternatives } from '../product/healthier-alternatives';
 import { NutritionalImpact } from '../product/nutritional-impact';
 import { ContributeSection } from './ContributeSection';
 import { RatingSystem } from '../product/rating-system';
-import { MenuBar } from '../ui/menu-bar';
-  import { Link } from 'react-router-dom';
+
+import { Link } from 'react-router-dom';
+import { MenuBar } from './MenuBar';
 
 export default function Home({ user, onModalStateChange }) {
   const [state, setState] = useState({
@@ -369,16 +370,16 @@ export default function Home({ user, onModalStateChange }) {
     <>
       <FloatingFoodIcons />
       
-      <div className="p-10 pl-10 relative z-10">
-        <div className="max-w-[1920px] mx-auto px-4"> {/* Increased max width and added padding */}
-          
+      <div className="p-10 pl-10 relative z-10 md:mt-0 mt-16">      <div className="max-w-[1920px] mx-auto px-4"> {/* Increased max width and added padding */}
+          <MenuBar user={user}/>
           {/* Welcome message with user info */}
           <div className="mb-6">
             {user ? (
-              <div className="space-y-2">
+              <div className="space-y-2 flex flex-row gap-">
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white">
                   Welcome back, {user.username}!
                 </h1>
+                
                 {user.role === 'admin' && (
                   <div className="mt-6">
                     <Link 

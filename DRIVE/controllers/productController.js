@@ -2,6 +2,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const calculateHealthRating = require('../utils/healthRating');
+const healthRatingCache = require('../utils/cacheService').HealthRatingCache;
 
 // Create an axios instance with custom config
 const api = axios.create({
@@ -199,6 +200,7 @@ exports.searchProducts = async (req, res) => {
               imageUrl: p.image_url || p.image_small_url || p.image_thumb_url,
               category: p.categories?.split(',')[0]?.trim(),
               description: p.generic_name || p.product_name,
+              genericName: p.generic_name,
               ingredients: p.ingredients_text ? p.ingredients_text.split(',').map(i => i.trim()).filter(Boolean) : [],
               labels: p.labels || '',
               allergens: p.allergens ? p.allergens.split(',').map(a => a.trim()).filter(Boolean) : [],
@@ -315,20 +317,31 @@ exports.getFeaturedProducts = async (req, res) => {
 
 exports.getHealthierAlternatives = async (req, res) => {
   try {
-    console.log('Received alternatives request:', { query: req.query, body: req.body });
-    
     const { category, healthRating = 3.0 } = req.query;
-    const minHealthRating = parseFloat(healthRating);
     const productData = req.body;
     
     if (!productData) {
-      console.log('Missing product data');
       return res.status(400).json({
         success: false,
-        error: 'Product data is required'
+        error: 'Missing product data'
       });
     }
 
+    // Generate cache key for alternatives query
+    const cacheKey = `alternatives:${category}:${healthRating}:${productData._id}`;
+    const cachedAlternatives = healthRatingCache.get({ _id: cacheKey });
+
+    if (cachedAlternatives) {
+      return res.json({
+        success: true,
+        alternatives: cachedAlternatives,
+        fromCache: true
+      });
+    }
+
+    // Rest of the existing getHealthierAlternatives logic...
+    const minHealthRating = parseFloat(healthRating);
+    
     // Build base query
     const mainQuery = {
       healthRating: { $gt: Math.max(minHealthRating, productData.healthRating || 3.0) }
@@ -426,9 +439,13 @@ exports.getHealthierAlternatives = async (req, res) => {
           };
         });
 
+        // Cache the results before sending
+        healthRatingCache.set({ _id: cacheKey }, results);
+
         return res.json({
           success: true,
-          alternatives: results
+          alternatives: results,
+          fromCache: false
         });
       }
     }
@@ -455,11 +472,15 @@ exports.getHealthierAlternatives = async (req, res) => {
       (a.relevanceScore + a.nutritionalImprovement)
     ));
 
+    // Cache the results before sending
+    healthRatingCache.set({ _id: cacheKey }, results);
+
     console.log(`Returning ${results.length} alternatives`);
 
     res.json({
       success: true,
-      alternatives: results
+      alternatives: results,
+      fromCache: false
     });
   } catch (error) {
     console.error('Failed to fetch healthier alternatives:', error);
@@ -625,63 +646,148 @@ exports.getIndianProducts = async (req, res) => {
   }
 };
 
-// Update health ratings for products
+// Update health ratings for products with caching
 async function updateHealthRatings() {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    // Find products that need rating updates
+    const batchSize = 50;
+    const updateInterval = 24 * 60 * 60 * 1000;
+    const priorityUpdateInterval = 12 * 60 * 60 * 1000;
+    
     const productsToUpdate = await Product.find({
       $or: [
-        { lastFetched: { $lt: thirtyDaysAgo } },
-        { healthRating: { $exists: false } },
-        { healthRating: null },
-        { healthRating: 3 }  // Update default ratings
+        { lastFetched: { $lt: new Date(Date.now() - updateInterval) } },
+        { 
+          $or: [
+            { healthRating: { $exists: false } },
+            { healthRating: null },
+            { healthRating: 3.0 }
+          ],
+          lastFetched: { $lt: new Date(Date.now() - priorityUpdateInterval) }
+        },
+        {
+          $and: [
+            { healthRating: { $exists: true } },
+            { healthAnalysis: { $exists: false } }
+          ]
+        }
       ]
-    }).limit(100);
+    })
+    .sort({ lastFetched: 1 })
+    .limit(batchSize);
 
     let updatedCount = 0;
+    let errorCount = 0;
+    let cacheHits = 0;
+    const updateResults = {
+      success: [],
+      failures: [],
+      cacheStats: null
+    };
+
     for (const product of productsToUpdate) {
-      // Enhanced ingredient processing
-      const processedIngredients = Array.isArray(product.ingredients) 
-        ? product.ingredients.join(', ') 
-        : typeof product.ingredients === 'string' 
-          ? product.ingredients 
-          : '';
+      try {
+        // Check cache first
+        let healthAnalysis = healthRatingCache.get(product);
+        let usedCache = false;
 
-      // Calculate health rating with enhanced context
-      const healthAnalysis = calculateHealthRating({
-        ingredients: processedIngredients,
-        nutriments: product.nutriments || {},
-        nutriscore_grade: product.nutriscore_grade,
-        name: product.name,
-        category: product.category
-      });
+        if (!healthAnalysis) {
+          // Calculate new health rating if not in cache
+          const processedIngredients = Array.isArray(product.ingredients) 
+            ? product.ingredients.join(', ') 
+            : typeof product.ingredients === 'string' 
+              ? product.ingredients 
+              : '';
 
-      // Update product with new rating
-      await Product.updateOne(
-        { _id: product._id },
-        {
-          $set: {
-            healthRating: healthAnalysis.score,
-            healthAnalysis: healthAnalysis.analysis,
-            healthRatingLabel: healthAnalysis.rating,
-            healthRatingColor: healthAnalysis.color,
-            lastFetched: new Date()
-          }
+          healthAnalysis = calculateHealthRating({
+            ingredients: processedIngredients,
+            nutriments: product.nutriments || {},
+            nutriscore_grade: product.nutriscore_grade,
+            name: product.name,
+            category: product.category
+          });
+
+          // Cache the result
+          healthRatingCache.set(product, healthAnalysis);
+        } else {
+          usedCache = true;
+          cacheHits++;
         }
-      );
-      updatedCount++;
+
+        // Check if rating has changed significantly
+        const ratingChanged = !product.healthRating || 
+          Math.abs(product.healthRating - healthAnalysis.score) >= 0.5;
+
+        // Update product with new rating
+        await Product.updateOne(
+          { _id: product._id },
+          {
+            $set: {
+              healthRating: healthAnalysis.score,
+              healthAnalysis: healthAnalysis.analysis,
+              healthRatingLabel: healthAnalysis.rating,
+              healthRatingColor: healthAnalysis.color,
+              confidence: healthAnalysis.confidence,
+              dataCompleteness: healthAnalysis.dataCompleteness,
+              lastFetched: new Date(),
+              ratingChanged: ratingChanged,
+              lastSignificantUpdate: ratingChanged ? new Date() : product.lastSignificantUpdate,
+              cacheHit: usedCache
+            }
+          }
+        );
+
+        updateResults.success.push({
+          id: product._id,
+          oldScore: product.healthRating,
+          newScore: healthAnalysis.score,
+          changed: ratingChanged,
+          fromCache: usedCache
+        });
+        updatedCount++;
+      } catch (error) {
+        console.error(`Error updating health rating for product ${product._id}:`, error);
+        updateResults.failures.push({
+          id: product._id,
+          error: error.message
+        });
+        errorCount++;
+      }
     }
 
-    console.log(`Updated health ratings for ${updatedCount} products`);
+    // Get cache statistics
+    updateResults.cacheStats = healthRatingCache.getStats();
+
+    console.log(`Updated health ratings for ${updatedCount} products (${cacheHits} cache hits) with ${errorCount} errors`);
+    console.log('Update results:', JSON.stringify(updateResults, null, 2));
+    
+    return {
+      success: true,
+      updatedCount,
+      errorCount,
+      cacheHits,
+      results: updateResults
+    };
   } catch (error) {
-    console.error('Error updating health ratings:', error);
+    console.error('Error in health rating update process:', error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
 
-// Run health rating updates every 6 hours instead of 12
+// Add cache cleanup on interval
+setInterval(() => {
+  const stats = healthRatingCache.getStats();
+  if (stats.expiredEntries > 0) {
+    console.log(`Clearing ${stats.expiredEntries} expired cache entries`);
+    // Clear expired entries by forcing a get() on all entries
+    // This will trigger the expiration check and cleanup
+    [...healthRatingCache.cache.keys()].forEach(key => healthRatingCache.get({ _id: key }));
+  }
+}, 60 * 60 * 1000); // Run every hour
+
+// Run health rating updates every 6 hours
 setInterval(updateHealthRatings, 6 * 60 * 60 * 1000);
 
 // Run initial update

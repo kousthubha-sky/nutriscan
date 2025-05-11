@@ -16,7 +16,7 @@ body {
 
 /* dash prods */
 #root {
-  max-width: 100%; /* Update from 1280px */
+  width: 100%; /* Update from 1280px */
   margin: 0;
   padding: 0;
   text-align: left;

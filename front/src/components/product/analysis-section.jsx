@@ -49,7 +49,9 @@ export function AnalysisSection({ product }) {
       "Good choice for health-conscious consumers",
       "Consider portion size to maintain balanced nutrition"
     ],
-    nutritionalInsights: "The nutrient composition indicates a well-balanced product with consideration for daily nutritional needs. Our AI analysis takes into account factors such as ingredient quality, processing methods, and nutritional density.",
+    nutritionalInsights: currentProduct?.genericName 
+      ? `${currentProduct.genericName}. The nutrient composition indicates a well-balanced product with consideration for daily nutritional needs.` 
+      : "The nutrient composition indicates a well-balanced product with consideration for daily nutritional needs. Our AI analysis takes into account factors such as ingredient quality, processing methods, and nutritional density.",
     sustainabilityNote: "Product packaging and ingredients suggest moderate environmental impact. Future updates will include detailed sustainability metrics.",
     disclaimer: "This analysis is generated using available product data and will be enhanced with AI-powered insights in future updates."
   };
