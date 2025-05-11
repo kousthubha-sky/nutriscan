@@ -67,18 +67,55 @@ npm run dev
 ## Project Structure
 
 ```
-nutriscan/
-├── DRIVE/              # Backend
-│   ├── config/        # Database configuration
-│   ├── controllers/   # Route controllers
-│   ├── models/       # Database models
-│   └── routes/       # API routes
-└── front/            # Frontend
+mern/
+├── DRIVE/
+│   ├── app.js
+│   ├── package.json
+│   ├── config/
+│   │   ├── db.js
+│   │   └── email.js
+│   ├── controllers/
+│   │   ├── adminController.js
+│   │   └── productController.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── upload.js
+│   ├── models/
+│   │   ├── Product.js
+│   │   ├── ProductSubmission.js
+│   │   └── user.model.js
+│   ├── routes/
+│   │   ├── admin.routes.js
+│   │   ├── index.routes.js
+│   │   ├── productRoutes.js
+│   │   └── user.routes.js
+│   └── utils/
+│       ├── cacheService.js
+│       └── healthRating.js
+└── front/
+    ├── public/
+    │   └── vite.svg
     ├── src/
+    │   ├── App.jsx
+    │   ├── main.jsx
+    │   ├── assets/
     │   ├── components/
-    │   ├── pages/
+    │   │   ├── auth/
+    │   │   ├── barcode/
+    │   │   ├── contexts/
+    │   │   ├── dashboard/
+    │   │   ├── home/
+    │   │   ├── product/
+    │   │   ├── scanner/
+    │   │   ├── shared/
+    │   │   └── ui/
+    │   ├── config/
+    │   ├── hooks/
     │   └── services/
-    └── public/
+    ├── package.json
+    ├── index.html
+    ├── vite.config.js
+    └── tailwind.config.js
 ```
 
 ## Contributing
