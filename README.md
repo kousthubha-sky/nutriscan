@@ -5,8 +5,6 @@ A MERN stack application for nutrition analysis and meal planning.
 ## Features
 
 - Food nutrition analysis
-- Meal planning assistance
-- Recipe recommendations
 - User authentication
 - Responsive design
 
@@ -23,7 +21,7 @@ A MERN stack application for nutrition analysis and meal planning.
   - Express
   - MongoDB
   - Mongoose
-  - OpenAI API
+  
 
 ## Installation
 
