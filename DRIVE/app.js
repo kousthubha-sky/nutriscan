@@ -5,8 +5,25 @@ require('dotenv').config();
 const cookieParser = require('cookie-parser');
 const { body, validationResult } = require('express-validator');
 const fs = require('fs').promises;
+const helmet = require('helmet');
+const { xssPreventionMiddleware, globalRateLimiter, apiRateLimiter } = require('./middleware/security');
 
 const app = express();
+
+// Security middleware
+app.use(helmet());
+app.use(xssPreventionMiddleware);
+app.use(globalRateLimiter);
+app.use('/api', apiRateLimiter);
+
+// Set security headers
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
+});
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads', 'products');

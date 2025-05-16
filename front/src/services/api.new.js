@@ -1,6 +1,7 @@
 import { cacheService, CACHE_CONFIG } from './cacheService';
 import { apiService } from './apiService';
 
+
 const api = {
   async searchProducts(query, page = 1, filters = {}, sortBy = 'relevance') {
     const cacheKey = cacheService.generateKey('searchProducts', { query, page, filters, sortBy });
@@ -33,9 +34,8 @@ const api = {
         throw new Error('Invalid search parameters. Please check your input.');
       } else if (error.status === 429) {
         throw new Error('Too many search requests. Please try again later.');
-      } else {
-        throw new Error('Failed to search products. Please try again.');
       }
+      throw new Error('Failed to search products. Please try again.');
     }
   },
 
@@ -96,7 +96,14 @@ const api = {
       return alternatives;
     } catch (error) {
       console.error('Failed to fetch healthier alternatives:', error);
-      throw error;
+      if (error.status === 400) {
+        throw new Error(error.data?.message || 'Invalid product data. Please check input parameters.');
+      } else if (error.status === 404) {
+        throw new Error('No healthier alternatives found for this product.');
+      } else if (error.status === 429) {
+        throw new Error('Too many requests. Please try again later.');
+      }
+      throw new Error('Failed to find healthier alternatives. Please try again.');
     }
   },
 
@@ -132,7 +139,12 @@ const api = {
   async getPendingSubmissions(page = 1, limit = 10) {
     try {
       const params = new URLSearchParams({ page, limit });
-      return await apiService.fetchWithAuth(`/admin/submissions/pending?${params}`);
+      const data = await apiService.fetchWithAuth(`/admin/submissions/pending?${params}`);
+      return {
+        submissions: data.submissions || [],
+        totalPages: data.totalPages || 1,
+        currentPage: data.currentPage || page
+      };
     } catch (error) {
       console.error('Failed to fetch pending submissions:', error);
       if (error.status === 403) {
@@ -146,7 +158,13 @@ const api = {
 
   async getSubmissionStats() {
     try {
-      return await apiService.fetchWithAuth('/admin/submissions/stats');
+      const data = await apiService.fetchWithAuth('/admin/submissions/stats');
+      return {
+        total: data.total || 0,
+        pending: data.pending || 0,
+        approved: data.approved || 0,
+        rejected: data.rejected || 0
+      };
     } catch (error) {
       console.error('Failed to fetch submission stats:', error);
       if (error.status === 403) {
@@ -158,7 +176,7 @@ const api = {
 
   async reviewSubmission(submissionId, { status, adminNotes, ...productData }) {
     try {
-      return await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/review`, {
+      const data = await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/review`, {
         method: 'POST',
         body: JSON.stringify({ 
           status, 
@@ -166,6 +184,7 @@ const api = {
           ...productData
         })
       });
+      return data;
     } catch (error) {
       console.error('Review submission error:', error);
       if (error.status === 403) {
@@ -203,18 +222,28 @@ const api = {
           throw new Error(data.message || 'Invalid product data. Please check all fields.');
         } else if (response.status === 429) {
           throw new Error('Too many submissions. Please try again later.');
+        } else if (response.status === 409) {
+          throw new Error('This product has already been submitted. Please check existing products.');
         }
         throw new Error(data.message || data.error || 'Failed to submit product');
       }
       return data;
     } catch (error) {
       console.error('Product submission error:', error);
+      if (error instanceof TypeError) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
       throw error;
     }
   },
+
   async getSubmissionDetails(submissionId) {
     try {
-      return await apiService.fetchWithAuth(`/admin/submissions/${submissionId}`);
+      const data = await apiService.fetchWithAuth(`/admin/submissions/${submissionId}`);
+      if (!data) {
+        throw new Error('Submission not found.');
+      }
+      return data;
     } catch (error) {
       console.error('Failed to fetch submission details:', error);
       if (error.status === 403) {
@@ -228,10 +257,11 @@ const api = {
 
   async updateSubmissionStatus(submissionId, status) {
     try {
-      return await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/status`, {
+      const data = await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status })
       });
+      return data;
     } catch (error) {
       console.error('Failed to update submission status:', error);
       if (error.status === 403) {

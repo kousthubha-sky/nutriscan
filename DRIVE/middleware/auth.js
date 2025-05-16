@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const RefreshToken = require('../models/refresh-token.model');
+const { generateTokens } = require('../utils/token-service');
 
 module.exports = async (req, res, next) => {
   try {
@@ -12,12 +14,56 @@ module.exports = async (req, res, next) => {
       });
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Check token blacklist
+    if (TOKEN_BLACKLIST.has(token)) {
+      return res.status(401).json({
+        message: 'Token has been revoked',
+        code: 'TOKEN_REVOKED'
+      });
+    }    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+        algorithms: ['HS256'] // Explicitly specify allowed algorithms
+      });
       
-      // Check if token is about to expire (within 1 hour)
+      // Check if token is about to expire
       const expiresIn = decoded.exp * 1000 - Date.now();
-      const refreshThreshold = 60 * 60 * 1000; // 1 hour
+      const refreshThreshold = 5 * 60 * 1000; // 5 minutes
+      
+      // If token is about to expire and refresh token is present, generate new tokens
+      if (expiresIn < refreshThreshold && req.header('X-Refresh-Token')) {
+        const refreshToken = req.header('X-Refresh-Token');
+        const validRefreshToken = await RefreshToken.findOne({
+          token: refreshToken,
+          isRevoked: false,
+          expiresAt: { $gt: new Date() }
+        });
+
+        if (validRefreshToken) {
+          const user = await User.findById(decoded.uid);
+          if (user) {
+            const tokens = await generateTokens(
+              user,
+              req.ip,
+              req.headers['user-agent']
+            );
+
+            // Set new tokens in response headers
+            res.set({
+              'X-Access-Token': tokens.accessToken,
+              'X-Refresh-Token': tokens.refreshToken,
+              'X-Token-Expiry': Date.now() + (tokens.expiresIn * 1000)
+            });
+          }
+        }
+      }
+
+      // Additional security checks
+      if (!decoded.uid || !decoded.role) {
+        return res.status(401).json({
+          message: 'Invalid token format',
+          code: 'TOKEN_INVALID_FORMAT'
+        });
+      }
       
       if (expiresIn < 0) {
         return res.status(401).json({ 

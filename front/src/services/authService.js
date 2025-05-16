@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 class AuthService {
   constructor() {
     this.token = localStorage.getItem('authToken');
+    this.refreshToken = localStorage.getItem('refreshToken');
     this.user = JSON.parse(localStorage.getItem('user'));
     this.refreshTimeout = null;
   }
@@ -28,19 +29,25 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
+        credentials: 'include' // For secure http-only cookies
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 423) {
+          throw new Error('Account is temporarily locked. Please try again later.');
+        }
         throw new Error(data.message || 'Login failed');
       }
 
-      this.token = data.token;
+      this.token = data.accessToken;
+      this.refreshToken = data.refreshToken;
       this.user = data.user;
 
       localStorage.setItem('authToken', this.token);
+      localStorage.setItem('refreshToken', this.refreshToken);
       localStorage.setItem('user', JSON.stringify(this.user));
 
       this.setupTokenRefresh();
@@ -53,15 +60,30 @@ class AuthService {
     }
   }
 
-  logout() {
-    this.clearAuth();
-    window.dispatchEvent(new Event('auth:logout'));
+  async logout() {
+    try {
+      await fetch('http://localhost:3000/user/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'X-Refresh-Token': this.refreshToken
+        },
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      this.clearAuth();
+      window.dispatchEvent(new Event('auth:logout'));
+    }
   }
 
   clearAuth() {
     this.token = null;
+    this.refreshToken = null;
     this.user = null;
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     if (this.refreshTimeout) {
       clearTimeout(this.refreshTimeout);
@@ -105,30 +127,38 @@ class AuthService {
       const response = await fetch('http://localhost:3000/user/refresh-token', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.token}`
-        }
+          'Authorization': `Bearer ${this.token}`,
+          'X-Refresh-Token': localStorage.getItem('refreshToken')
+        },
+        credentials: 'include'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          this.clearAuth();
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(data.message || 'Token refresh failed');
       }
 
-      this.token = data.token;
+      this.token = data.accessToken;
+      this.refreshToken = data.refreshToken;
       this.user = data.user;
 
       localStorage.setItem('authToken', this.token);
+      localStorage.setItem('refreshToken', this.refreshToken);
       localStorage.setItem('user', JSON.stringify(this.user));
 
       this.setupTokenRefresh();
     } catch (error) {
       console.error('Token refresh error:', error);
-      if (error.message.includes('Token has expired')) {
-        this.clearAuth();
-        toast.error('Session expired. Please log in again.');
+      if (error.message.includes('Session expired')) {
+        toast.error(error.message);
         window.dispatchEvent(new Event('auth:logout'));
       }
+      throw error;
     }
   }
 
