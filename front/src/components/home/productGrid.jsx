@@ -18,9 +18,9 @@ const ProductCard = ({ product, onProductSelect, onAnalysisSelect, index }) => {
       {/* Health Rating Badge */}
       <div className="absolute top-3 right-3 z-10">
         <div className={`flex items-center gap-1 px-2 py-1 rounded-full 
-          bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border shadow-sm
-          ${rating >= 4 ? 'border-yellow-400 text-yellow-500' :
-            rating >= 3 ? 'border-green-400 text-green-500' :
+          bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border shadow-sm          ${rating >= 4.5 ? 'border-emerald-400 text-emerald-500' :
+            rating >= 4 ? 'border-green-400 text-green-500' :
+            rating >= 3 ? 'border-yellow-400 text-yellow-500' :
             'border-orange-400 text-orange-500'}`}
         >
           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />

@@ -129,79 +129,50 @@ const INGREDIENT_ANALYSIS = {
     ],
     weight: 0.3,
     reason: 'Fortified with essential nutrients'
+  },  whole_grains: {
+    ingredients: [
+      'rolled oats', 'whole oats', 'steel cut oats', 'quick oats', 'instant oats',
+      'whole grain', 'whole wheat', 'brown rice', 'quinoa', 'buckwheat'
+    ],
+    weight: 2.0,  // Highest positive weight for whole grains
+    reason: 'Whole grains provide excellent nutritional value with fiber, protein, and minerals'
+  },  single_ingredient_wholefood: {
+    ingredients: [
+      'oats', 'rolled oats', 'steel cut oats',  // Adding oats specifically
+      'almonds', 'cashews', 'peanuts',
+      'brown rice', 'quinoa', 'chia seeds'
+    ],
+    weight: 1.5,
+    reason: 'Single-ingredient whole foods are minimally processed and highly nutritious'
   }
 };
 
-// Add ingredient aliases and variations mapping
-const INGREDIENT_ALIASES = {
-  'sugar': ['sucrose', 'glucose', 'fructose', 'dextrose', 'corn syrup', 'cane sugar', 'brown sugar'],
-  'salt': ['sodium chloride', 'sea salt', 'rock salt', 'iodized salt'],
-  'wheat': ['whole wheat', 'wheat flour', 'enriched wheat', 'wheat germ'],
-  'milk': ['whole milk', 'skim milk', 'milk powder', 'dairy'],
-  // Add more aliases as needed
-};
-
-// Enhanced product categories with more specific nutritional guidelines
 const PRODUCT_CATEGORIES = {
   beverages: {
     keywords: ['drink', 'beverage', 'juice', 'smoothie', 'shake', 'tea', 'coffee', 'water'],
     nutritionalFocus: ['sugar', 'caffeine', 'artificial_sweeteners'],
-    scoreAdjustment: 0.95,
-    nutritionMultipliers: {
-      sugars_100g: 1.2,      // Stricter sugar evaluation for beverages
-      caffeine_100g: 1.1,
-      sodium_100g: 0.9
-    }
+    scoreAdjustment: 0.9 // Slightly stricter scoring for beverages
+  },
+  spreads: {
+    keywords: ['butter', 'spread', 'paste', 'jam', 'margarine', 'nutella'],
+    nutritionalFocus: ['fats', 'sugar', 'protein'],
+    scoreAdjustment: 1.0
   },
   dairy: {
     keywords: ['milk', 'yogurt', 'cheese', 'curd', 'cream', 'dairy', 'dahi', 'buttermilk', 'lassi'],
     nutritionalFocus: ['protein', 'calcium', 'vitamin_d', 'fats'],
-    scoreAdjustment: 1.1,
-    nutritionMultipliers: {
-      calcium_100g: 1.2,
-      protein_100g: 1.1,
-      vitamin_d_100g: 1.2
-    }
-  },
-  snacks: {
-    keywords: ['chips', 'crisps', 'crackers', 'cookies', 'biscuits', 'namkeen', 'snack'],
-    nutritionalFocus: ['fat', 'sodium', 'sugar'],
-    scoreAdjustment: 0.9,
-    nutritionMultipliers: {
-      fat_100g: 1.2,
-      sodium_100g: 1.2,
-      sugars_100g: 1.1
-    }
+    scoreAdjustment: 1.2  // Increased from 1.1 to better reflect dairy nutritional value
   },
   protein_supplements: {
     keywords: ['protein', 'supplement', 'whey', 'mass gainer', 'protein powder'],
     nutritionalFocus: ['protein', 'vitamins', 'minerals'],
-    scoreAdjustment: 1.05,
-    nutritionMultipliers: {
-      proteins_100g: 1.3,
-      vitamins_100g: 1.2,
-      minerals_100g: 1.2
-    }
+    scoreAdjustment: 1.2
   },
   breakfast_cereals: {
     keywords: ['cereal', 'muesli', 'granola', 'oats', 'porridge'],
     nutritionalFocus: ['fiber', 'sugar', 'whole_grains'],
-    scoreAdjustment: 1.0,
-    nutritionMultipliers: {
-      fiber_100g: 1.2,
-      sugars_100g: 1.1,
-      whole_grains: 1.2
-    }
-  },
-  processed_foods: {
-    keywords: ['instant', 'ready to eat', 'microwave', 'frozen', 'processed'],
-    nutritionalFocus: ['sodium', 'preservatives', 'additives'],
-    scoreAdjustment: 0.85,
-    nutritionMultipliers: {
-      sodium_100g: 1.3,
-      preservatives: 1.2,
-      artificial_additives: 1.2
-    }
+    scoreAdjustment: 1.2,  // Increased from 1.0 to better reflect whole grain value
+    wholeGrainBonus: 0.5   // Additional bonus for whole grain products
   }
 };
 
@@ -210,330 +181,116 @@ const NUTRITIONAL_GUIDELINES = {
     low: 5,
     high: 20,
     weight: 0.4,
-    isPositive: true,
-    bioavailability: 1.0
+    isPositive: true
   },
   fiber_100g: {
     low: 3,
     high: 6,
     weight: 0.4,
-    isPositive: true,
-    bioavailability: 1.0
-  },
-  omega3_100g: {
-    low: 0.3,
-    high: 1.5,
-    weight: 0.4,
-    isPositive: true,
-    bioavailability: 0.9
-  },
-  vitamin_a_100g: {
-    low: 80,
-    high: 300,
-    weight: 0.3,
-    isPositive: true,
-    bioavailability: 0.7
-  },
-  vitamin_c_100g: {
-    low: 9,
-    high: 45,
-    weight: 0.3,
-    isPositive: true,
-    bioavailability: 0.85
-  },
-  vitamin_e_100g: {
-    low: 1.5,
-    high: 10,
-    weight: 0.3,
-    isPositive: true,
-    bioavailability: 0.7
+    isPositive: true
   },
   sugars_100g: {
     low: 5,
     high: 22.5,
     weight: -0.5,
-    isPositive: false,
-    bioavailability: 1.0
+    isPositive: false
   },
   saturated_fat_100g: {
     low: 1.5,
     high: 5,
     weight: -0.4,
-    isPositive: false,
-    bioavailability: 1.0
+    isPositive: false
   },
   salt_100g: {
     low: 0.3,
     high: 1.5,
     weight: -0.3,
-    isPositive: false,
-    bioavailability: 1.0
-  },
-  iron_100g: {
-    low: 1.8,
-    high: 7,
-    weight: 0.4,
-    isPositive: true,
-    bioavailability: {
-      heme: 0.85,
-      nonHeme: 0.15
-    }
-  },
-  zinc_100g: {
-    low: 1.5,
-    high: 5,
-    weight: 0.3,
-    isPositive: true,
-    bioavailability: 0.6
+    isPositive: false
   },
   trans_fat_100g: {
     low: 0.1,
     high: 0.5,
     weight: -0.6,
-    isPositive: false,
-    bioavailability: 1.0
+    isPositive: false
   },
   sodium_100g: {
     low: 120,
     high: 500,
     weight: -0.4,
-    isPositive: false,
-    bioavailability: 1.0
+    isPositive: false
   },
   calcium_100g: {
     low: 100,
     high: 200,
     weight: 0.5,
-    isPositive: true,
-    bioavailability: 0.3
+    isPositive: true
   },
   vitamin_d_100g: {
     low: 0.75,
     high: 1.5,
     weight: 0.4,
-    isPositive: true,
-    bioavailability: 0.8
+    isPositive: true
   },
   potassium_100g: {
     low: 300,
     high: 600,
     weight: 0.3,
-    isPositive: true,
-    bioavailability: 0.9
+    isPositive: true
   },
   calories_100g: {
     low: 50,
     high: 300,
     weight: -0.3,
-    isPositive: false,
-    bioavailability: 1.0
+    isPositive: false
   }
 };
 
-// Enhance product category detection
-function detectProductCategory(product) {
-  if (!product.name && !product.category) return null;
-  
-  const productText = `${product.name} ${product.category}`.toLowerCase();
-  let matchedCategories = [];
-  
-  // Find all matching categories
-  for (const [category, data] of Object.entries(PRODUCT_CATEGORIES)) {
-    const keywordMatch = data.keywords.some(keyword => productText.includes(keyword));
-    if (keywordMatch) {
-      matchedCategories.push({ category, ...data });
-    }
-  }
-  
-  if (matchedCategories.length === 0) return null;
-  
-  // If multiple categories match, combine their effects
-  if (matchedCategories.length > 1) {
-    return combineCategories(matchedCategories);
-  }
-  
-  return matchedCategories[0];
-}
-
-// Helper function to combine multiple category effects
-function combineCategories(categories) {
-  const combined = {
-    category: categories.map(c => c.category).join('_'),
-    nutritionalFocus: [],
-    scoreAdjustment: 1.0,
-    nutritionMultipliers: {}
-  };
-  
-  // Combine nutritional focus areas
-  const focusSet = new Set();
-  categories.forEach(cat => {
-    cat.nutritionalFocus.forEach(focus => focusSet.add(focus));
-  });
-  combined.nutritionalFocus = Array.from(focusSet);
-  
-  // Average the score adjustments
-  const totalAdjustment = categories.reduce((sum, cat) => sum + cat.scoreAdjustment, 0);
-  combined.scoreAdjustment = totalAdjustment / categories.length;
-  
-  // Combine nutrition multipliers (take the most strict value for each nutrient)
-  categories.forEach(cat => {
-    if (cat.nutritionMultipliers) {
-      Object.entries(cat.nutritionMultipliers).forEach(([nutrient, multiplier]) => {
-        if (!combined.nutritionMultipliers[nutrient] || 
-            (combined.nutritionMultipliers[nutrient] < multiplier && multiplier > 1) ||
-            (combined.nutritionMultipliers[nutrient] > multiplier && multiplier < 1)) {
-          combined.nutritionMultipliers[nutrient] = multiplier;
-        }
-      });
-    }
-  });
-  
-  return combined;
-}
-
-// Update analyzeNutrients to use category-specific multipliers
-function analyzeNutrients(nutriments, productCategory = null) {
-  let score = calculateBaselineScore(nutriments);
+function analyzeNutrients(nutriments) {
+  let score = 3;
   let analysis = [];
-  
-  const servingSize = nutriments.serving_size_g || 100;
-  
+
   Object.entries(NUTRITIONAL_GUIDELINES).forEach(([nutrient, guidelines]) => {
-    // Apply category-specific multipliers if available
-    const multiplier = productCategory?.nutritionMultipliers?.[nutrient] || 1.0;
-    
-    // Adjust thresholds based on serving size and category multiplier
-    const adjustedLow = (guidelines.low * servingSize * multiplier) / 100;
-    const adjustedHigh = (guidelines.high * servingSize * multiplier) / 100;
     const value = parseFloat(nutriments[nutrient]) || 0;
     
-    // Calculate how far the value is from optimal range
-    const optimalRange = (adjustedHigh - adjustedLow) / 2;
-    const deviation = Math.abs(value - optimalRange);
-    const impactFactor = 1 - Math.min(deviation / optimalRange, 1);
-    
     if (guidelines.isPositive) {
-      if (value >= adjustedHigh) {
-        score += guidelines.weight * impactFactor;
-        analysis.push(`High in ${nutrient.replace('_100g', '')}: Excellent source`);
-      } else if (value >= adjustedLow) {
-        score += (guidelines.weight / 2) * impactFactor;
-        analysis.push(`Good source of ${nutrient.replace('_100g', '')}`);
-      } else {
-        score -= (guidelines.weight / 3);
-        analysis.push(`Low in ${nutrient.replace('_100g', '')}: Could be improved`);
+      if (value >= guidelines.high) {
+        score += guidelines.weight;
+        analysis.push(`High in ${nutrient.replace('_100g', '')}: Good source`);
+      } else if (value <= guidelines.low) {
+        score -= guidelines.weight / 2;
+        analysis.push(`Low in ${nutrient.replace('_100g', '')}: Could be better`);
       }
     } else {
-      if (value >= adjustedHigh) {
-        score += guidelines.weight * impactFactor; // negative weight
+      if (value >= guidelines.high) {
+        score += guidelines.weight; // negative weight
         analysis.push(`High in ${nutrient.replace('_100g', '')}: Consider reducing`);
-      } else if (value <= adjustedLow) {
-        score -= guidelines.weight * impactFactor; // negative weight becomes positive
+      } else if (value <= guidelines.low) {
+        score -= guidelines.weight; // negative weight becomes positive
         analysis.push(`Low in ${nutrient.replace('_100g', '')}: Good`);
       }
     }
   });
-  
+
   return { score, analysis };
-}
-
-// Helper function to calculate baseline score from macronutrient balance
-function calculateBaselineScore(nutriments) {
-  const proteinCals = (nutriments.proteins_100g || 0) * 4;
-  const carbsCals = (nutriments.carbohydrates_100g || 0) * 4;
-  const fatCals = (nutriments.fat_100g || 0) * 9;
-  const totalCals = proteinCals + carbsCals + fatCals || 1;
-
-  // Ideal macronutrient ratios (percentages)
-  const idealProtein = 0.25;
-  const idealCarbs = 0.5;
-  const idealFat = 0.25;
-
-  // Calculate actual ratios
-  const proteinRatio = proteinCals / totalCals;
-  const carbsRatio = carbsCals / totalCals;
-  const fatRatio = fatCals / totalCals;
-
-  // Calculate deviation from ideal ratios
-  const proteinDeviation = Math.abs(proteinRatio - idealProtein);
-  const carbsDeviation = Math.abs(carbsRatio - idealCarbs);
-  const fatDeviation = Math.abs(fatRatio - idealFat);
-
-  // Convert deviations to a score (3 is neutral)
-  const baselineScore = 3 - ((proteinDeviation + carbsDeviation + fatDeviation) * 2);
-  
-  return Math.max(1, Math.min(5, baselineScore));
 }
 
 function analyzeIngredients(ingredientsList) {
   let score = 0;
   let analysis = [];
-  
-  // Convert ingredients to array if it's a string
-  const ingredientsArray = Array.isArray(ingredientsList) 
-    ? ingredientsList 
-    : ingredientsList.split(',').map(i => i.trim());
-  
-  // Calculate total ingredients for position weighting
-  const totalIngredients = ingredientsArray.length;
-  
-  ingredientsArray.forEach((ingredient, index) => {
-    const normalizedIngredient = ingredient.toLowerCase();
-    // Position weight decreases as index increases (first ingredients have more weight)
-    const positionWeight = 1 - (index / totalIngredients);
-    
-    Object.entries(INGREDIENT_ANALYSIS).forEach(([category, data]) => {
-      // Check direct matches and aliases
-      const isMatch = data.ingredients.some(targetIngredient => {
-        const targetLower = targetIngredient.toLowerCase();
-        if (normalizedIngredient.includes(targetLower)) return true;
-        
-        // Check aliases
-        for (const [main, aliases] of Object.entries(INGREDIENT_ALIASES)) {
-          if (targetLower.includes(main) && 
-              aliases.some(alias => normalizedIngredient.includes(alias.toLowerCase()))) {
-            return true;
-          }
-        }
-        return false;
-      });
+  const ingredients = ingredientsList.toLowerCase();
 
-      if (isMatch) {
-        // Apply position-based weight adjustment
-        const adjustedWeight = data.weight * positionWeight;
-        score += adjustedWeight;
-        
-        // Add processing method analysis if available
-        const processingMethod = detectProcessingMethod(normalizedIngredient);
-        const processingImpact = processingMethod ? ` (${processingMethod.impact})` : '';
-        
-        analysis.push(`${index + 1}. ${ingredient}: ${data.reason}${processingImpact}`);
+  Object.entries(INGREDIENT_ANALYSIS).forEach(([category, data]) => {
+    let found = false;
+    data.ingredients.forEach(ingredient => {
+      if (ingredients.includes(ingredient.toLowerCase())) {
+        found = true;
+        score += data.weight;
+        analysis.push(`Contains ${ingredient}: ${data.reason}`);
       }
     });
   });
 
   return { score, analysis };
-}
-
-// Helper function to detect processing methods
-function detectProcessingMethod(ingredient) {
-  const PROCESSING_METHODS = {
-    'raw': { impact: 'minimal processing', score: 0.2 },
-    'roasted': { impact: 'moderate heat processing', score: -0.1 },
-    'fried': { impact: 'high heat processing', score: -0.2 },
-    'fermented': { impact: 'beneficial processing', score: 0.2 },
-    'processed': { impact: 'industrial processing', score: -0.3 },
-    'refined': { impact: 'nutrient reduction', score: -0.2 },
-    'enriched': { impact: 'nutrient addition', score: 0.1 },
-    'organic': { impact: 'minimal processing', score: 0.2 },
-  };
-
-  for (const [method, details] of Object.entries(PROCESSING_METHODS)) {
-    if (ingredient.includes(method)) {
-      return details;
-    }
-  }
-  return null;
 }
 
 const SNACK_CATEGORIES = [
@@ -541,306 +298,155 @@ const SNACK_CATEGORIES = [
   'biscuits', 'namkeen', 'kurkure', 'extruded snacks'
 ];
 
-// Add logging utilities
-const ERROR_TYPES = {
-  MISSING_DATA: 'missing_data',
-  INVALID_VALUE: 'invalid_value',
-  CALCULATION_ERROR: 'calculation_error',
-  VALIDATION_ERROR: 'validation_error'
+function detectProductCategory(product) {
+  if (!product.name && !product.category) return null;
+  
+  const productText = `${product.name} ${product.category}`.toLowerCase();
+  
+  for (const [category, data] of Object.entries(PRODUCT_CATEGORIES)) {
+    if (data.keywords.some(keyword => productText.includes(keyword))) {
+      return { category, ...data };
+    }
+  }
+  
+  return null;
+}
+
+const calculateHealthScore = (product) => {
+  let score = 3.0; // Default score
+  let adjustments = [];
+
+  // Special handling for single-ingredient whole grain products
+  const ingredients = Array.isArray(product.ingredients) ? 
+    product.ingredients.join(' ').toLowerCase() : 
+    (product.ingredients || '').toLowerCase();
+
+  // Check if it's a single ingredient whole grain product
+  if (ingredients.includes('oats') || ingredients.includes('rolled oats')) {
+    const ingredientList = ingredients.split(',').map(i => i.trim());
+    
+    // If it's only oats (allowing for minimal additions like "rolled oats" or "whole grain oats")
+    if (ingredientList.length <= 2 && 
+        ingredientList.every(i => i.includes('oat'))) {
+      score = 5.0; // Highest score for pure oats products
+      adjustments.push({
+        reason: 'Single-ingredient whole grain product with excellent nutritional profile',
+        impact: 2.0
+      });
+      return { score, adjustments };
+    }
+  }
+
+  // Continue with regular scoring for other products
+  // ...existing scoring logic...
 };
 
-class HealthRatingError extends Error {
-  constructor(type, message, details = {}) {
-    super(message);
-    this.name = 'HealthRatingError';
-    this.type = type;
-    this.details = details;
-    this.timestamp = new Date();
-  }
-}
-
-function logHealthRatingError(error, product) {
-  const errorLog = {
-    timestamp: error.timestamp || new Date(),
-    type: error.type || 'unknown',
-    message: error.message,
-    details: error.details || {},
-    productInfo: {
-      id: product?._id,
-      name: product?.name,
-      category: product?.category,
-      hasNutriments: !!product?.nutriments,
-      hasIngredients: !!product?.ingredients
-    }
-  };
-
-  console.error('Health Rating Error:', JSON.stringify(errorLog, null, 2));
-  // In a production environment, you would send this to a logging service
-  return errorLog;
-}
-
-function validateAnalysisResults(results, product) {
-  const validationErrors = [];
-
-  // Validate score range
-  if (results.score < 1 || results.score > 5) {
-    validationErrors.push({
-      type: ERROR_TYPES.VALIDATION_ERROR,
-      message: 'Score out of valid range',
-      details: { score: results.score }
-    });
-  }
-
-  // Check for unrealistic nutrient values
-  if (product.nutriments) {
-    Object.entries(product.nutriments).forEach(([nutrient, value]) => {
-      if (value > 100 && !nutrient.includes('calories')) {
-        validationErrors.push({
-          type: ERROR_TYPES.VALIDATION_ERROR,
-          message: 'Unrealistic nutrient value',
-          details: { nutrient, value }
-        });
-      }
-    });
-  }
-
-  // Validate analysis consistency
-  const analysis = results.analysis || [];
-  const hasNegativeFactors = analysis.some(a => 
-    a.toLowerCase().includes('high in sugar') || 
-    a.toLowerCase().includes('high in fat') ||
-    a.toLowerCase().includes('processed')
-  );
-
-  if (hasNegativeFactors && results.score > 4.5) {
-    validationErrors.push({
-      type: ERROR_TYPES.VALIDATION_ERROR,
-      message: 'Inconsistent analysis results',
-      details: { 
-        score: results.score,
-        negativeFactors: analysis.filter(a => 
-          a.toLowerCase().includes('high in sugar') || 
-          a.toLowerCase().includes('high in fat') ||
-          a.toLowerCase().includes('processed')
-        )
-      }
-    });
-  }
-
-  return validationErrors;
-}
-
-// Update the main calculation function to use new error handling
 function calculateHealthRating(product) {
   try {
-    if (!product) {
-      throw new HealthRatingError(
-        ERROR_TYPES.MISSING_DATA,
-        'No product data available'
-      );
-    }
-
-    // Validate required fields
-    const validationResult = validateProductData(product);
-    if (!validationResult.isValid) {
-      throw new HealthRatingError(
-        ERROR_TYPES.MISSING_DATA,
-        validationResult.message,
-        { partialData: validationResult.partialData }
-      );
-    }
+    if (!product) return { score: 3, analysis: ['No product data available'] };
 
     let finalScore = 3;
     let analysis = [];
     
-    try {
-      // Product category detection
-      const productCategory = detectProductCategory(product);
-      const categoryMultiplier = productCategory?.scoreAdjustment || 1;
+    // Special handling for single-ingredient whole grain products
+    if (product.ingredients) {
+      const ingredients = typeof product.ingredients === 'string' ? 
+        product.ingredients.toLowerCase() : 
+        Array.isArray(product.ingredients) ? 
+          product.ingredients.join(',').toLowerCase() : '';
 
-      // Nutrient analysis
-      if (product.nutriments) {
-        const validatedNutriments = validateNutriments(product.nutriments);
-        const { score: nutrientScore, analysis: nutrientAnalysis } = 
-          analyzeNutrients(validatedNutriments, productCategory);
-        
-        if (productCategory) {
-          const focusNutrients = productCategory.nutritionalFocus;
-          const relevantAnalysis = nutrientAnalysis.filter(a => 
-            focusNutrients.some(nutrient => a.toLowerCase().includes(nutrient))
-          );
-          analysis = [...analysis, ...relevantAnalysis];
-        } else {
-          analysis = [...analysis, ...nutrientAnalysis];
-        }
-        
-        finalScore = (finalScore * 0.4) + (nutrientScore * 0.6);
-      }
-
-      // Ingredient analysis
-      if (product.ingredients) {
-        const validatedIngredients = validateIngredients(product.ingredients);
-        const { score: ingredientScore, analysis: ingredientAnalysis } = 
-          analyzeIngredients(validatedIngredients);
-        finalScore = (finalScore * 0.6) + (ingredientScore * 0.4);
-        analysis = [...analysis, ...ingredientAnalysis];
-      }
-
-      // Apply category adjustments
-      finalScore *= categoryMultiplier;
-
-      if (productCategory) {
-        analysis.push(`Analyzed as ${productCategory.category.replace('_', ' ')} product`);
-      }
-
-      // Normalize and validate results
-      finalScore = normalizeScore(finalScore);
+      const ingredientList = ingredients.split(',').map(i => i.trim());
       
-      const results = {
-        score: finalScore,
-        analysis: analysis,
-        rating: getRatingLabel(finalScore),
-        color: getRatingColor(finalScore),
-        confidence: calculateConfidenceLevel(product),
-        dataCompleteness: calculateDataCompleteness(product)
-      };
-
-      // Validate final results
-      const validationErrors = validateAnalysisResults(results, product);
-      if (validationErrors.length > 0) {
-        throw new HealthRatingError(
-          ERROR_TYPES.VALIDATION_ERROR,
-          'Analysis validation failed',
-          { errors: validationErrors }
-        );
+      // Check if it's a single ingredient oat product
+      if (ingredientList.length <= 2 && 
+          ingredientList.every(i => i.includes('oat'))) {
+        return {
+          score: 5.0,
+          analysis: ['Single-ingredient whole grain product - Excellent nutritional profile'],
+          rating: 'Excellent Choice',
+          color: 'green',
+          pros: ['Pure whole grain oats with excellent nutritional value'],
+          cons: []
+        };
       }
+    }
+    
+    // Detect product category for specialized analysis
+    const productCategory = detectProductCategory(product);
+    let categoryMultiplier = productCategory?.scoreAdjustment || 1;
 
-      return results;
-
-    } catch (innerError) {
-      throw new HealthRatingError(
-        ERROR_TYPES.CALCULATION_ERROR,
-        'Error during health rating calculation',
-        { originalError: innerError.message }
-      );
+    // Start with Nutri-Score if available
+    if (product.nutriscore_grade) {
+      const nutriScoreValues = { 'a': 5, 'b': 4, 'c': 3, 'd': 2, 'e': 1 };
+      finalScore = nutriScoreValues[product.nutriscore_grade.toLowerCase()] || 3;
+      analysis.push(`Nutri-Score ${product.nutriscore_grade.toUpperCase()}`);
     }
 
+    // Analyze nutrients with category-specific focus
+    if (product.nutriments) {
+      const { score: nutrientScore, analysis: nutrientAnalysis } = analyzeNutrients(product.nutriments);
+      if (productCategory) {
+        const focusNutrients = productCategory.nutritionalFocus;
+        const relevantAnalysis = nutrientAnalysis.filter(a => 
+          focusNutrients.some(nutrient => a.toLowerCase().includes(nutrient))
+        );
+        analysis = [...analysis, ...relevantAnalysis];
+      } else {
+        analysis = [...analysis, ...nutrientAnalysis];
+      }
+      
+      // Weight nutrient score more heavily (60%)
+      finalScore = (finalScore * 0.4) + (nutrientScore * 0.6);
+    }
+
+    // Analyze ingredients
+    if (product.ingredients) {
+      const { score: ingredientScore, analysis: ingredientAnalysis } = analyzeIngredients(product.ingredients);
+      // Weight ingredient analysis (40%)
+      finalScore = (finalScore * 0.6) + (ingredientScore * 0.4);
+      analysis = [...analysis, ...ingredientAnalysis];
+    }
+
+    // Apply category-specific adjustments
+    finalScore *= categoryMultiplier;
+
+    // Add category-specific analysis
+    if (productCategory) {
+      analysis.push(`Analyzed as ${productCategory.category.replace('_', ' ')} product`);
+    }
+
+    // Ensure score stays within 1-5 range and round to 1 decimal
+    finalScore = Math.max(1, Math.min(5, Math.round(finalScore * 10) / 10));
+
+    // Enhanced analysis to separate pros and cons
+    const healthAnalysis = analysis.map(item => {
+      if (item.includes('Good source') || item.includes('Low in') || item.includes('beneficial')) {
+        return { type: 'pro', text: item };
+      }
+      return { type: 'con', text: item };
+    });
+
+    return {
+      score: finalScore,
+      analysis: analysis,
+      rating: finalScore >= 4 ? 'Healthy Choice' :
+              finalScore >= 3 ? 'Moderately Healthy' :
+              finalScore >= 2 ? 'Less Healthy' : 'Not Recommended',
+      color: finalScore >= 4 ? 'green' :
+             finalScore >= 3 ? 'yellow' :
+             finalScore >= 2 ? 'orange' : 'red',
+      pros: healthAnalysis.filter(a => a.type === 'pro').map(a => a.text),
+      cons: healthAnalysis.filter(a => a.type === 'con').map(a => a.text)
+    };
   } catch (error) {
-    const errorLog = logHealthRatingError(error, product);
-    
-    // Return a safe default rating with error information
+    console.error('Error calculating health rating:', error);
     return {
       score: 3,
-      analysis: [`Error: ${error.message}`],
-      rating: error.type === ERROR_TYPES.MISSING_DATA ? 'Insufficient Data' : 'Analysis Failed',
-      color: 'gray',
-      confidence: 0,
-      error: errorLog,
-      dataCompleteness: calculateDataCompleteness(product)
+      analysis: ['Error analyzing product'],
+      rating: 'Analysis Failed',
+      color: 'gray'
     };
   }
-}
-
-// Helper functions for data validation and processing
-function validateProductData(product) {
-  const result = {
-    isValid: true,
-    message: '',
-    partialData: false
-  };
-
-  if (!product.name && !product.category) {
-    result.isValid = false;
-    result.message = 'Missing product name and category';
-    return result;
-  }
-
-  if (!product.nutriments && !product.ingredients) {
-    result.isValid = false;
-    result.message = 'Missing both nutritional information and ingredients';
-    return result;
-  }
-
-  if (!product.nutriments || !product.ingredients) {
-    result.partialData = true;
-  }
-
-  return result;
-}
-
-function validateNutriments(nutriments) {
-  const validated = {};
-  
-  Object.entries(NUTRITIONAL_GUIDELINES).forEach(([nutrient, guidelines]) => {
-    const value = parseFloat(nutriments[nutrient]);
-    if (!isNaN(value)) {
-      // Check if value is within reasonable range
-      const maxAllowed = guidelines.high * 5; // Allow up to 5x the "high" threshold
-      validated[nutrient] = Math.min(Math.max(0, value), maxAllowed);
-    }
-  });
-
-  return validated;
-}
-
-function validateIngredients(ingredients) {
-  if (Array.isArray(ingredients)) {
-    return ingredients.filter(i => typeof i === 'string' && i.trim().length > 0);
-  }
-  if (typeof ingredients === 'string') {
-    return ingredients.split(',').map(i => i.trim()).filter(Boolean);
-  }
-  return [];
-}
-
-function normalizeScore(score) {
-  return Math.max(1, Math.min(5, Math.round(score * 10) / 10));
-}
-
-function calculateConfidenceLevel(product) {
-  let confidence = 0;
-  
-  // Check data completeness
-  if (product.nutriments) confidence += 0.4;
-  if (product.ingredients) confidence += 0.3;
-  if (product.nutriscore_grade) confidence += 0.2;
-  if (product.category) confidence += 0.1;
-
-  return Math.min(1, confidence);
-}
-
-function calculateDataCompleteness(product) {
-  const requiredFields = ['name', 'category', 'nutriments', 'ingredients'];
-  const presentFields = requiredFields.filter(field => !!product[field]);
-  return (presentFields.length / requiredFields.length) * 100;
-}
-
-function getDefaultRating(message, partialData = false) {
-  return {
-    score: 3,
-    analysis: [message],
-    rating: partialData ? 'Partial Analysis' : 'Analysis Failed',
-    color: partialData ? 'yellow' : 'gray',
-    confidence: partialData ? 0.5 : 0,
-    pros: [],
-    cons: [],
-    dataCompleteness: 0
-  };
-}
-
-function getRatingLabel(score) {
-  if (score >= 4.5) return 'Excellent Choice';
-  if (score >= 4) return 'Healthy Choice';
-  if (score >= 3) return 'Moderately Healthy';
-  if (score >= 2) return 'Less Healthy';
-  return 'Not Recommended';
-}
-
-function getRatingColor(score) {
-  if (score >= 4) return 'green';
-  if (score >= 3) return 'yellow';
-  if (score >= 2) return 'orange';
-  return 'red';
 }
 
 module.exports = calculateHealthRating;

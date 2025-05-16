@@ -55,11 +55,10 @@ export function AnalysisSection({ product }) {
     sustainabilityNote: "Product packaging and ingredients suggest moderate environmental impact. Future updates will include detailed sustainability metrics.",
     disclaimer: "This analysis is generated using available product data and will be enhanced with AI-powered insights in future updates."
   };
-
   // Transform API data or use fallbacks
   const analysis = {
-    title: currentProduct?.name || "Product Name",
-    brand: currentProduct?.brand || "Unknown Brand",
+    title: currentProduct?.product_name || currentProduct?.name || "Product Name",
+    brand: currentProduct?.brands || currentProduct?.brand || "Unknown Brand",
     healthScore: currentProduct?.healthRating || 3.0,
     tags: [
       currentProduct?.category,

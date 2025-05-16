@@ -260,27 +260,24 @@ export default function Home({ user, onModalStateChange }) {
     if (!state.products.length && !state.isLoading) {
       setSelectedAnalysisProduct(null);
     }
-  }, [state.products.length, state.isLoading]);
-
-  const handleAnalysisSelect = useCallback((product) => {
-    // Reset previous product state
+  }, [state.products.length, state.isLoading]);  const handleAnalysisSelect = useCallback((product) => {
+    // First update the state
     setSelectedProduct(null);
     setSelectedAnalysisProduct(product);
     
-    // Scroll to analysis section with smooth behavior
-    const analysisSection = document.getElementById('details');
-    if (analysisSection) {
-      // Clear any existing smooth scroll animations
-      window.scrollTo({
-        top: analysisSection.offsetTop - 100,
-        behavior: 'instant'
+    // Use requestAnimationFrame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const analysisSection = document.getElementById('details');
+        if (analysisSection) {
+          const offset = analysisSection.getBoundingClientRect().top + window.pageYOffset - 80;
+          window.scrollTo({
+            top: offset,
+            behavior: 'smooth'
+          });
+        }
       });
-      // Then do the smooth scroll
-      window.scrollTo({
-        top: analysisSection.offsetTop - 100,
-        behavior: 'smooth'
-      });
-    }
+    });
   }, []);
 
   const handleApplyFilters = async () => {
@@ -368,7 +365,7 @@ export default function Home({ user, onModalStateChange }) {
 
   return (
     <>
-      <FloatingFoodIcons />
+      <FloatingFoodIcons/>
       
       <div className="p-10 pl-10 relative z-10 md:mt-0 mt-16">      <div className="max-w-[1920px] mx-auto px-4"> {/* Increased max width and added padding */}
           <MenuBar user={user}/>
@@ -653,10 +650,8 @@ export default function Home({ user, onModalStateChange }) {
                   <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
                     <Sparkles className="w-6 h-6 text-primary" />
                     Featured Products
-                  </h2>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols gap-6">
-                    {featuredProducts.slice(0, showAllFeatured ? undefined : 8).map((product) => (
+                  </h2>                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {featuredProducts.slice(0, showAllFeatured ? undefined : window.innerWidth < 640 ? 2 : 6).map((product) => (
                       <div
                         key={product._id || product.code}
                         className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden bg-card hover:border-primary/50 transition-all duration-300"
@@ -725,9 +720,7 @@ export default function Home({ user, onModalStateChange }) {
                         </div>
                       </div>
                     ))}
-                  </div>
-
-                  {featuredProducts.length > 8 && (
+                  </div>                  {featuredProducts.length > (window.innerWidth < 640 ? 2 : 6) && (
                     <motion.button 
                       onClick={() => setShowAllFeatured(!showAllFeatured)}
                       className="mt-8 mx-auto block px-6 py-2.5 rounded-lg border border-gray-200 

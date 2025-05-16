@@ -120,7 +120,7 @@ export default function ForgotPassword() {
       }
 
       setStep("success");
-      toast.success("Password reset successful!");
+      toast.success("Your password has been reset successfully. Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
       console.error("Reset error:", error);
@@ -279,7 +279,8 @@ export default function ForgotPassword() {
 
         {step === "success" && (
           <div className="text-center text-gray-600 dark:text-gray-400">
-            <p>Redirecting you to login...</p>
+            <p className="mb-2 text-lg font-medium text-green-600">Password Reset Complete</p>
+            <p>Your password has been successfully reset. You will be redirected to the login page in a moment.</p>
           </div>
         )}
       </div>
