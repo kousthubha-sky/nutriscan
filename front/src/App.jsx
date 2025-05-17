@@ -14,6 +14,7 @@ import { UserProfile } from './components/product/user-profile';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AdminDashboard from './components/dashboard/AdminDashboard';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 
 // Protected route componentxx
 const AdminRoute = ({ children }) => {
@@ -83,21 +84,24 @@ function AppContent() {
         )}
 
         {/* Main content */}
-        <main className={`flex-1 w-full transition-all duration-300 ${shouldShowSidebar ? 'md:pl-64' : ''}`}>
-          <Routes>
-            <Route path="/" element={<Home user={user} />} />
-            <Route path="/login" element={<Login onLogin={setUser} />} />
-            <Route path="/signup" element={<Signup onLogin={setUser} />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route 
-              path="/admin" 
-              element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              } 
-            />
-          </Routes>
+        <main className={`flex-1 w-full transition-all duration-300 ${shouldShowSidebar ? 'md:pl-64' : ''}`}>          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Home user={user} />} />
+              <Route path="/login" element={<Login onLogin={setUser} />} />
+              <Route path="/signup" element={<Signup onLogin={setUser} />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <AdminRoute>
+                    <ErrorBoundary>
+                      <AdminDashboard />
+                    </ErrorBoundary>
+                  </AdminRoute>
+                } 
+              />
+            </Routes>
+          </ErrorBoundary>
         </main>
       </div>
 
@@ -123,23 +127,25 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <BrowserRouter>
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="colored"
-        />
-        <AppContent />
-      </BrowserRouter>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <BrowserRouter>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+          />
+          <AppContent />
+        </BrowserRouter>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

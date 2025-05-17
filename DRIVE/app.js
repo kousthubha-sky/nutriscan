@@ -85,9 +85,27 @@ app.use('/user', userRouter);
 app.use('/admin', adminRoutes);
 app.use('/products', productRouter);
 
+// Import error handling middleware
+const { globalErrorHandler, setupErrorHandlers } = require('./middleware/errorMiddleware');
+
+// Global error handling middleware - must be after all routes
+app.use(globalErrorHandler);
+
+// Setup process-level error handlers
+setupErrorHandlers(app);
+
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
 
-app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, () => {
     console.log(`Server is running on http://${HOST}:${PORT}`);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
