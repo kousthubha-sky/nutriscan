@@ -3,6 +3,11 @@
 
 # Environment variables
 .env
+.env.development
+.env.production
+
+# Build output
+/dist
 
 # Logs
 *.log
@@ -18,3 +23,6 @@ pids
 
 # Optional eslint cache
 .eslintcache
+
+# Frontend (since it's in a separate folder)
+/front/

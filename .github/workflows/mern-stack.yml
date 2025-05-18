@@ -26,7 +26,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18.x'
+        node-version: '20.18'
         cache: 'npm'
         cache-dependency-path: DRIVE/package-lock.json
     
@@ -50,7 +50,6 @@ jobs:
       run: npm run build
       env:
         NODE_ENV: production
-
   frontend:
     runs-on: ubuntu-latest
     
@@ -60,7 +59,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18.x'
+        node-version: '20.18'
         cache: 'npm'
         cache-dependency-path: front/package-lock.json
     
@@ -75,7 +74,6 @@ jobs:
         npm run build
       env:
         VITE_API_URL: ${{ secrets.VITE_API_URL }}
-
   deploy:
     needs: [backend, frontend]
     runs-on: ubuntu-latest
@@ -87,7 +85,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18.x'
+        node-version: '20.18'
     
     - name: Install PM2 globally
       run: npm install -g pm2
