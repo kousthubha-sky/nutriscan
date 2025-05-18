@@ -67,14 +67,37 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Deploy to Production
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: DRIVE/package-lock.json
+    
+    - name: Install Dependencies
+      working-directory: ./DRIVE
+      run: npm ci
+    
+    - name: Build Application
+      working-directory: ./DRIVE
+      run: npm run build
       env:
-        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        NODE_ENV: production
+    
+    - name: Setup SSH
       run: |
-        echo "Add your deployment commands here"
-        # Example deployment steps:
-        # 1. SSH into your server
-        # 2. Pull latest changes
-        # 3. Install dependencies
-        # 4. Build application
-        # 5. Restart services
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+    
+    - name: Deploy Application
+      env:
+        MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        NODE_ENV: production
+      run: |
+        pm2 delete drive-app || true
+        cd DRIVE
+        pm2 start dist/server.js --name drive-app
+        pm2 save

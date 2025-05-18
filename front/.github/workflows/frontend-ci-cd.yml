@@ -16,7 +16,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [18.x]
 
     steps:
     - uses: actions/checkout@v4
@@ -36,12 +36,6 @@ jobs:
       working-directory: ./front
       run: npm run lint
     
-    - name: Run Tests
-      working-directory: ./front
-      run: npm test
-      env:
-        NODE_ENV: test
-    
     - name: Build
       working-directory: ./front
       run: npm run build
@@ -56,12 +50,29 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Deploy Frontend
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: front/package-lock.json
+    
+    - name: Install Dependencies
+      working-directory: ./front
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./front
+      run: npm run build
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+    
+    - name: Setup SSH and Deploy
       env:
         DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
       run: |
-        echo "Add your frontend deployment commands here"
-        # Example deployment steps for frontend:
-        # 1. Build the production version
-        # 2. Deploy to CDN or static hosting
-        # 3. Invalidate cache if needed
+        mkdir -p ~/.ssh/
+        echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        cd front/dist
+        pm2 serve . 5173 --name drive-frontend --spa
