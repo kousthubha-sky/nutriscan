@@ -1,0 +1,80 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'DRIVE/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'DRIVE/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: DRIVE/package-lock.json
+    
+    - name: Install Dependencies
+      working-directory: ./DRIVE
+      run: npm ci
+    
+    - name: Run Linting
+      working-directory: ./DRIVE
+      run: npm run lint
+    
+    - name: Run Tests
+      working-directory: ./DRIVE
+      run: npm test
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/test
+        JWT_SECRET: test-secret
+        PORT: 3000
+
+    - name: Build
+      working-directory: ./DRIVE
+      run: npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Production
+      env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      run: |
+        echo "Add your deployment commands here"
+        # Example deployment steps:
+        # 1. SSH into your server
+        # 2. Pull latest changes
+        # 3. Install dependencies
+        # 4. Build application
+        # 5. Restart services
