@@ -5,25 +5,25 @@ const HealthHistorySchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Health score is required'],
     min: [0, 'Health score cannot be negative'],
-    max: [5, 'Health score cannot exceed 5']
+    max: [5, 'Health score cannot exceed 5'],
   },
   timestamp: {
     type: Date,
     default: Date.now,
     required: [true, 'Timestamp is required'],
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return value <= Date.now();
       },
-      message: 'Health history timestamp cannot be in the future'
-    }
+      message: 'Health history timestamp cannot be in the future',
+    },
   },
   reason: {
     type: String,
     required: [true, 'Reason for health score change is required'],
     trim: true,
-    maxlength: [500, 'Reason cannot exceed 500 characters']
-  }
+    maxlength: [500, 'Reason cannot exceed 500 characters'],
+  },
 });
 
 const productSchema = new mongoose.Schema({
@@ -33,11 +33,11 @@ const productSchema = new mongoose.Schema({
     unique: true,
     index: true,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return /^[0-9]{8,14}$/.test(v);
       },
-      message: props => `${props.value} is not a valid barcode number. Must be 8-14 digits.`
-    }
+      message: props => `${props.value} is not a valid barcode number. Must be 8-14 digits.`,
+    },
   },
   name: {
     type: String,
@@ -45,31 +45,31 @@ const productSchema = new mongoose.Schema({
     trim: true,
     index: true,
     minlength: [2, 'Product name must be at least 2 characters long'],
-    maxlength: [100, 'Product name cannot exceed 100 characters']
+    maxlength: [100, 'Product name cannot exceed 100 characters'],
   },
   brand: {
     type: String,
     trim: true,
     index: true,
-    maxlength: [50, 'Brand name cannot exceed 50 characters']
+    maxlength: [50, 'Brand name cannot exceed 50 characters'],
   },
   productImage: {
     type: String,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return !v || /\.(jpg|jpeg|png)$/i.test(v);
       },
-      message: 'Product image must be a valid image file (JPG, JPEG, or PNG)'
-    }
+      message: 'Product image must be a valid image file (JPG, JPEG, or PNG)',
+    },
   },
   barcodeImage: {
     type: String,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return !v || /\.(jpg|jpeg|png)$/i.test(v);
       },
-      message: 'Barcode image must be a valid image file (JPG, JPEG, or PNG)'
-    }
+      message: 'Barcode image must be a valid image file (JPG, JPEG, or PNG)',
+    },
   },
   category: {
     type: String,
@@ -88,95 +88,95 @@ const productSchema = new mongoose.Schema({
         'bakery',
         'condiments',
         'frozen',
-        'organic'
+        'organic',
       ],
-      message: '{VALUE} is not a valid category'
+      message: '{VALUE} is not a valid category',
     },
-    default: 'Uncategorized'
+    default: 'Uncategorized',
   },
   description: {
     type: String,
     trim: true,
-    maxlength: [1000, 'Description cannot exceed 1000 characters']
+    maxlength: [1000, 'Description cannot exceed 1000 characters'],
   },
   ingredients: [{
     type: String,
     trim: true,
-    maxlength: [100, 'Individual ingredient name cannot exceed 100 characters']
+    maxlength: [100, 'Individual ingredient name cannot exceed 100 characters'],
   }],
   labels: {
     type: String,
     trim: true,
-    maxlength: [200, 'Labels cannot exceed 200 characters']
+    maxlength: [200, 'Labels cannot exceed 200 characters'],
   },
   allergens: [{
     type: String,
     trim: true,
-    maxlength: [50, 'Allergen name cannot exceed 50 characters']
+    maxlength: [50, 'Allergen name cannot exceed 50 characters'],
   }],
   nutriments: {
     energy_kcal_100g: {
       type: Number,
       min: [0, 'Energy value cannot be negative'],
-      max: [1000, 'Energy value seems too high']
+      max: [1000, 'Energy value seems too high'],
     },
     carbohydrates_100g: {
       type: Number,
       min: [0, 'Carbohydrates value cannot be negative'],
-      max: [100, 'Carbohydrates value cannot exceed 100g per 100g']
+      max: [100, 'Carbohydrates value cannot exceed 100g per 100g'],
     },
     sugars_100g: {
       type: Number,
       min: [0, 'Sugars value cannot be negative'],
-      max: [100, 'Sugars value cannot exceed 100g per 100g']
+      max: [100, 'Sugars value cannot exceed 100g per 100g'],
     },
     fat_100g: {
       type: Number,
       min: [0, 'Fat value cannot be negative'],
-      max: [100, 'Fat value cannot exceed 100g per 100g']
+      max: [100, 'Fat value cannot exceed 100g per 100g'],
     },
     saturated_fat_100g: {
       type: Number,
       min: [0, 'Saturated fat value cannot be negative'],
-      max: [100, 'Saturated fat value cannot exceed 100g per 100g']
+      max: [100, 'Saturated fat value cannot exceed 100g per 100g'],
     },
     proteins_100g: {
       type: Number,
       min: [0, 'Proteins value cannot be negative'],
-      max: [100, 'Proteins value cannot exceed 100g per 100g']
+      max: [100, 'Proteins value cannot exceed 100g per 100g'],
     },
     fiber_100g: {
       type: Number,
       min: [0, 'Fiber value cannot be negative'],
-      max: [100, 'Fiber value cannot exceed 100g per 100g']
+      max: [100, 'Fiber value cannot exceed 100g per 100g'],
     },
     salt_100g: {
       type: Number,
       min: [0, 'Salt value cannot be negative'],
-      max: [100, 'Salt value cannot exceed 100g per 100g']
-    }
+      max: [100, 'Salt value cannot exceed 100g per 100g'],
+    },
   },
   nutriscore_grade: {
     type: String,
     enum: {
       values: ['a', 'b', 'c', 'd', 'e'],
-      message: '{VALUE} is not a valid Nutri-Score grade'
-    }
+      message: '{VALUE} is not a valid Nutri-Score grade',
+    },
   },  healthRating: {
     type: Number,
     default: 3.0,
     required: [true, 'Health rating is required'],
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return v >= 1 && v <= 5;
       },
-      message: 'Health rating must be between 1 and 5'
-    }
+      message: 'Health rating must be between 1 and 5',
+    },
   },
   healthAnalysis: [{
     type: String,
     trim: true,
-    maxlength: [500, 'Health analysis item cannot exceed 500 characters']
+    maxlength: [500, 'Health analysis item cannot exceed 500 characters'],
   }],
   healthRatingLabel: {
     type: String,
@@ -184,104 +184,104 @@ const productSchema = new mongoose.Schema({
     maxlength: [50, 'Health rating label cannot exceed 50 characters'],
     enum: {
       values: ['Excellent Choice', 'Healthy Choice', 'Good Choice', 'Fair Choice', 'Poor Choice'],
-      message: '{VALUE} is not a valid health rating label'
-    }
+      message: '{VALUE} is not a valid health rating label',
+    },
   },
   healthRatingColor: {
     type: String,
     trim: true,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return /^#[0-9A-Fa-f]{6}$/.test(v);
       },
-      message: 'Health rating color must be a valid hex color code'
-    }
+      message: 'Health rating color must be a valid hex color code',
+    },
   },
   confidence: {
     type: Number,
     required: [true, 'Confidence score is required'],
     min: [0, 'Confidence score cannot be negative'],
     max: [1, 'Confidence score cannot exceed 1'],
-    default: 0.5
+    default: 0.5,
   },
   dataCompleteness: {
     type: Number,
     required: [true, 'Data completeness score is required'],
     min: [0, 'Data completeness cannot be negative'],
     max: [100, 'Data completeness cannot exceed 100%'],
-    default: 0
+    default: 0,
   },
   lastSignificantUpdate: {
     type: Date,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return !value || value <= Date.now();
       },
-      message: 'Last significant update date cannot be in the future'
-    }
+      message: 'Last significant update date cannot be in the future',
+    },
   },
   ratingChanged: {
     type: Boolean,
-    default: false
+    default: false,
   },
   cacheHit: {
     type: Boolean,
-    default: false
+    default: false,
   },
   healthHistory: [HealthHistorySchema],
   healthTrends: {
     avgScore30Days: {
       type: Number,
       min: [1, 'Average score cannot be less than 1'],
-      max: [5, 'Average score cannot exceed 5']
+      max: [5, 'Average score cannot exceed 5'],
     },
     avgScore90Days: {
       type: Number,
       min: [1, 'Average score cannot be less than 1'],
-      max: [5, 'Average score cannot exceed 5']
+      max: [5, 'Average score cannot exceed 5'],
     },
     improvement30Days: {
       type: Number,
       min: [-5, 'Improvement cannot be less than -5'],
-      max: [5, 'Improvement cannot exceed 5']
+      max: [5, 'Improvement cannot exceed 5'],
     },
     improvement90Days: {
       type: Number,
       min: [-5, 'Improvement cannot be less than -5'],
-      max: [5, 'Improvement cannot exceed 5']
+      max: [5, 'Improvement cannot exceed 5'],
     },
     lastAnalyzed: {
       type: Date,
       validate: {
-        validator: function(value) {
+        validator: function (value) {
           return !value || value <= Date.now();
         },
-        message: 'Last analyzed date cannot be in the future'
-      }
-    }
+        message: 'Last analyzed date cannot be in the future',
+      },
+    },
   },  searchCount: {
     type: Number,
     default: 0,
     min: [0, 'Search count cannot be negative'],
-    index: true
+    index: true,
   },
   lastFetched: {
     type: Date,
     default: Date.now,
     index: true,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return !value || value <= Date.now();
       },
-      message: 'Last fetched date cannot be in the future'
-    }
+      message: 'Last fetched date cannot be in the future',
+    },
   },
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
     required: [true, 'Added by user reference is required'],
     validate: {
-      validator: async function(value) {
+      validator: async function (value) {
         try {
           const User = mongoose.model('user');
           const user = await User.findById(value);
@@ -290,18 +290,18 @@ const productSchema = new mongoose.Schema({
           return false;
         }
       },
-      message: 'The specified user does not exist'
-    }
+      message: 'The specified user does not exist',
+    },
   },
   isVerified: {
     type: Boolean,
-    default: false
+    default: false,
   },
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
     validate: {
-      validator: async function(value) {
+      validator: async function (value) {
         if (!value) return true; // Optional field
         try {
           const User = mongoose.model('user');
@@ -311,20 +311,20 @@ const productSchema = new mongoose.Schema({
           return false;
         }
       },
-      message: 'Product can only be verified by an admin user'
-    }
+      message: 'Product can only be verified by an admin user',
+    },
   },
   verifiedAt: {
     type: Date,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return !value || value <= Date.now();
       },
-      message: 'Verification date cannot be in the future'
-    }
-  }
+      message: 'Verification date cannot be in the future',
+    },
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 // Create text indexes for better search performance
@@ -332,18 +332,18 @@ productSchema.index({
   name: 'text',
   brand: 'text',
   category: 'text',
-  description: 'text'
+  description: 'text',
 }, {
   weights: {
     name: 10,
     brand: 5,
     category: 3,
-    description: 1
-  }
+    description: 1,
+  },
 });
 
 // Add method to update health history
-productSchema.methods.updateHealthHistory = function(newScore, reason) {
+productSchema.methods.updateHealthHistory = function (newScore, reason) {
   if (!reason) {
     throw new Error('A reason is required when updating health history');
   }
@@ -355,7 +355,7 @@ productSchema.methods.updateHealthHistory = function(newScore, reason) {
   this.healthHistory.push({
     score: newScore,
     reason: reason,
-    timestamp: new Date()
+    timestamp: new Date(),
   });
   // Keep only last 365 days of history
   const oneYearAgo = new Date();
@@ -370,7 +370,7 @@ productSchema.methods.updateHealthHistory = function(newScore, reason) {
 };
 
 // Calculate health trends
-productSchema.methods.calculateHealthTrends = function() {
+productSchema.methods.calculateHealthTrends = function () {
   const now = new Date();
   const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
   const ninetyDaysAgo = new Date(now - 90 * 24 * 60 * 60 * 1000);
@@ -392,12 +392,12 @@ productSchema.methods.calculateHealthTrends = function() {
     improvement90Days: last90Days.length >= 2
       ? parseFloat((last90Days[last90Days.length - 1].score - last90Days[0].score).toFixed(2))
       : null,
-    lastAnalyzed: now
+    lastAnalyzed: now,
   };
 };
 
 // Calculate data completeness score
-productSchema.methods.calculateDataCompleteness = function() {
+productSchema.methods.calculateDataCompleteness = function () {
   const requiredFields = ['name', 'brand', 'category', 'ingredients', 'nutriments'];
   const optionalFields = ['description', 'allergens', 'labels', 'nutriscore_grade'];
   const nutrimentFields = ['energy_kcal_100g', 'carbohydrates_100g', 'proteins_100g', 'fat_100g'];
@@ -434,7 +434,7 @@ productSchema.methods.calculateDataCompleteness = function() {
 };
 
 // Pre-save middleware to update timestamps and completeness
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function (next) {
   if (this.isModified()) {
     this.lastSignificantUpdate = new Date();
     this.calculateDataCompleteness();
@@ -443,7 +443,7 @@ productSchema.pre('save', function(next) {
 });
 
 // Add method to calculate health trends
-productSchema.methods.updateHealthTrends = function() {
+productSchema.methods.updateHealthTrends = function () {
   const now = new Date();
   const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
   const ninetyDaysAgo = new Date(now - 90 * 24 * 60 * 60 * 1000);
@@ -475,16 +475,16 @@ productSchema.methods.updateHealthTrends = function() {
 };
 
 // Add static method to get trending products
-productSchema.statics.getTrendingProducts = async function(options = {}) {
+productSchema.statics.getTrendingProducts = async function (options = {}) {
   const {
     limit = 10,
     minImprovement = 5,
-    period = 30
+    period = 30,
   } = options;
 
   const query = {
     [`healthTrends.improvement${period}Days`]: { $gte: minImprovement },
-    [`healthTrends.avgScore${period}Days`]: { $exists: true }
+    [`healthTrends.avgScore${period}Days`]: { $exists: true },
   };
 
   return this.find(query)

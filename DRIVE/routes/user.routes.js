@@ -1,10 +1,10 @@
-const express = require('express')
-const app = express()
-const router = express.Router()
-const userModel = require('../models/user.model')
+const express = require('express');
+const app = express();
+const router = express.Router();
+const userModel = require('../models/user.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {body, validationResult} = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const auth = require('../middleware/auth');
 const { sendEmail } = require('../config/email');
 const rateLimit = require('express-rate-limit');
@@ -44,22 +44,22 @@ const loginLimiter = rateLimit({
   handler: (req, res) => {
     res.status(429).json({
       message: 'Too many login attempts, please try again after 15 minutes',
-      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+      retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
     });
   },
-  skipSuccessfulRequests: true // Don't count successful logins
+  skipSuccessfulRequests: true, // Don't count successful logins
 });
 
 const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3, // 3 accounts per hour per IP
-  message: 'Too many accounts created, please try again after an hour'
+  message: 'Too many accounts created, please try again after an hour',
 });
 
 const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3, // 3 password reset attempts per hour
-  message: 'Too many password reset attempts, please try again after an hour'
+  message: 'Too many password reset attempts, please try again after an hour',
 });
 
 // Middleware
@@ -83,14 +83,14 @@ const validatePasswordStrength = (password) => {
 };
 
 router.get('/signup', (req, res) => {
-  res.render('register')
-})
+  res.render('register');
+});
 // Signup route with enhanced security
 router.post('/signup',
   signupLimiter,
   body('username')
     .trim()
-    .isLength({min: 3})
+    .isLength({ min: 3 })
     .withMessage('Username must be at least 3 characters long')
     .matches(/^[a-zA-Z0-9_-]+$/)
     .withMessage('Username can only contain letters, numbers, underscores and dashes')
@@ -127,14 +127,14 @@ router.post('/signup',
       const existingUser = await userModel.findOne({
         $or: [
           { username: sanitizedUsername },
-          { email: sanitizedEmail }
-        ]
+          { email: sanitizedEmail },
+        ],
       });
 
       if (existingUser) {
         return res.status(400).json({
           message: existingUser.username === sanitizedUsername ? 
-            'Username already exists' : 'Email already registered'
+            'Username already exists' : 'Email already registered',
         });
       }      // Hash password with pepper
       const hashedPassword = await hashPassword(password);
@@ -143,20 +143,20 @@ router.post('/signup',
         username: sanitizedUsername,
         email: sanitizedEmail,
         password: hashedPassword,
-        role: role === 'admin' ? 'admin' : 'user'
+        role: role === 'admin' ? 'admin' : 'user',
       });
 
       // Generate JWT token with reduced payload
       const token = jwt.sign(
         { 
           uid: newUser._id,
-          role: newUser.role 
+          role: newUser.role, 
         },
         process.env.JWT_SECRET,
         { 
           expiresIn: '1h',
-          algorithm: 'HS256'
-        }
+          algorithm: 'HS256',
+        },
       );
 
       // Remove sensitive data from response
@@ -164,57 +164,57 @@ router.post('/signup',
         _id: newUser._id,
         username: newUser.username,
         email: newUser.email,
-        role: newUser.role
+        role: newUser.role,
       };
       
       res.status(201).json({
         message: 'Registration successful',
         user: userResponse,
-        token: token
+        token: token,
       });
 
     } catch (error) {
       console.error('Signup error:', error);
       res.status(500).json({
         message: 'Registration failed',
-        error: error.message
+        error: error.message,
       });
     }
-  }
-)
+  },
+);
 
 router.get('/login', (req, res) => {
-  res.render('login')
-})
+  res.render('login');
+});
 // Login route with enhanced security
 router.post('/login',
   loginLimiter,
   body('username')
     .trim()
-    .isLength({min: 3})
+    .isLength({ min: 3 })
     .escape(),
   body('password')
     .trim()
-    .isLength({min: 8}),
+    .isLength({ min: 8 }),
   async (req, res) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          message: 'Invalid credentials'
+          message: 'Invalid credentials',
         });
       }      const { username, password } = req.body;
       const sanitizedUsername = req.sanitize(username.toLowerCase());
 
       const user = await userModel.findOne({ 
-        username: sanitizedUsername
+        username: sanitizedUsername,
       });
 
       // Check for account lockout
       if (user && user.accountLocked && user.lockUntil > Date.now()) {
         const waitMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
         return res.status(423).json({
-          message: `Account is temporarily locked. Please try again in ${waitMinutes} minutes`
+          message: `Account is temporarily locked. Please try again in ${waitMinutes} minutes`,
         });
       }
 
@@ -222,7 +222,7 @@ router.post('/login',
         // Use consistent timing to prevent username enumeration
         await bcrypt.compare(password, '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LcdYste0X/S.PXY1G');
         return res.status(401).json({
-          message: 'Invalid credentials'
+          message: 'Invalid credentials',
         });
       }      const isMatch = await verifyPassword(password, user.password);
       if (!isMatch) {
@@ -230,7 +230,7 @@ router.post('/login',
         return res.status(401).json({ 
           message: user.accountLocked ? 
             'Account has been locked due to too many failed attempts' : 
-            'Invalid credentials'
+            'Invalid credentials',
         });
       }
 
@@ -243,36 +243,36 @@ router.post('/login',
       const token = jwt.sign(
         { 
           uid: user._id,
-          role: user.role 
+          role: user.role, 
         },
         process.env.JWT_SECRET,
         { 
           expiresIn: '1h',
-          algorithm: 'HS256'
-        }
+          algorithm: 'HS256',
+        },
       );
 
       const userResponse = {
         _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
       };
 
       res.status(200).json({
         message: 'Login successful',
         user: userResponse,
-        token: token
+        token: token,
       });
 
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({
         message: 'Login failed',
-        error: 'An unexpected error occurred'
+        error: 'An unexpected error occurred',
       });
     }
-  }
+  },
 );
 
 // Generate OTP
@@ -288,7 +288,7 @@ router.post('/forgot-password',
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          message: 'Invalid email format'
+          message: 'Invalid email format',
         });
       }
 
@@ -301,7 +301,7 @@ router.post('/forgot-password',
 
       if (!user.canRequestOTP()) {
         return res.status(429).json({ 
-          message: 'Please wait 1 minute before requesting another OTP'
+          message: 'Please wait 1 minute before requesting another OTP',
         });
       }
 
@@ -322,7 +322,7 @@ router.post('/forgot-password',
         <p>Your OTP for password reset is: <strong>${otp}</strong></p>
         <p>This OTP will expire in 10 minutes.</p>
         <p>If you didn't request this password reset, please ignore this email.</p>
-        `
+        `,
       );
 
       if (!emailSent) {
@@ -330,13 +330,13 @@ router.post('/forgot-password',
       }
 
       res.json({
-        message: 'OTP sent successfully to your email'
+        message: 'OTP sent successfully to your email',
       });
     } catch (error) {
       console.error('Password reset error:', error);
       res.status(500).json({ message: error.message || 'Error sending OTP' });
     }
-  }
+  },
 );
 
 // Verify OTP
@@ -348,7 +348,7 @@ router.post('/verify-otp',
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          message: 'Invalid input'
+          message: 'Invalid input',
         });
       }
 
@@ -356,7 +356,7 @@ router.post('/verify-otp',
       const user = await userModel.findOne({ 
         email: email.toLowerCase(),
         resetOTP: otp,
-        otpExpiry: { $gt: Date.now() }
+        otpExpiry: { $gt: Date.now() },
       });
 
       if (!user) {
@@ -368,7 +368,7 @@ router.post('/verify-otp',
       console.error('OTP verification error:', error);
       res.status(500).json({ message: 'Error verifying OTP' });
     }
-  }
+  },
 );
 
 // Reset Password with OTP
@@ -381,7 +381,7 @@ router.post('/reset-password',
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          message: 'Invalid input'
+          message: 'Invalid input',
         });
       }
 
@@ -389,7 +389,7 @@ router.post('/reset-password',
       const user = await userModel.findOne({ 
         email: email.toLowerCase(),
         resetOTP: otp,
-        otpExpiry: { $gt: Date.now() }
+        otpExpiry: { $gt: Date.now() },
       });
 
       if (!user) {
@@ -409,7 +409,7 @@ router.post('/reset-password',
       console.error('Password reset error:', error);
       res.status(500).json({ message: 'Error resetting password' });
     }
-  }
+  },
 );
 
 // Change Password (requires authentication)
@@ -436,7 +436,7 @@ router.post('/change-password',
     } catch (error) {
       res.status(500).json({ message: 'Error changing password', error: error.message });
     }
-  }
+  },
 );
 
 // Update user preferences
@@ -471,14 +471,14 @@ router.patch('/preferences',
         role: user.role,
         dietaryPreferences: user.dietaryPreferences,
         allergies: user.allergies,
-        location: user.location
+        location: user.location,
       };
 
       res.json({ message: 'Preferences updated successfully', user: userResponse });
     } catch (error) {
       res.status(500).json({ message: 'Error updating preferences', error: error.message });
     }
-  }
+  },
 );
 
-module.exports = router
+module.exports = router;

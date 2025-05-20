@@ -18,14 +18,14 @@ const ErrorCodes = {
   RATE_LIMIT: 'RATE_LIMIT',
   INTERNAL_ERROR: 'INTERNAL_SERVER_ERROR',
   BAD_REQUEST: 'BAD_REQUEST',
-  INVALID_TOKEN: 'INVALID_TOKEN'
+  INVALID_TOKEN: 'INVALID_TOKEN',
 };
 
 const formatValidationErrors = (errors) => {
   return Object.values(errors).map(err => ({
     field: err.path,
     message: err.message,
-    value: err.value
+    value: err.value,
   }));
 };
 
@@ -34,7 +34,7 @@ const errorResponse = (err, includeStack = false) => {
     status: err.status || 'error',
     errorCode: err.errorCode || ErrorCodes.INTERNAL_ERROR,
     message: err.message || 'An unexpected error occurred',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   if (err.details) {
@@ -56,5 +56,5 @@ module.exports = {
   AppError,
   ErrorCodes,
   errorResponse,
-  formatValidationErrors
+  formatValidationErrors,
 };

@@ -6,7 +6,7 @@ module.exports = {
   corsOrigin: process.env.FRONTEND_URL,
   uploadLimits: {
     fileSize: 5 * 1024 * 1024, // 5MB
-    files: 3
+    files: 3,
   },
-  logLevel: 'error'
+  logLevel: 'error',
 };

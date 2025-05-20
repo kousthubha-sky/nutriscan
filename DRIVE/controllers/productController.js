@@ -8,7 +8,7 @@ const healthRatingCache = require('../utils/cacheService').HealthRatingCache;
 const api = axios.create({
   timeout: 10000, // 10 second timeout
   retry: 2,
-  retryDelay: 1000
+  retryDelay: 1000,
 });
 
 // Add a retry interceptor
@@ -36,14 +36,14 @@ function escapeRegExp(string) {
 exports.searchProducts = async (req, res) => {
   const limit = 10;
   try {
-    const { q:query, page = 1, filters = {}, sortBy = 'relevance' } = req.query;
+    const { q: query, page = 1, filters = {}, sortBy = 'relevance' } = req.query;
     console.log('Search request:', { query, page, sortBy, filters });
 
     // Relaxed validation - allow minimum 1 character
     if (!query || typeof query !== 'string' || query.trim().length === 0)  {
       return res.status(400).json({
         success: false,
-        error: 'Please enter a valid search term'
+        error: 'Please enter a valid search term',
       });
     }
 
@@ -56,8 +56,8 @@ exports.searchProducts = async (req, res) => {
         { name: new RegExp(sanitizedQuery, 'i') },
         { brand: new RegExp(sanitizedQuery, 'i') },
         { category: new RegExp(sanitizedQuery, 'i') },
-        { barcode: new RegExp(sanitizedQuery, 'i') }
-      ]
+        { barcode: new RegExp(sanitizedQuery, 'i') },
+      ],
     };
 
     // Apply filters if provided
@@ -75,7 +75,7 @@ exports.searchProducts = async (req, res) => {
       // Handle filter chips (dietary preferences)
       if (filters.dietary && Array.isArray(filters.dietary)) {
         const dietaryFilters = filters.dietary.map(pref => {
-          switch(pref) {
+          switch (pref) {
             case 'gluten-free':
               return { ingredients: { $not: /wheat|gluten/i } };
             case 'no preservatives':
@@ -85,8 +85,8 @@ exports.searchProducts = async (req, res) => {
             case 'organic':
               return { $or: [
                 { labels: /organic/i },
-                { name: /organic/i }
-              ]};
+                { name: /organic/i },
+              ] };
             case 'low sugar':
               return { 'nutriments.sugars_100g': { $lt: 5 } };
             case 'high protein':
@@ -159,7 +159,7 @@ exports.searchProducts = async (req, res) => {
         .skip(skip)
         .limit(limit)
         .lean(),
-      Product.countDocuments(searchQuery)
+      Product.countDocuments(searchQuery),
     ]);
 
     // Update search count for retrieved products
@@ -167,7 +167,7 @@ exports.searchProducts = async (req, res) => {
       const productIds = localResults.map(p => p._id);
       await Product.updateMany(
         { _id: { $in: productIds } },
-        { $inc: { searchCount: 1 } }
+        { $inc: { searchCount: 1 } },
       );
     }
 
@@ -180,8 +180,8 @@ exports.searchProducts = async (req, res) => {
             search_terms: sanitizedQuery,
             page_size: limit - localResults.length,
             page: 1,
-            json: 1
-          }
+            json: 1,
+          },
         });
 
         apiProducts = (apiResponse.data.products || [])
@@ -190,7 +190,7 @@ exports.searchProducts = async (req, res) => {
             const healthAnalysis = calculateHealthRating({
               ingredients: p.ingredients_text || '',
               nutriments: p.nutriments,
-              nutriscore_grade: p.nutriscore_grade
+              nutriscore_grade: p.nutriscore_grade,
             });
 
             return {
@@ -212,7 +212,7 @@ exports.searchProducts = async (req, res) => {
                 saturated_fat_100g: p.nutriments?.saturated_fat_100g,
                 proteins_100g: p.nutriments?.proteins_100g,
                 fiber_100g: p.nutriments?.fiber_100g,
-                salt_100g: p.nutriments?.salt_100g
+                salt_100g: p.nutriments?.salt_100g,
               },
               nutriscore_grade: p.nutriscore_grade,
               healthRating: healthAnalysis.score,
@@ -220,7 +220,7 @@ exports.searchProducts = async (req, res) => {
               healthRatingLabel: healthAnalysis.rating,
               healthRatingColor: healthAnalysis.color,
               source: 'api',
-              lastFetched: new Date()
+              lastFetched: new Date(),
             };
           });
 
@@ -230,8 +230,8 @@ exports.searchProducts = async (req, res) => {
             updateOne: {
               filter: { barcode: product.barcode },
               update: { $set: { ...product } },
-              upsert: true
-            }
+              upsert: true,
+            },
           }));
 
           try {
@@ -275,8 +275,8 @@ exports.searchProducts = async (req, res) => {
       total: totalCount,
       sources: {
         local: localResults.length,
-        api: apiProducts.length
-      }
+        api: apiProducts.length,
+      },
     });
 
   } catch (error) {
@@ -284,7 +284,7 @@ exports.searchProducts = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Search failed',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -295,22 +295,22 @@ exports.getFeaturedProducts = async (req, res) => {
     const results = await Product.find({
       $or: [
         { category: { $in: categories.map(cat => new RegExp(cat, 'i')) } },
-        { healthRating: { $gte: 3.0 } }
-      ]
+        { healthRating: { $gte: 3.0 } },
+      ],
     })
-    .sort({ healthRating: -1, searchCount: -1 })
-    .limit(12)
-    .lean();
+      .sort({ healthRating: -1, searchCount: -1 })
+      .limit(12)
+      .lean();
 
     res.json({
       success: true,
-      products: results
+      products: results,
     });
   } catch (error) {
     console.error('Failed to fetch featured products:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch featured products'
+      error: 'Failed to fetch featured products',
     });
   }
 };
@@ -323,7 +323,7 @@ exports.getHealthierAlternatives = async (req, res) => {
     if (!productData) {
       return res.status(400).json({
         success: false,
-        error: 'Missing product data'
+        error: 'Missing product data',
       });
     }
 
@@ -335,7 +335,7 @@ exports.getHealthierAlternatives = async (req, res) => {
       return res.json({
         success: true,
         alternatives: cachedAlternatives,
-        fromCache: true
+        fromCache: true,
       });
     }
 
@@ -344,7 +344,7 @@ exports.getHealthierAlternatives = async (req, res) => {
     
     // Build base query
     const mainQuery = {
-      healthRating: { $gt: Math.max(minHealthRating, productData.healthRating || 3.0) }
+      healthRating: { $gt: Math.max(minHealthRating, productData.healthRating || 3.0) },
     };
 
     // Add ID exclusion if provided
@@ -388,7 +388,7 @@ exports.getHealthierAlternatives = async (req, res) => {
         mainQuery.$or = [
           // Match either by category or by nutritional profile
           { category: mainQuery.category },
-          nutrientRanges
+          nutrientRanges,
         ];
         delete mainQuery.category; // Remove from main query since it's in $or
       }
@@ -401,7 +401,7 @@ exports.getHealthierAlternatives = async (req, res) => {
       .sort({ 
         healthRating: -1,
         'nutriments.proteins_100g': -1,
-        'nutriments.fiber_100g': -1
+        'nutriments.fiber_100g': -1,
       })
       .limit(6)
       .lean();
@@ -413,7 +413,7 @@ exports.getHealthierAlternatives = async (req, res) => {
       // Try a broader search focusing only on health rating
       const broadQuery = {
         _id: { $ne: productData._id },
-        healthRating: { $gt: minHealthRating }
+        healthRating: { $gt: minHealthRating },
       };
 
       const broadAlternatives = await Product.find(broadQuery)
@@ -430,12 +430,12 @@ exports.getHealthierAlternatives = async (req, res) => {
           
           return {
             ...alt._doc || alt,
-            tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
-                 alt.healthRating >= 4.0 ? "Healthy Choice" :
-                 "Better Choice",
+            tag: alt.healthRating >= 4.5 ? 'Healthiest Choice' :
+              alt.healthRating >= 4.0 ? 'Healthy Choice' :
+                'Better Choice',
             relevanceScore,
             nutritionalImprovement,
-            description: generateAlternativeDescription(alt, nutritionalImprovement)
+            description: generateAlternativeDescription(alt, nutritionalImprovement),
           };
         });
 
@@ -445,7 +445,7 @@ exports.getHealthierAlternatives = async (req, res) => {
         return res.json({
           success: true,
           alternatives: results,
-          fromCache: false
+          fromCache: false,
         });
       }
     }
@@ -457,12 +457,12 @@ exports.getHealthierAlternatives = async (req, res) => {
       
       return {
         ...alt._doc || alt,
-        tag: alt.healthRating >= 4.5 ? "Healthiest Choice" :
-             alt.healthRating >= 4.0 ? "Healthy Choice" :
-             "Better Choice",
+        tag: alt.healthRating >= 4.5 ? 'Healthiest Choice' :
+          alt.healthRating >= 4.0 ? 'Healthy Choice' :
+            'Better Choice',
         relevanceScore,
         nutritionalImprovement,
-        description: generateAlternativeDescription(alt, nutritionalImprovement)
+        description: generateAlternativeDescription(alt, nutritionalImprovement),
       };
     });
 
@@ -480,14 +480,14 @@ exports.getHealthierAlternatives = async (req, res) => {
     res.json({
       success: true,
       alternatives: results,
-      fromCache: false
+      fromCache: false,
     });
   } catch (error) {
     console.error('Failed to fetch healthier alternatives:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch healthier alternatives',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -501,7 +501,7 @@ function calculateNutritionalImprovement(alternative, originalProduct) {
     proteins_100g: { weight: 0.3, preferHigher: true },
     fiber_100g: { weight: 0.3, preferHigher: true },
     sugars_100g: { weight: 0.2, preferHigher: false },
-    fat_100g: { weight: 0.2, preferHigher: false }
+    fat_100g: { weight: 0.2, preferHigher: false },
   };
 
   Object.entries(nutrients).forEach(([nutrient, { weight, preferHigher }]) => {
@@ -606,7 +606,7 @@ const INDIAN_BRANDS = [
   'amul', 'britannia', 'parle', 'haldirams', 'mtr', 'dabur', 
   'patanjali', 'mother dairy', 'tata', 'itc', 'nestle india', 
   'himalaya', 'fortune', 'bikaji', 'vadilal', 'everest', 
-  'lijjat', 'bikano', 'aashirvaad', 'godrej'
+  'lijjat', 'bikano', 'aashirvaad', 'godrej',
 ];
 
 exports.getIndianProducts = async (req, res) => {
@@ -617,8 +617,8 @@ exports.getIndianProducts = async (req, res) => {
     const query = {
       $or: [
         { brand: { $in: INDIAN_BRANDS.map(brand => new RegExp(brand, 'i')) } },
-        { category: { $in: ['indian', 'masala', 'curry', 'spices'].map(cat => new RegExp(cat, 'i')) } }
-      ]
+        { category: { $in: ['indian', 'masala', 'curry', 'spices'].map(cat => new RegExp(cat, 'i')) } },
+      ],
     };
 
     const [products, total] = await Promise.all([
@@ -627,7 +627,7 @@ exports.getIndianProducts = async (req, res) => {
         .skip(skip)
         .limit(parseInt(limit))
         .lean(),
-      Product.countDocuments(query)
+      Product.countDocuments(query),
     ]);
 
     res.json({
@@ -635,13 +635,13 @@ exports.getIndianProducts = async (req, res) => {
       products,
       currentPage: parseInt(page),
       totalPages: Math.ceil(total / parseInt(limit)),
-      total
+      total,
     });
   } catch (error) {
     console.error('Failed to fetch Indian products:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch Indian products'
+      error: 'Failed to fetch Indian products',
     });
   }
 };
@@ -660,20 +660,20 @@ async function updateHealthRatings() {
           $or: [
             { healthRating: { $exists: false } },
             { healthRating: null },
-            { healthRating: 3.0 }
+            { healthRating: 3.0 },
           ],
-          lastFetched: { $lt: new Date(Date.now() - priorityUpdateInterval) }
+          lastFetched: { $lt: new Date(Date.now() - priorityUpdateInterval) },
         },
         {
           $and: [
             { healthRating: { $exists: true } },
-            { healthAnalysis: { $exists: false } }
-          ]
-        }
-      ]
+            { healthAnalysis: { $exists: false } },
+          ],
+        },
+      ],
     })
-    .sort({ lastFetched: 1 })
-    .limit(batchSize);
+      .sort({ lastFetched: 1 })
+      .limit(batchSize);
 
     let updatedCount = 0;
     let errorCount = 0;
@@ -681,7 +681,7 @@ async function updateHealthRatings() {
     const updateResults = {
       success: [],
       failures: [],
-      cacheStats: null
+      cacheStats: null,
     };
 
     for (const product of productsToUpdate) {
@@ -703,7 +703,7 @@ async function updateHealthRatings() {
             nutriments: product.nutriments || {},
             nutriscore_grade: product.nutriscore_grade,
             name: product.name,
-            category: product.category
+            category: product.category,
           });
 
           // Cache the result
@@ -731,9 +731,9 @@ async function updateHealthRatings() {
               lastFetched: new Date(),
               ratingChanged: ratingChanged,
               lastSignificantUpdate: ratingChanged ? new Date() : product.lastSignificantUpdate,
-              cacheHit: usedCache
-            }
-          }
+              cacheHit: usedCache,
+            },
+          },
         );
 
         updateResults.success.push({
@@ -741,14 +741,14 @@ async function updateHealthRatings() {
           oldScore: product.healthRating,
           newScore: healthAnalysis.score,
           changed: ratingChanged,
-          fromCache: usedCache
+          fromCache: usedCache,
         });
         updatedCount++;
       } catch (error) {
         console.error(`Error updating health rating for product ${product._id}:`, error);
         updateResults.failures.push({
           id: product._id,
-          error: error.message
+          error: error.message,
         });
         errorCount++;
       }
@@ -765,13 +765,13 @@ async function updateHealthRatings() {
       updatedCount,
       errorCount,
       cacheHits,
-      results: updateResults
+      results: updateResults,
     };
   } catch (error) {
     console.error('Error in health rating update process:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }

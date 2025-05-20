@@ -7,7 +7,7 @@ function validateEnvironment() {
     '.env.production',
     'webpack.config.js',
     '.babelrc',
-    '.eslintrc.js'
+    '.eslintrc.js',
   ];
 
   const requiredDirs = [
@@ -16,7 +16,7 @@ function validateEnvironment() {
     'models',
     'routes',
     'middleware',
-    'utils'
+    'utils',
   ];
 
   console.log('Validating environment setup...\n');
@@ -43,13 +43,13 @@ function validateEnvironment() {
   // Load and validate environment variables
   try {
     require('dotenv').config({
-      path: `.env.${process.env.NODE_ENV || 'development'}`
+      path: `.env.${process.env.NODE_ENV || 'development'}`,
     });
     
     const requiredEnvVars = [
       'MONGODB_URI',
       'JWT_SECRET',
-      'PORT'
+      'PORT',
     ];
 
     console.log('\nChecking environment variables:');

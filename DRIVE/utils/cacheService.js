@@ -1,5 +1,5 @@
 const CACHE_CONFIG = {
-  healthRating: 24 * 60 * 60 * 1000 // 24 hours
+  healthRating: 24 * 60 * 60 * 1000, // 24 hours
 };
 
 class CacheService {
@@ -47,7 +47,7 @@ class CacheService {
     this.cache.set(key, {
       data,
       expiry,
-      lastAccessed: Date.now()
+      lastAccessed: Date.now(),
     });
 
     if (this.timeouts.has(key)) {
@@ -80,7 +80,7 @@ class CacheService {
       activeEntries: 0,
       expiredEntries: 0,
       averageAge: 0,
-      memoryUsage: process.memoryUsage().heapUsed
+      memoryUsage: process.memoryUsage().heapUsed,
     };
 
     let totalAge = 0;
@@ -149,7 +149,7 @@ class HealthRatingCache {
       category: product.category,
       nutriments: product.nutriments,
       ingredients: product.ingredients,
-      nutriscore_grade: product.nutriscore_grade
+      nutriscore_grade: product.nutriscore_grade,
     });
   }
 

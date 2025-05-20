@@ -3,177 +3,177 @@ const INGREDIENT_ANALYSIS = {
     ingredients: [
       'E102', 'E104', 'E110', 'E122', 'E124', 'E129',
       'tartrazine', 'quinoline yellow', 'sunset yellow',
-      'carmoisine', 'ponceau', 'allura red'
+      'carmoisine', 'ponceau', 'allura red',
     ],
     weight: -0.5,
-    reason: 'Artificial colors may cause hyperactivity in children'
+    reason: 'Artificial colors may cause hyperactivity in children',
   },
   artificial_sweeteners: {
     ingredients: [
       'aspartame', 'sucralose', 'acesulfame', 'saccharin',
-      'E951', 'E950', 'E952', 'E954', 'E955', 'E962'
+      'E951', 'E950', 'E952', 'E954', 'E955', 'E962',
     ],
     weight: -0.3,
-    reason: 'Artificial sweeteners may affect gut bacteria and metabolism'
+    reason: 'Artificial sweeteners may affect gut bacteria and metabolism',
   },
   preservatives: {
     ingredients: [
       'E211', 'E212', 'E220', 'sodium benzoate', 'potassium sorbate',
-      'sulfur dioxide', 'nitrite', 'nitrate', 'BHA', 'BHT'
+      'sulfur dioxide', 'nitrite', 'nitrate', 'BHA', 'BHT',
     ],
     weight: -0.4,
-    reason: 'Some preservatives may have negative health effects'
+    reason: 'Some preservatives may have negative health effects',
   },
   healthy_nutrients: {
     ingredients: [
       'whole grain', 'quinoa', 'chia', 'flax', 'oat', 
-      'spinach', 'kale', 'broccoli', 'almonds', 'walnuts'
+      'spinach', 'kale', 'broccoli', 'almonds', 'walnuts',
     ],
     weight: 0.5,
-    reason: 'Contains beneficial nutrients and fiber'
+    reason: 'Contains beneficial nutrients and fiber',
   },
   processed_grains: {
     ingredients: [
       'refined flour', 'maida', 'corn flour', 'rice flour', 'wheat flour',
-      'enriched flour', 'bleached flour', 'modified starch'
+      'enriched flour', 'bleached flour', 'modified starch',
     ],
     weight: -0.3,
-    reason: 'Refined grains have lower nutritional value compared to whole grains'
+    reason: 'Refined grains have lower nutritional value compared to whole grains',
   },
   snack_additives: {
     ingredients: [
       'msg', 'monosodium glutamate', 'maltodextrin', 'hydrolyzed', 
       'flavor enhancer', 'artificial flavor', 'natural flavor',
-      'E621', 'E631', 'E627'
+      'E621', 'E631', 'E627',
     ],
     weight: -0.4,
-    reason: 'Contains flavor enhancers and additives common in processed snacks'
+    reason: 'Contains flavor enhancers and additives common in processed snacks',
   },
   processed_oils: {
     ingredients: [
       'palm oil', 'hydrogenated', 'partially hydrogenated', 
-      'vegetable oil', 'interesterified', 'shortening'
+      'vegetable oil', 'interesterified', 'shortening',
     ],
     weight: -0.4,
-    reason: 'Contains processed oils that may have trans fats or inflammatory properties'
+    reason: 'Contains processed oils that may have trans fats or inflammatory properties',
   },
   healthy_grains: {
     ingredients: [
       'whole wheat', 'whole grain', 'multigrain', 'ragi', 'millet',
-      'quinoa', 'oats', 'barley', 'brown rice'
+      'quinoa', 'oats', 'barley', 'brown rice',
     ],
     weight: 0.4,
-    reason: 'Contains whole grains with higher nutritional value'
+    reason: 'Contains whole grains with higher nutritional value',
   },
   spices_herbs: {
     ingredients: [
       'turmeric', 'ginger', 'garlic', 'black pepper', 'cumin',
-      'coriander', 'cardamom', 'cinnamon', 'basil'
+      'coriander', 'cardamom', 'cinnamon', 'basil',
     ],
     weight: 0.3,
-    reason: 'Contains natural spices with potential health benefits'
+    reason: 'Contains natural spices with potential health benefits',
   },
   healthy_proteins: {
     ingredients: [
       'whey protein', 'soy protein', 'pea protein', 'egg white',
-      'milk protein', 'casein', 'protein isolate', 'quinoa protein'
+      'milk protein', 'casein', 'protein isolate', 'quinoa protein',
     ],
     weight: 0.4,
-    reason: 'Contains quality protein sources'
+    reason: 'Contains quality protein sources',
   },
   healthy_fats: {
     ingredients: [
       'olive oil', 'avocado oil', 'coconut oil', 'peanut', 'almond',
-      'cashew', 'sunflower seeds', 'pumpkin seeds', 'chia seeds'
+      'cashew', 'sunflower seeds', 'pumpkin seeds', 'chia seeds',
     ],
     weight: 0.3,
-    reason: 'Contains healthy fats and omega fatty acids'
+    reason: 'Contains healthy fats and omega fatty acids',
   },
   fortified_nutrients: {
     ingredients: [
       'vitamin d', 'vitamin b12', 'folate', 'iron', 'calcium',
-      'zinc', 'magnesium', 'potassium', 'dha', 'epa'
+      'zinc', 'magnesium', 'potassium', 'dha', 'epa',
     ],
     weight: 0.3,
-    reason: 'Fortified with essential nutrients'
+    reason: 'Fortified with essential nutrients',
   },
   probiotics: {
     ingredients: [
       'lactobacillus', 'bifidobacterium', 'probiotics', 'live cultures',
-      'fermented', 'cultured', 'yogurt cultures'
+      'fermented', 'cultured', 'yogurt cultures',
     ],
     weight: 0.3,
-    reason: 'Contains beneficial probiotics'
+    reason: 'Contains beneficial probiotics',
   },
   dairy_positive: {
     ingredients: [
       'milk', 'whole milk', 'skimmed milk', 'low fat milk', 'toned milk',
       'a2 milk', 'organic milk', 'pasteurized milk', 'homogenized milk',
-      'fresh milk', 'buffalo milk', 'cow milk', 'goat milk'
+      'fresh milk', 'buffalo milk', 'cow milk', 'goat milk',
     ],
     weight: 0.5,
-    reason: 'Contains natural dairy milk with essential nutrients'
+    reason: 'Contains natural dairy milk with essential nutrients',
   },
   dairy_additives: {
     ingredients: [
       'milk solids', 'milk powder', 'reconstituted milk',
-      'ultra filtered', 'milk protein concentrate'
+      'ultra filtered', 'milk protein concentrate',
     ],
     weight: -0.2,
-    reason: 'Contains processed dairy ingredients'
+    reason: 'Contains processed dairy ingredients',
   },
   dairy_enrichment: {
     ingredients: [
       'vitamin d3', 'vitamin d', 'calcium fortified', 'omega 3',
-      'dha', 'vitamin a', 'vitamin b12', 'folate'
+      'dha', 'vitamin a', 'vitamin b12', 'folate',
     ],
     weight: 0.3,
-    reason: 'Fortified with essential nutrients'
+    reason: 'Fortified with essential nutrients',
   },  whole_grains: {
     ingredients: [
       'rolled oats', 'whole oats', 'steel cut oats', 'quick oats', 'instant oats',
-      'whole grain', 'whole wheat', 'brown rice', 'quinoa', 'buckwheat'
+      'whole grain', 'whole wheat', 'brown rice', 'quinoa', 'buckwheat',
     ],
     weight: 2.0,  // Highest positive weight for whole grains
-    reason: 'Whole grains provide excellent nutritional value with fiber, protein, and minerals'
+    reason: 'Whole grains provide excellent nutritional value with fiber, protein, and minerals',
   },  single_ingredient_wholefood: {
     ingredients: [
       'oats', 'rolled oats', 'steel cut oats',  // Adding oats specifically
       'almonds', 'cashews', 'peanuts',
-      'brown rice', 'quinoa', 'chia seeds'
+      'brown rice', 'quinoa', 'chia seeds',
     ],
     weight: 1.5,
-    reason: 'Single-ingredient whole foods are minimally processed and highly nutritious'
-  }
+    reason: 'Single-ingredient whole foods are minimally processed and highly nutritious',
+  },
 };
 
 const PRODUCT_CATEGORIES = {
   beverages: {
     keywords: ['drink', 'beverage', 'juice', 'smoothie', 'shake', 'tea', 'coffee', 'water'],
     nutritionalFocus: ['sugar', 'caffeine', 'artificial_sweeteners'],
-    scoreAdjustment: 0.9 // Slightly stricter scoring for beverages
+    scoreAdjustment: 0.9, // Slightly stricter scoring for beverages
   },
   spreads: {
     keywords: ['butter', 'spread', 'paste', 'jam', 'margarine', 'nutella'],
     nutritionalFocus: ['fats', 'sugar', 'protein'],
-    scoreAdjustment: 1.0
+    scoreAdjustment: 1.0,
   },
   dairy: {
     keywords: ['milk', 'yogurt', 'cheese', 'curd', 'cream', 'dairy', 'dahi', 'buttermilk', 'lassi'],
     nutritionalFocus: ['protein', 'calcium', 'vitamin_d', 'fats'],
-    scoreAdjustment: 1.2  // Increased from 1.1 to better reflect dairy nutritional value
+    scoreAdjustment: 1.2,  // Increased from 1.1 to better reflect dairy nutritional value
   },
   protein_supplements: {
     keywords: ['protein', 'supplement', 'whey', 'mass gainer', 'protein powder'],
     nutritionalFocus: ['protein', 'vitamins', 'minerals'],
-    scoreAdjustment: 1.2
+    scoreAdjustment: 1.2,
   },
   breakfast_cereals: {
     keywords: ['cereal', 'muesli', 'granola', 'oats', 'porridge'],
     nutritionalFocus: ['fiber', 'sugar', 'whole_grains'],
     scoreAdjustment: 1.2,  // Increased from 1.0 to better reflect whole grain value
-    wholeGrainBonus: 0.5   // Additional bonus for whole grain products
-  }
+    wholeGrainBonus: 0.5,   // Additional bonus for whole grain products
+  },
 };
 
 const NUTRITIONAL_GUIDELINES = {
@@ -181,68 +181,68 @@ const NUTRITIONAL_GUIDELINES = {
     low: 5,
     high: 20,
     weight: 0.4,
-    isPositive: true
+    isPositive: true,
   },
   fiber_100g: {
     low: 3,
     high: 6,
     weight: 0.4,
-    isPositive: true
+    isPositive: true,
   },
   sugars_100g: {
     low: 5,
     high: 22.5,
     weight: -0.5,
-    isPositive: false
+    isPositive: false,
   },
   saturated_fat_100g: {
     low: 1.5,
     high: 5,
     weight: -0.4,
-    isPositive: false
+    isPositive: false,
   },
   salt_100g: {
     low: 0.3,
     high: 1.5,
     weight: -0.3,
-    isPositive: false
+    isPositive: false,
   },
   trans_fat_100g: {
     low: 0.1,
     high: 0.5,
     weight: -0.6,
-    isPositive: false
+    isPositive: false,
   },
   sodium_100g: {
     low: 120,
     high: 500,
     weight: -0.4,
-    isPositive: false
+    isPositive: false,
   },
   calcium_100g: {
     low: 100,
     high: 200,
     weight: 0.5,
-    isPositive: true
+    isPositive: true,
   },
   vitamin_d_100g: {
     low: 0.75,
     high: 1.5,
     weight: 0.4,
-    isPositive: true
+    isPositive: true,
   },
   potassium_100g: {
     low: 300,
     high: 600,
     weight: 0.3,
-    isPositive: true
+    isPositive: true,
   },
   calories_100g: {
     low: 50,
     high: 300,
     weight: -0.3,
-    isPositive: false
-  }
+    isPositive: false,
+  },
 };
 
 function analyzeNutrients(nutriments) {
@@ -295,7 +295,7 @@ function analyzeIngredients(ingredientsList) {
 
 const SNACK_CATEGORIES = [
   'snacks', 'chips', 'crisps', 'crackers', 'cookies',
-  'biscuits', 'namkeen', 'kurkure', 'extruded snacks'
+  'biscuits', 'namkeen', 'kurkure', 'extruded snacks',
 ];
 
 function detectProductCategory(product) {
@@ -331,7 +331,7 @@ const calculateHealthScore = (product) => {
       score = 5.0; // Highest score for pure oats products
       adjustments.push({
         reason: 'Single-ingredient whole grain product with excellent nutritional profile',
-        impact: 2.0
+        impact: 2.0,
       });
       return { score, adjustments };
     }
@@ -366,7 +366,7 @@ function calculateHealthRating(product) {
           rating: 'Excellent Choice',
           color: 'green',
           pros: ['Pure whole grain oats with excellent nutritional value'],
-          cons: []
+          cons: [],
         };
       }
     }
@@ -388,7 +388,7 @@ function calculateHealthRating(product) {
       if (productCategory) {
         const focusNutrients = productCategory.nutritionalFocus;
         const relevantAnalysis = nutrientAnalysis.filter(a => 
-          focusNutrients.some(nutrient => a.toLowerCase().includes(nutrient))
+          focusNutrients.some(nutrient => a.toLowerCase().includes(nutrient)),
         );
         analysis = [...analysis, ...relevantAnalysis];
       } else {
@@ -430,13 +430,13 @@ function calculateHealthRating(product) {
       score: finalScore,
       analysis: analysis,
       rating: finalScore >= 4 ? 'Healthy Choice' :
-              finalScore >= 3 ? 'Moderately Healthy' :
-              finalScore >= 2 ? 'Less Healthy' : 'Not Recommended',
+        finalScore >= 3 ? 'Moderately Healthy' :
+          finalScore >= 2 ? 'Less Healthy' : 'Not Recommended',
       color: finalScore >= 4 ? 'green' :
-             finalScore >= 3 ? 'yellow' :
-             finalScore >= 2 ? 'orange' : 'red',
+        finalScore >= 3 ? 'yellow' :
+          finalScore >= 2 ? 'orange' : 'red',
       pros: healthAnalysis.filter(a => a.type === 'pro').map(a => a.text),
-      cons: healthAnalysis.filter(a => a.type === 'con').map(a => a.text)
+      cons: healthAnalysis.filter(a => a.type === 'con').map(a => a.text),
     };
   } catch (error) {
     console.error('Error calculating health rating:', error);
@@ -444,7 +444,7 @@ function calculateHealthRating(product) {
       score: 3,
       analysis: ['Error analyzing product'],
       rating: 'Analysis Failed',
-      color: 'gray'
+      color: 'gray',
     };
   }
 }

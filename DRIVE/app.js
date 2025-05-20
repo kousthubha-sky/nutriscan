@@ -1,10 +1,9 @@
-const express = require('express')
-const cors = require("cors");
+const express = require('express');
+const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 const cookieParser = require('cookie-parser');
-const { body, validationResult } = require('express-validator');
-const fs = require('fs').promises;
+const fs = require('fs');
 const helmet = require('helmet');
 const { xssPreventionMiddleware, globalRateLimiter, apiRateLimiter } = require('./middleware/security');
 
@@ -18,31 +17,34 @@ app.use('/api', apiRateLimiter);
 
 // Set security headers
 app.use((req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    next();
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
 });
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads', 'products');
-(async () => {
+const createUploadsDir = async () => {
   try {
-    await fs.access(uploadsDir);
+    await fs.promises.access(uploadsDir);
   } catch {
-    await fs.mkdir(uploadsDir, { recursive: true });
+    await fs.promises.mkdir(uploadsDir, { recursive: true });
     console.log('Created uploads directory');
   }
-})().catch(err => {
+};
+
+createUploadsDir().catch(err => {
   console.error('Failed to create uploads directory:', err);
-  process.exit(1);
+  // Instead of process.exit, let the error handler deal with it
+  throw new Error('Failed to create required directories: ' + err.message);
 });
 
 // Configure CORS to allow all origins
 app.use(cors({
   origin: true, // Allow all origins
-  credentials: true
+  credentials: true,
 }));
 
 // Database connection
@@ -62,13 +64,13 @@ app.use((err, req, res, next) => {
   if (err.name === 'MulterError') {
     return res.status(400).json({
       success: false,
-      message: err.message
+      message: err.message,
     });
   }
   if (err) {
     return res.status(500).json({
       success: false,
-      message: 'Something went wrong with file upload'
+      message: 'Something went wrong with file upload',
     });
   }
   next();
@@ -98,7 +100,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Listen on all network interfaces
 
 const server = app.listen(PORT, HOST, () => {
-    console.log(`Server is running on http://${HOST}:${PORT}`);
+  console.log(`Server is running on http://${HOST}:${PORT}`);
 });
 
 // Handle graceful shutdown

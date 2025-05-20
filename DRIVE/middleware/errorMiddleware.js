@@ -12,7 +12,7 @@ const handleMongooseValidationError = (err) => {
   const validationErrors = Object.values(err.errors).map(error => ({
     field: error.path,
     message: error.message,
-    value: error.value
+    value: error.value,
   }));
   
   return new AppError('Validation failed', 400, ErrorCodes.VALIDATION_ERROR, validationErrors);
@@ -29,7 +29,7 @@ const handleDuplicateKeyError = (err) => {
   return new AppError(
     `Duplicate value for field: ${field}. This ${field} already exists.`,
     400,
-    ErrorCodes.CONFLICT
+    ErrorCodes.CONFLICT,
   );
 };
 
@@ -48,11 +48,11 @@ const globalErrorHandler = (err, req, res, next) => {
     name: err.name,
     message: err.message,
     stack: err.stack,
-    errorCode: err.errorCode
+    errorCode: err.errorCode,
   });
 
   // Default values
-  let error = {...err};
+  let error = { ...err };
   error.message = err.message;
   error.errorCode = err.errorCode;
 
@@ -80,7 +80,7 @@ const globalErrorHandler = (err, req, res, next) => {
     console.error('Full error details:', {
       error,
       originalError: err,
-      stack: err.stack
+      stack: err.stack,
     });
   }
 
@@ -89,28 +89,45 @@ const globalErrorHandler = (err, req, res, next) => {
 };
 
 // Handle uncaught exceptions and unhandled rejections
-const setupErrorHandlers = (app) => {
-  process.on('uncaughtException', (err) => {
+const setupErrorHandlers = (app) => {  process.on('uncaughtException', (err) => {
     console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
     console.error(err.name, err.message, err.stack);
-    process.exit(1);
+    // Allow the process to finish current requests
+    if (app && app.server) {
+      app.server.close(() => {
+        throw err;
+      });
+    } else {
+      throw err;
+    }
   });
 
   process.on('unhandledRejection', (err) => {
     console.error('UNHANDLED REJECTION! 💥 Shutting down...');
     console.error(err.name, err.message, err.stack);
-    process.exit(1);
+    // Allow the process to finish current requests
+    if (app && app.server) {
+      app.server.close(() => {
+        throw err;
+      });
+    } else {
+      throw err;
+    }
   });
 
   // Handle SIGTERM
   process.on('SIGTERM', () => {
     console.log('👋 SIGTERM RECEIVED. Shutting down gracefully');
-    process.exit(1);
+    if (app && app.server) {
+      app.server.close(() => {
+        console.log('Server closed gracefully');
+      });
+    }
   });
 };
 
 module.exports = {
   catchAsync,
   globalErrorHandler,
-  setupErrorHandlers
+  setupErrorHandlers,
 };
