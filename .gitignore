@@ -1,2 +1,44 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+dist/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+
+# Deployment
+deployment_key
+deployment_key.pub
+
+# Previous ignores
 frontendcusdes
 gta.pdf
+
+# Uploads
+DRIVE/uploads/products/*
+!DRIVE/uploads/products/.gitkeep
+
+# Temp files
+DRIVE/temp/*
+!DRIVE/temp/.gitkeep
