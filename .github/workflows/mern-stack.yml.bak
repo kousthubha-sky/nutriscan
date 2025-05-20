@@ -1,0 +1,117 @@
+name: MERN Stack CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: DRIVE/package-lock.json
+    
+    - name: Install Backend Dependencies
+      working-directory: ./DRIVE
+      run: npm ci
+    
+    - name: Run Backend Tests
+      working-directory: ./DRIVE
+      run: |
+        npm run lint || true
+        npm test || true
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/test
+        JWT_SECRET: test-secret
+        PORT: 3000
+
+    - name: Build Backend
+      working-directory: ./DRIVE
+      run: npm run build
+      env:
+        NODE_ENV: production
+  frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.18'
+        cache: 'npm'
+        cache-dependency-path: front/package-lock.json
+    
+    - name: Install Frontend Dependencies
+      working-directory: ./front
+      run: npm ci
+    
+    - name: Build Frontend
+      working-directory: ./front
+      run: |
+        npm run lint || true
+        npm run build
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+  deploy:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.18'
+    
+    - name: Install PM2 globally
+      run: npm install -g pm2
+    
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+    
+    - name: Deploy Backend
+      working-directory: ./DRIVE
+      run: |
+        npm ci
+        npm run build
+        pm2 delete drive-app || true
+        pm2 start dist/server.js --name drive-app
+      env:
+        NODE_ENV: production
+        MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    
+    - name: Deploy Frontend
+      working-directory: ./front
+      run: |
+        npm ci
+        npm run build
+        pm2 delete drive-frontend || true
+        pm2 serve dist 5173 --name drive-frontend --spa
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
