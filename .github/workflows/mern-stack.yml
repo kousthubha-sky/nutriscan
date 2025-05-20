@@ -30,7 +30,9 @@ jobs:
       
       - name: Install Backend Dependencies
         working-directory: ./DRIVE
-        run: npm ci
+        run: |
+          npm ci
+          npm install --save-dev webpack-node-externals
       
       - name: Run Backend Tests
         working-directory: ./DRIVE
