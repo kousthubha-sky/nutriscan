@@ -32,7 +32,7 @@ jobs:
         working-directory: ./DRIVE
         run: |
           npm ci
-          npm install --save-dev webpack-node-externals
+          npm ls webpack webpack-cli webpack-node-externals || true
       
       - name: Run Backend Tests
         working-directory: ./DRIVE
@@ -47,7 +47,11 @@ jobs:
       
       - name: Build Backend
         working-directory: ./DRIVE
-        run: npm run build
+        run: |
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+          echo "Webpack version: $(npx webpack -v)"
+          NODE_ENV=production npm run build --verbose
         env:
           NODE_ENV: production
 
