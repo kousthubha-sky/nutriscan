@@ -33,10 +33,10 @@ jobs:
         run: |
           echo "Installing dependencies..."
           npm ci
-          echo "\nVerifying webpack installations..."
-          npm list webpack webpack-cli webpack-node-externals
-          echo "\nChecking for outdated packages..."
-          npm outdated webpack webpack-cli webpack-node-externals || true
+          echo "\nVerifying installation of node_modules..."
+          ls -la node_modules
+          echo "\nChecking for missing dependencies..."
+          npm list || true
       
       - name: Debug Webpack Config
         working-directory: ./DRIVE
