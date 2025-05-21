@@ -33,7 +33,21 @@ jobs:
         run: |
           npm ci
           npm ls webpack webpack-cli webpack-node-externals || true
-      
+
+      - name: Verify Webpack and Dependencies
+        working-directory: ./DRIVE
+        run: |
+          npm install webpack webpack-cli webpack-node-externals --save-dev
+          npm list webpack webpack-cli webpack-node-externals
+          
+      - name: Debug Build Environment
+        working-directory: ./DRIVE
+        run: |
+            echo "Node version: $(node -v)"
+            echo "NPM version: $(npm -v)"
+            echo "Installed Webpack version: $(npx webpack -v)"
+
+
       - name: Run Backend Tests
         working-directory: ./DRIVE
         run: |
