@@ -28,26 +28,25 @@ jobs:
           cache: "npm"
           cache-dependency-path: DRIVE/package-lock.json
       
-      - name: Install Backend Dependencies
+      - name: Install and Verify Backend Dependencies
         working-directory: ./DRIVE
         run: |
+          echo "Installing dependencies..."
           npm ci
-          npm ls webpack webpack-cli webpack-node-externals || true
-
-      - name: Verify Webpack and Dependencies
-        working-directory: ./DRIVE
-        run: |
-          npm install webpack webpack-cli webpack-node-externals --save-dev
+          echo "\nVerifying webpack installations..."
           npm list webpack webpack-cli webpack-node-externals
-          
-      - name: Debug Build Environment
+          echo "\nChecking for outdated packages..."
+          npm outdated webpack webpack-cli webpack-node-externals || true
+      
+      - name: Debug Webpack Config
         working-directory: ./DRIVE
         run: |
-            echo "Node version: $(node -v)"
-            echo "NPM version: $(npm -v)"
-            echo "Installed Webpack version: $(npx webpack -v)"
-
-
+          echo "Content of webpack.config.js:"
+          cat webpack.config.js
+          echo "\nNode version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+          echo "Webpack version: $(npx webpack -v)"
+      
       - name: Run Backend Tests
         working-directory: ./DRIVE
         run: |
@@ -62,12 +61,13 @@ jobs:
       - name: Build Backend
         working-directory: ./DRIVE
         run: |
-          echo "Node version: $(node -v)"
-          echo "NPM version: $(npm -v)"
-          echo "Webpack version: $(npx webpack -v)"
+          echo "Starting production build..."
           NODE_ENV=production npm run build --verbose
+          echo "\nVerifying build output..."
+          ls -la dist/
         env:
           NODE_ENV: production
+          DEBUG: "webpack:*"
 
   frontend:
     runs-on: ubuntu-latest
