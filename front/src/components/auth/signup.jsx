@@ -17,7 +17,7 @@ export default function Signup({ onLogin }) {
   function handleSubmit(event) {
     event.preventDefault();
     setIsLoading(true);
-    fetch("http://localhost:3000/user/signup", {
+    fetch("/api/user/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -37,7 +37,7 @@ export default function Signup({ onLogin }) {
       })
       .then(() => {
         toast.success("Account created successfully!");
-        return fetch("http://localhost:3000/user/login", {
+        return fetch("/api/user/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password })

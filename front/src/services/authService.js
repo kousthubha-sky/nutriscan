@@ -23,8 +23,7 @@ class AuthService {
   }
 
   async login(username, password) {
-    try {
-      const response = await fetch('http://localhost:3000/user/login', {
+    try {      const response = await fetch('/api/user/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -62,7 +61,7 @@ class AuthService {
 
   async logout() {
     try {
-      await fetch('http://localhost:3000/user/logout', {
+      await fetch('/api/user/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,
@@ -124,7 +123,7 @@ class AuthService {
     if (!this.token) return;
 
     try {
-      const response = await fetch('http://localhost:3000/user/refresh-token', {
+      const response = await fetch('/api/user/refresh-token', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,

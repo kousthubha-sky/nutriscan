@@ -1,16 +1,8 @@
 import { cacheService } from './cacheService';
 
 class ApiService {
-  constructor(baseUrl = 'http://localhost:3000') {
-    // Validate and normalize base URL
-    try {
-      const url = new URL(baseUrl);
-      // Remove trailing slash if present
-      this.baseUrl = url.href.replace(/\/$/, '');
-    } catch (error) {
-      console.error('Invalid base URL:', error);
-      throw new Error('Invalid API base URL provided');
-    }
+  constructor(baseUrl = '/api') {
+    this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
   async fetchWithAuth(endpoint, options = {}) {

@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/user/forgot-password", {
+      const response = await fetch("/api/user/forgot-password", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -64,7 +64,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/user/verify-otp", {
+      const response = await fetch("/api/user/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -103,7 +103,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/user/reset-password", {
+      const response = await fetch("/api/user/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
