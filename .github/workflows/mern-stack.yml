@@ -32,11 +32,14 @@ jobs:
         working-directory: ./DRIVE
         run: |
           echo "Installing dependencies..."
-          npm ci
+          npm install
+          npm run build
           echo "\nVerifying installation of node_modules..."
           ls -la node_modules
           echo "\nChecking for missing dependencies..."
           npm list || true
+        env:
+          NODE_ENV: development
       
       - name: Debug Webpack Config
         working-directory: ./DRIVE
