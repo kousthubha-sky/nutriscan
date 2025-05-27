@@ -1,3 +1,8 @@
+
+// Admin user created successfully: { username: 'oneadmin', email: 'oneadmin@example.com', role: 'admin' }
+// Admin user created successfully: { username: 'threeadmin', email: '3admin@example.com',passowrd:admin!123, role: 'admin' }
+// Admin user created successfully: { username: 'proadmin', email: 'proadmin@example.com', passowrd:admin!123, role: 'admin' }
+
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';

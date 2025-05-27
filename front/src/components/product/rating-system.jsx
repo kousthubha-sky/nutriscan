@@ -10,7 +10,7 @@ export function RatingSystem() {
 
         <h3 className="text-xl font-bold mb-4">Health Rating System</h3>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Our AI analyzes ingredient lists to provide accurate health scores and unbiased evaluations.
+          Our analysis of ingredient lists to provide accurate health scores and unbiased evaluations.
         </p>
 
         <h4 className="font-medium mb-4">NutriScan Rating Scale</h4>
@@ -139,7 +139,7 @@ export function RatingSystem() {
             {[
               {
                 question: "How accurate is the health rating system?",
-                answer: "Our AI-powered system analyzes multiple factors including ingredients, nutritional content, and processing methods. The ratings are based on established nutritional guidelines and are regularly updated with new research."
+                answer: "Our system analyzes multiple factors including ingredients, nutritional content, and processing methods. The ratings are based on established nutritional guidelines and are regularly updated with new research."
               },
               {
                 question: "What makes a product score higher?",
@@ -181,13 +181,13 @@ export function RatingSystem() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Technical Support:</span>
-                <a href="mailto:tech@nutriscan.com" className="text-primary hover:underline">
+                <a href="mailto:support@nutriscan.com" className="text-primary hover:underline">
                   tech@nutriscan.com
                 </a>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Business Inquiries:</span>
-                <a href="mailto:business@nutriscan.com" className="text-primary hover:underline">
+                <a href="mailto:support@nutriscan.com" className="text-primary hover:underline">
                   business@nutriscan.com
                 </a>
               </div>
