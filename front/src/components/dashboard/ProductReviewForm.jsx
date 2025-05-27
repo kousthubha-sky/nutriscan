@@ -40,10 +40,42 @@ export function ProductReviewForm({ submission, onSubmit, onClose }) {
         [name]: value
       }));
     }
-  };
-
-  const handleSubmit = (e) => {
+  };  const handleSubmit = (e) => {
     e.preventDefault();
+    
+    const validationErrors = [];
+
+    // Validate required fields
+    if (!formData.productName || !formData.brand || !formData.category || !submission.barcodeNumber) {
+      validationErrors.push('Product Name, Brand, Category, and Barcode are required fields');
+    }
+
+    // Validate nutritional information
+    const nutritionalInfo = formData.nutritionalInfo;
+    if (nutritionalInfo) {
+      // Check required nutritional fields
+      if (!nutritionalInfo.servingSize) {
+        validationErrors.push('Serving Size is required');
+      }
+
+      // Validate numeric fields are non-negative
+      const numericFields = ['calories', 'protein', 'carbohydrates', 'fat', 'fiber', 'sugar', 'sodium'];
+      numericFields.forEach(field => {
+        if (nutritionalInfo[field] && (isNaN(nutritionalInfo[field]) || nutritionalInfo[field] < 0)) {
+          validationErrors.push(`${field.charAt(0).toUpperCase() + field.slice(1)} must be a non-negative number`);
+        }
+      });
+    }
+
+    // Validate admin notes if rejecting
+    if (formData.status === 'rejected' && !formData.adminNotes.trim()) {
+      validationErrors.push('Admin notes are required when rejecting a submission');
+    }
+
+    if (validationErrors.length > 0) {
+      alert(validationErrors.join('\n'));
+      return;
+    }
     
     // Convert comma-separated strings back to arrays and ensure numeric values
     const processedData = {

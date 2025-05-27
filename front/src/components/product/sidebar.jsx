@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Home, ScanLine, BarChart2, GitCompare, PlusCircle, Settings, LogOut, Menu, X, ShieldCheck } from "lucide-react"
 import { Link } from "react-router-dom"
+import { BarcodeScanner } from "../home/BarcodeScanner"
 
 
   
@@ -70,12 +71,21 @@ const bottomMenuItems = [
 export function Sidebar({ user, onAction }) {
   const [activeSection, setActiveSection] = useState("top")
   const [isOpen, setIsOpen] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
 
   const handleMenuItemClick = (e, item) => {
-    if (item.action) {
+    if (item.action === 'scan') {
+      e.preventDefault()
+      setShowScanner(true)
+    } else if (item.action) {
       e.preventDefault()
       onAction(item.action)
     }
+  }
+
+  const handleBarcodeDetected = (barcode) => {
+    setShowScanner(false)
+    onAction('barcodeSearch', barcode)
   }
 
   useEffect(() => {
@@ -119,9 +129,14 @@ export function Sidebar({ user, onAction }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isOpen])
 
-  return (
-    <>
-      
+  return (    <>
+      {/* Barcode Scanner Modal */}
+      {showScanner && (
+        <BarcodeScanner
+          onDetected={handleBarcodeDetected}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       {/* Sidebar container */}
       <div

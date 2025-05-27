@@ -4,7 +4,7 @@ import { useState } from "react"
 import type React from "react"
 import { motion } from "framer-motion"
 import { Home, Settings, Bell, User, GitCompare, ScanLine, BarChart3, PlusCircleIcon, ChevronRight } from "lucide-react"
-import { useTheme } from "../../../../dash/ThemeProvider"
+import { useTheme } from "../ui/theme-context"
 import { BarcodeScanner } from "./BarcodeScanner"
 import { SettingsMenu } from "../product/settings-menu"
 import { UserProfile } from "../product/user-profile"
@@ -112,7 +112,7 @@ export function MenuBar({ user }: { user?: any }) {
     {
       icon: <BarChart3 className="h-4 w-4 transition-colors duration-300" />,
       label: "Analysis",
-      href: "#Analysis",
+      href: "#details",
       gradient: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.06) 50%, rgba(21,128,61,0) 100%)",
       iconColor: "green-500",
     },
@@ -187,8 +187,13 @@ export function MenuBar({ user }: { user?: any }) {
                   variants={itemVariants}
                   transition={sharedTransition}
                   style={{ transformStyle: "preserve-3d", transformOrigin: "center bottom" }}
-                >
-                  <span className={`text-white/50 group-hover:text-${item.iconColor}`}>
+                >                  <span className={`text-white/50 ${
+                    item.label === "Home" ? "group-hover:text-blue-500" :
+                    item.label === "Scan" ? "group-hover:text-orange-500" :
+                    item.label === "Analysis" ? "group-hover:text-green-500" :
+                    item.label === "Alternatives" ? "group-hover:text-red-900" :
+                    "group-hover:text-yellow-500"
+                  }`}>
                     {item.icon}
                   </span>
                   <span className="text-white/35 text-[10px]">{item.label}</span>
@@ -206,8 +211,13 @@ export function MenuBar({ user }: { user?: any }) {
                   variants={backVariants}
                   transition={sharedTransition}
                   style={{ transformStyle: "preserve-3d", transformOrigin: "center top", rotateX: 90 }}
-                >
-                  <span className={`text-white/50 group-hover:text-${item.iconColor}`}>
+                >                  <span className={`text-white/50 ${
+                    item.label === "Home" ? "group-hover:text-blue-500" :
+                    item.label === "Scan" ? "group-hover:text-orange-500" :
+                    item.label === "Analysis" ? "group-hover:text-green-500" :
+                    item.label === "Alternatives" ? "group-hover:text-red-900" :
+                    "group-hover:text-yellow-500"
+                  }`}>
                     {item.icon}
                   </span>
                   <span className="text-white text-[10px]">{item.label}</span>

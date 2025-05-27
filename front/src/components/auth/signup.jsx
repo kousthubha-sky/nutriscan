@@ -188,7 +188,7 @@ export default function Signup({ onLogin }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 h-11 px-4 border border-gray-600 rounded-md text-gray-300 bg-gray-800/50 hover:bg-gray-800 transition-colors"
@@ -222,7 +222,7 @@ export default function Signup({ onLogin }) {
                 </svg>
                 <span className="text-sm font-medium">GitHub</span>
               </button>
-            </div>
+            </div> */}
 
             <p className="text-center text-sm text-gray-400">
               Already have an account?{" "}

@@ -2,13 +2,12 @@
 
 import { useState } from "react"
 import { Settings, Moon, Sun, LogOut } from "lucide-react"
-import { useTheme } from "next-themes"
+
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 
 export function SettingsMenu({ isOpen, onClose, user }) {
-  const { theme, setTheme } = useTheme()
-  const isDarkTheme = theme === "dark"
+  
   const navigate = useNavigate();
 
   // Editable fields
@@ -123,25 +122,7 @@ export function SettingsMenu({ isOpen, onClose, user }) {
               </button>
             </div>
 
-            {/* Theme */}
-            <div>
-              <h3 className="text-lg font-medium mb-3">Appearance</h3>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {isDarkTheme ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                  <span>Dark Mode</span>
-                </div>
-                <button
-                  onClick={() => setTheme(isDarkTheme ? "light" : "dark")}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full ${isDarkTheme ? "bg-green-600" : "bg-gray-200"}`}
-                >
-                  <span className="sr-only">Toggle dark mode</span>
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${isDarkTheme ? "translate-x-6" : "translate-x-1"}`}
-                  />
-                </button>
-              </div>
-            </div>
+            
 
             {/* Logout Button */}
             <div className="pt-4">

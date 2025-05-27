@@ -99,11 +99,37 @@ exports.reviewSubmission = async (req, res) => {
         } = req.body;
 
         // Validate required fields
-        if (!status) {
+        if (!status || !productName || !brand || !category) {
             return res.status(400).json({ 
                 success: false,
-                message: 'Status is required for review submission' 
+                message: 'Status, product name, brand, and category are required for review submission' 
             });
+        }
+
+        // Validate nutritional info if provided
+        if (nutritionalInfo) {
+            const requiredNutritionalFields = ['servingSize', 'calories', 'protein', 'carbohydrates', 'fat'];
+            const missingFields = requiredNutritionalFields.filter(field => !nutritionalInfo[field]);
+            
+            if (missingFields.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Missing required nutritional information: ${missingFields.join(', ')}`
+                });
+            }
+
+            // Validate numeric values
+            const numericFields = ['calories', 'protein', 'carbohydrates', 'fat', 'fiber', 'sugar', 'sodium'];
+            const invalidFields = numericFields.filter(field => 
+                nutritionalInfo[field] && (isNaN(nutritionalInfo[field]) || nutritionalInfo[field] < 0)
+            );
+
+            if (invalidFields.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid nutritional values for: ${invalidFields.join(', ')}`
+                });
+            }
         }
 
         const submission = await ProductSubmission.findById(id);
@@ -138,9 +164,7 @@ exports.reviewSubmission = async (req, res) => {
             status,
             notes: adminNotes,
             updatedBy: req.user._id
-        });
-
-        // If approved, create a new product in the main products collection
+        });        // If approved, create a new product in the main products collection
         if (status === 'approved') {
             try {
                 // Map nutritional info to product schema format
@@ -149,8 +173,10 @@ exports.reviewSubmission = async (req, res) => {
                     carbohydrates_100g: nutritionalInfo?.carbohydrates || 0,
                     sugars_100g: nutritionalInfo?.sugar || 0,
                     fat_100g: nutritionalInfo?.fat || 0,
+                    saturated_fat_100g: 0, // Default value since not provided in submission
                     proteins_100g: nutritionalInfo?.protein || 0,
-                    fiber_100g: nutritionalInfo?.fiber || 0
+                    fiber_100g: nutritionalInfo?.fiber || 0,
+                    salt_100g: nutritionalInfo?.sodium ? nutritionalInfo.sodium / 1000 : 0 // Convert sodium to salt (mg to g)
                 };
 
                 // Calculate health rating based on nutritional info
@@ -158,25 +184,33 @@ exports.reviewSubmission = async (req, res) => {
                     ingredients: Array.isArray(ingredients) ? ingredients.join(', ') : '',
                     nutriments,
                     nutriscore_grade: 'unknown'
-                });
+                });                // First check if product with this barcode already exists
+                let existingProduct = await Product.findOne({ barcode: submission.barcodeNumber });
+                
+                if (existingProduct) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'A product with this barcode already exists',
+                        existingProduct
+                    });
+                }
 
                 const newProduct = new Product({
-                    name: submission.productName,
+                    name: productName || submission.productName,
                     barcode: submission.barcodeNumber,
-                    brand: submission.brand,
-                    category: submission.category,
-                    ingredients: Array.isArray(submission.ingredients) ? submission.ingredients : [submission.ingredients].filter(Boolean),
+                    brand: brand || submission.brand,
+                    category: category || submission.category,
+                    description: submission.description || '',
+                    ingredients: ingredients || (Array.isArray(submission.ingredients) ? submission.ingredients : [submission.ingredients].filter(Boolean)),
                     nutriments,
-                    allergens: Array.isArray(submission.allergens) ? submission.allergens : [submission.allergens].filter(Boolean),
-                    labels: submission.dietaryInfo ? submission.dietaryInfo.join(', ') : '',
+                    allergens: allergens || (Array.isArray(submission.allergens) ? submission.allergens : [submission.allergens].filter(Boolean)),
+                    labels: dietaryInfo ? dietaryInfo.join(', ') : (submission.dietaryInfo ? submission.dietaryInfo.join(', ') : ''),
                     productImage: submission.productImage,
                     barcodeImage: submission.barcodeImage,
                     addedBy: submission.submittedBy,
-                    lastFetched: new Date(),
                     healthRating: healthAnalysis.score,
-                    healthAnalysis: healthAnalysis.analysis,
-                    healthRatingLabel: healthAnalysis.rating,
-                    healthRatingColor: healthAnalysis.color
+                    verifiedBy: req.user._id,
+                    verifiedAt: new Date()
                 });
 
                 await newProduct.save();

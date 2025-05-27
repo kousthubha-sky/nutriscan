@@ -165,7 +165,7 @@ export function AnalysisSection({ product }) {
         <div className="p-6 space-y-8">
           {/* AI-Powered Analysis */}
           <section>
-            <h3 className="text-xl font-bold mb-4">AI-Powered Analysis</h3>
+            <h3 className="text-xl font-bold mb-4"> Analysis</h3>
             <div className="space-y-6">
               <div>
                 <h4 className="font-medium text-muted-foreground mb-2">Overall Assessment</h4>

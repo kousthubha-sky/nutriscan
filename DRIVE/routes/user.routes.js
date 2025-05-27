@@ -35,6 +35,12 @@ router.post('/signup',
         message: 'Username already exists'
       })
     }
+    const existingEmail = await userModel.findOne({ email: email.toLowerCase() })
+    if (existingEmail) {
+      return res.status(400).json({
+        message: 'Email already registered'
+      })
+    }
     
     const hashedPassword = await bcrypt.hash(password, 10)
     //whenever a new user is created it will be saved in the database in this const variable

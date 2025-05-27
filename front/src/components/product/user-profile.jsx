@@ -338,13 +338,7 @@ export function UserProfile({ isOpen, onClose, user }) {
                         </div>
                       </button>
 
-                      <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-accent rounded-lg transition-colors">
-                        <Download className="h-5 w-5 text-primary" />
-                        <div>
-                          <p className="font-medium">Export Data</p>
-                          <p className="text-sm text-muted-foreground">Download your data in JSON format</p>
-                        </div>
-                      </button>
+                      
 
                       <button className="w-full flex items-center gap-3 p-3 text-left text-destructive hover:bg-destructive/5 rounded-lg transition-colors">
                         <Shield className="h-5 w-5" />
