@@ -2,15 +2,25 @@
   "name": "drive",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": ">=12.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx nodemon app.js"
+    "start": "node dist/server.js",
+    "dev": "cross-env NODE_ENV=development nodemon app.js",
+    "prod": "cross-env NODE_ENV=production node dist/server.js",
+    "build": "webpack --config webpack.config.js",
+    "build:prod": "cross-env NODE_ENV=production webpack",
+    "lint": "eslint .",
+    "test": "jest --coverage",
+    "clean": "rimraf dist"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -18,15 +28,37 @@
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "express-sanitizer": "^1.0.6",
     "express-validator": "^7.2.1",
+    "form-data": "^4.0.2",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.12.2",
+    "lodash": "^4.17.21",
+    "mongoose": "^8.15.0",
     "multer": "^1.4.5-lts.2",
     "nodemailer": "^6.10.1",
-    "react-router-dom": "^7.4.1"
+    "react-router-dom": "^7.4.1",
+    "xss": "^1.0.15",
+    "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
-    "axios": "^1.8.4",
-    "form-data": "^4.0.2"
+    "@babel/core": "^7.24.0",
+    "@babel/eslint-parser": "^7.24.1",
+    "@babel/preset-env": "^7.24.0",
+    "babel-loader": "^9.2.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.57.0",
+    "eslint-config-node": "^4.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "glob": "^10.4.5",
+    "jest": "^29.7.0",
+    "lru-cache": "^10.2.0",
+    "nodemon": "^3.1.0",
+    "rimraf": "^5.0.10",
+    "supertest": "^6.3.4",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
+    
   }
 }

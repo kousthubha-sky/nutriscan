@@ -1,135 +1,14 @@
 import { cacheService, CACHE_CONFIG } from './cacheService';
 import { apiService } from './apiService';
 
-// Custom API error class for better error handling
-class APIError extends Error {
-  constructor(message, status, code = 'UNKNOWN_ERROR', details = null) {
-    super(message);
-    this.name = 'APIError';
-    this.status = status;
-    this.code = code;
-    this.details = details;
-    this.timestamp = new Date().toISOString();
-    this.retryable = [500, 502, 503, 504].includes(status);
-  }
-
-  static fromResponse(response, data) {
-    return new APIError(
-      data?.message || response.statusText,
-      response.status,
-      data?.code || 'API_ERROR',
-      data?.details
-    );
-  }
-}
-
-// Error handler helper function
-const handleApiError = (error, context, signal) => {
-  console.error(`${context}:`, error);
-
-  // Handle request cancellation
-  if (signal?.aborted) {
-    throw new APIError('Request was cancelled', 499, 'REQUEST_CANCELLED');
-  }
-
-  if (!navigator.onLine) {
-    throw new APIError(
-      'No internet connection. Please check your network and try again.',
-      0, 
-      'NETWORK_ERROR'
-    );
-  }
-
-  // If it's already our custom error, just throw it
-  if (error instanceof APIError) {
-    throw error;
-  }
-
-  // Handle specific HTTP status codes with more detailed messages
-  switch (error.status) {
-    case 400:
-      throw new APIError(
-        error.data?.message || 'The request was invalid. Please check your input and try again.',
-        400,
-        'BAD_REQUEST',
-        error.data?.details
-      );
-    case 401:
-      throw new APIError(
-        'Your session has expired. Please login again to continue.',
-        401,
-        'UNAUTHORIZED'
-      );
-    case 403:
-      throw new APIError(
-        'You do not have permission to perform this action. Please contact support if you believe this is an error.',
-        403,
-        'FORBIDDEN'
-      );
-    case 404:
-      throw new APIError(
-        'The requested resource could not be found. It may have been deleted or moved.',
-        404,
-        'NOT_FOUND'
-      );
-    case 429:
-      throw new APIError(
-        'Too many requests. Please wait a moment and try again.',
-        429,
-        'RATE_LIMIT'
-      );
-    case 413:
-      throw new APIError(
-        'The uploaded file is too large. Maximum size is 5MB.',
-        413,
-        'PAYLOAD_TOO_LARGE'
-      );
-    case 415:
-      throw new APIError(
-        'The uploaded file type is not supported. Please use JPG, PNG, or WEBP format.',
-        415,
-        'UNSUPPORTED_MEDIA_TYPE'
-      );
-    case 500:
-    case 502:
-    case 503:
-    case 504:
-      throw new APIError(
-        'A server error occurred. We have been notified and are working on a fix.',
-        error.status,
-        'SERVER_ERROR'
-      );
-    default:
-      throw new APIError(
-        error.message || 'An unexpected error occurred. Please try again.',
-        error.status || 500,
-        'UNKNOWN_ERROR',
-        error.data?.details
-      );
-  }
-};
 
 const api = {
-  // Helper function to handle cache and API calls
-  async withCache(cacheKey, apiCall, config = {}) {
+  async searchProducts(query, page = 1, filters = {}, sortBy = 'relevance') {
+    const cacheKey = cacheService.generateKey('searchProducts', { query, page, filters, sortBy });
     const cachedData = cacheService.get(cacheKey);
-    if (cachedData && !config.bypass) return cachedData;
+    if (cachedData) return cachedData;
 
     try {
-      const data = await apiCall();
-      if (config.cache !== false) {
-        cacheService.set(cacheKey, data, config.cacheConfig);
-      }
-      return data;
-    } catch (error) {
-      handleApiError(error, config.context, config.signal);
-    }
-  },
-
-  async searchProducts(query, page = 1, filters = {}, sortBy = 'relevance', signal) {
-    const cacheKey = cacheService.generateKey('searchProducts', { query, page, filters, sortBy });
-    
-    return this.withCache(cacheKey, async () => {
       const params = new URLSearchParams({
         q: query,
         page,
@@ -137,20 +16,27 @@ const api = {
         filters: JSON.stringify(filters)
       });
       
-      const data = await apiService.fetchWithAuth(`/products/search?${params.toString()}`, { signal });
+      const data = await apiService.fetchWithAuth(`/products/search?${params.toString()}`);
       
-      return {
+      const result = {
         products: data.products || [],
         currentPage: Number(data.currentPage) || page,
         totalPages: Number(data.totalPages) || 1,
         query,
         sources: data.sources
       };
-    }, {
-      cacheConfig: CACHE_CONFIG.searchProducts,
-      context: 'Product search failed',
-      signal
-    });
+
+      cacheService.set(cacheKey, result, CACHE_CONFIG.searchProducts);
+      return result;
+    } catch (error) {
+      console.error('Product search failed:', error);
+      if (error.status === 400) {
+        throw new Error('Invalid search parameters. Please check your input.');
+      } else if (error.status === 429) {
+        throw new Error('Too many search requests. Please try again later.');
+      }
+      throw new Error('Failed to search products. Please try again.');
+    }
   },
 
   async getFeaturedProducts() {
@@ -164,7 +50,13 @@ const api = {
       cacheService.set(cacheKey, products, CACHE_CONFIG.getFeaturedProducts);
       return products;
     } catch (error) {
-      handleApiError(error, 'Failed to fetch featured products');
+      console.error('Failed to fetch featured products:', error);
+      if (error.status === 404) {
+        throw new Error('No featured products found.');
+      } else if (error.status === 429) {
+        throw new Error('Too many requests. Please try again later.');
+      }
+      throw new Error('Failed to load featured products. Please try again.');
     }
   },
 
@@ -204,7 +96,14 @@ const api = {
       return alternatives;
     } catch (error) {
       console.error('Failed to fetch healthier alternatives:', error);
-      throw error;
+      if (error.status === 400) {
+        throw new Error(error.data?.message || 'Invalid product data. Please check input parameters.');
+      } else if (error.status === 404) {
+        throw new Error('No healthier alternatives found for this product.');
+      } else if (error.status === 429) {
+        throw new Error('Too many requests. Please try again later.');
+      }
+      throw new Error('Failed to find healthier alternatives. Please try again.');
     }
   },
 
@@ -240,7 +139,12 @@ const api = {
   async getPendingSubmissions(page = 1, limit = 10) {
     try {
       const params = new URLSearchParams({ page, limit });
-      return await apiService.fetchWithAuth(`/admin/submissions/pending?${params}`);
+      const data = await apiService.fetchWithAuth(`/admin/submissions/pending?${params}`);
+      return {
+        submissions: data.submissions || [],
+        totalPages: data.totalPages || 1,
+        currentPage: data.currentPage || page
+      };
     } catch (error) {
       console.error('Failed to fetch pending submissions:', error);
       if (error.status === 403) {
@@ -254,7 +158,13 @@ const api = {
 
   async getSubmissionStats() {
     try {
-      return await apiService.fetchWithAuth('/admin/submissions/stats');
+      const data = await apiService.fetchWithAuth('/admin/submissions/stats');
+      return {
+        total: data.total || 0,
+        pending: data.pending || 0,
+        approved: data.approved || 0,
+        rejected: data.rejected || 0
+      };
     } catch (error) {
       console.error('Failed to fetch submission stats:', error);
       if (error.status === 403) {
@@ -266,7 +176,7 @@ const api = {
 
   async reviewSubmission(submissionId, { status, adminNotes, ...productData }) {
     try {
-      return await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/review`, {
+      const data = await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/review`, {
         method: 'POST',
         body: JSON.stringify({ 
           status, 
@@ -274,6 +184,7 @@ const api = {
           ...productData
         })
       });
+      return data;
     } catch (error) {
       console.error('Review submission error:', error);
       if (error.status === 403) {
@@ -287,8 +198,9 @@ const api = {
     }
   },
 
-  async submitProduct(formData, signal) {
+  async submitProduct(formData) {
     try {
+      // For FormData, we need to handle Content-Type differently
       const response = await fetch(`${apiService.baseUrl}/products/submit`, {
         method: 'POST',
         headers: {
@@ -296,23 +208,42 @@ const api = {
           'X-Refresh-Token': localStorage.getItem('refreshToken')
         },
         body: formData,
-        credentials: 'include',
-        signal
+        credentials: 'include'
       });
 
       const data = await response.json();
       
       if (!response.ok) {
-        throw APIError.fromResponse(response, data);
+        if (response.status === 413) {
+          throw new Error('Image file size too large. Maximum size is 5MB.');
+        } else if (response.status === 415) {
+          throw new Error('Invalid file format. Please upload JPG, PNG, or WEBP images.');
+        } else if (response.status === 400) {
+          throw new Error(data.message || 'Invalid product data. Please check all fields.');
+        } else if (response.status === 429) {
+          throw new Error('Too many submissions. Please try again later.');
+        } else if (response.status === 409) {
+          throw new Error('This product has already been submitted. Please check existing products.');
+        }
+        throw new Error(data.message || data.error || 'Failed to submit product');
       }
       return data;
     } catch (error) {
-      handleApiError(error, 'Product submission error', signal);
+      console.error('Product submission error:', error);
+      if (error instanceof TypeError) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+      throw error;
     }
   },
+
   async getSubmissionDetails(submissionId) {
     try {
-      return await apiService.fetchWithAuth(`/admin/submissions/${submissionId}`);
+      const data = await apiService.fetchWithAuth(`/admin/submissions/${submissionId}`);
+      if (!data) {
+        throw new Error('Submission not found.');
+      }
+      return data;
     } catch (error) {
       console.error('Failed to fetch submission details:', error);
       if (error.status === 403) {
@@ -326,10 +257,11 @@ const api = {
 
   async updateSubmissionStatus(submissionId, status) {
     try {
-      return await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/status`, {
+      const data = await apiService.fetchWithAuth(`/admin/submissions/${submissionId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status })
       });
+      return data;
     } catch (error) {
       console.error('Failed to update submission status:', error);
       if (error.status === 403) {
@@ -344,5 +276,4 @@ const api = {
   }
 };
 
-export { APIError };
 export default api;

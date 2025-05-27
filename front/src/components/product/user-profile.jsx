@@ -52,7 +52,7 @@ export function UserProfile({ isOpen, onClose, user }) {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch("http://localhost:3000/user/preferences", {
+      const response = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

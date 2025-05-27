@@ -26,7 +26,7 @@ export function SettingsMenu({ isOpen, onClose, user }) {
     setSaving(true);
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch("http://localhost:3000/user/preferences", {
+      const res = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

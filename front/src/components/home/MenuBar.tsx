@@ -4,7 +4,11 @@ import { useState } from "react"
 import type React from "react"
 import { motion } from "framer-motion"
 import { Home, Settings, Bell, User, GitCompare, ScanLine, BarChart3, PlusCircleIcon, ChevronRight } from "lucide-react"
+<<<<<<< HEAD
 import { useTheme } from "../ui/theme-context"
+=======
+
+>>>>>>> 6d8d39db299e4999a3247f320435b03502378059
 import { BarcodeScanner } from "./BarcodeScanner"
 import { SettingsMenu } from "../product/settings-menu"
 import { UserProfile } from "../product/user-profile"
@@ -59,7 +63,7 @@ const sharedTransition = {
 }
 
 export function MenuBar({ user }: { user?: any }) {
-  const { theme } = useTheme()
+ 
   const [showScanner, setShowScanner] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
@@ -91,7 +95,7 @@ export function MenuBar({ user }: { user?: any }) {
     setShowSettingsPopup(false)
   }
 
-  const isDarkTheme = theme === "dark"
+  
 
   const menuItems: MenuItem[] = [
     {
@@ -148,11 +152,7 @@ export function MenuBar({ user }: { user?: any }) {
         whileHover="hover"
       >
         <motion.div
-          className={`absolute -inset-2 bg-gradient-radial from-transparent ${
-            isDarkTheme
-              ? "from-blue-400/30 from-30% via-purple-400/30 to-red-400/30"
-              : "from-blue-400/20 from-30% via-purple-400/20 to-red-400/20"
-          } to-transparent rounded-3xl z-0 pointer-events-none`}
+          className="absolute -inset-2 bg-gradient-radial from-blue-400/20 via-purple-400/20 to-red-400/20 rounded-3xl z-0 pointer-events-none"
           variants={navGlowVariants}
         />
         <ul className="flex items-center justify-between relative z-10 px-1 py-0.5 mx-auto container max-w-sm">

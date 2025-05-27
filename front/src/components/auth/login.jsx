@@ -18,7 +18,7 @@ export default function Login({ onLogin }) {
     setIsLoading(true);
     setErrorMessage("");
 
-    fetch("http://localhost:3000/user/login", {
+    fetch("/api/user/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

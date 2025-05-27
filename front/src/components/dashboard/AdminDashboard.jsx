@@ -43,7 +43,7 @@ export default function AdminDashboard() {
   const fetchSubmissions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:3000/admin/submissions${filter ? `?status=${filter}` : ''}`, {
+      const response = await fetch(`/api/admin/submissions${filter ? `?status=${filter}` : ''}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:3000/admin/stats', {
+      const response = await fetch('/api/admin/stats', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/admin/users', {
+      const response = await fetch('/api/admin/users', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
